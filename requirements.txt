@@ -1,21 +1,18 @@
-# Flask Web框架核心
+# Flask Web框架核心 - Vercel兼容版本
 Flask==2.3.3
-Flask-SocketIO==5.3.6
 Werkzeug==2.3.7
+
+# WebSocket支持（仅本地开发）
+Flask-SocketIO==5.3.6
 
 # 文档处理
 markdown==3.5.1
 
-# 系统监控和性能（Vercel兼容版本）
-psutil==5.9.6
+# HTTP请求
 requests==2.31.0
 
 # 文件处理
 python-multipart==0.0.6
 
-# Vercel部署优化
-# 移除不兼容的依赖，添加Vercel支持的依赖
-
-# 生产环境部署（Vercel不需要）
-# gunicorn==21.2.0
-# uwsgi==2.0.22 
+# Vercel部署优化 - 精简依赖列表
+# 移除可能导致问题的依赖：psutil（在Vercel中不可用） 

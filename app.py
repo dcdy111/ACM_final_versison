@@ -321,8 +321,33 @@ DATABASE = 'acm_lab.db'
 # 移除SQLAlchemy初始化
 # db.init_app(app)
 
-# 初始化SocketIO
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading', logger=True, engineio_logger=True)
+# 初始化SocketIO - 检测环境
+import os
+is_vercel = os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV')
+
+if is_vercel:
+    # 在Vercel环境中创建一个虚拟SocketIO对象
+    print("🔧 检测到Vercel环境，创建SocketIO兼容对象")
+    class MockSocketIO:
+        def __init__(self, app, **kwargs):
+            pass
+        def emit(self, event, data, **kwargs):
+            print(f"Mock SocketIO emit: {event}")
+        def on(self, event):
+            def decorator(f):
+                return f
+            return decorator
+        def init_app(self, app, **kwargs):
+            pass
+        def run(self, app, **kwargs):
+            app.run(**kwargs)
+    
+    socketio = MockSocketIO(app, cors_allowed_origins="*")
+else:
+    # 本地开发环境使用真实SocketIO
+    print("🚀 本地环境，初始化真实SocketIO")
+    socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading', logger=True, engineio_logger=True)
+
 app.extensions['socketio'] = socketio
 
 # WebSocket事件处理
