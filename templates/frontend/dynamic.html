@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>ACM算法研究实验室</title>
+	<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Exo+2:wght@300;500&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+	<script src="/static/socket-client.js"></script>
+	<script>
+		tailwind.config = {
+			theme: {
+				extend: {
+					colors: {
+						'neon-cyan': '#00f7ff',
+						'neon-purple': '#bf00ff',
+						'neon-blue': '#0066ff',
+						'dark-base': '#0a0e17',
+						'dark-blue': '#121a2e',
+						'dark-light': '#1e293b',
+					},
+					fontFamily: {
+						'mono': ['JetBrains Mono', 'monospace'],
+						'sans': ['Inter', 'sans-serif'],
+					},
+					animation: {
+						'fade-up': 'fade-up 0.8s ease-out forwards',
+					},
+					keyframes: {
+						'fade-up': { '0%': { opacity: 0, transform: 'translateY(20px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } }
+					}
+				}
+			}
+		}
+	</script>
+	
+	<style>
+		:root {
+			--primary: #3a86ff;
+			--secondary: #00ffcc;
+			--accent: #ff2d75;
+			--accent2: #b967ff;
+			--dark-bg: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
+			--text-light: #e0e0ff;
+			--glass: rgba(255, 255, 255, 0.05);
+		}
+		
+		* { margin: 0; padding: 0; box-sizing: border-box; }
+		
+		body {
+			font-family: 'Exo 2', sans-serif;
+			color: var(--text-light);
+			background: var(--dark-bg);
+			min-height: 100vh;
+			overflow-x: hidden;
+		}
+		
+		/* 粒子背景 */
+		#particles-js {
+			position: fixed;
+			width: 100%;
+			height: 100%;
+			z-index: -1;
+		}
+		
+		/* 导航栏 */
+		.navbar {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 1.5rem 5%;
+			backdrop-filter: blur(10px);
+			background: var(--glass);
+			border-bottom: 1px solid rgba(58, 134, 255, 0.2);
+			position: sticky;
+			top: 0;
+			z-index: 1000;
+		}
+		
+		.logo {
+			font-family: 'Orbitron', sans-serif;
+			font-size: 1.8rem;
+			font-weight: 700;
+			background: linear-gradient(to right, var(--primary), var(--secondary));
+			-webkit-background-clip: text;
+			background-clip: text;
+			color: transparent;
+			display: flex;
+			align-items: center;
+			transition: all 0.3s ease;
+		}
+		
+		.logo.active {
+			text-shadow: 0 0 15px rgba(58, 134, 255, 0.6);
+			transform: scale(1.05);
+		}
+		
+		.logo::before {
+			content: "";
+			display: inline-block;
+			width: 30px;
+			height: 30px;
+			background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233a86ff"><path d="M12 2L1 12h3v9h6v-6h4v6h6v-9h3L12 2zm0 2.8L18 10v9h-2v-6H8v6H6v-9l6-7.2z"/></svg>') no-repeat center;
+			margin-right: 10px;
+			animation: pulse 2s infinite;
+		}
+		
+		.nav-links {
+			display: flex;
+			gap: 2rem;
+			align-items: center;
+			white-space: nowrap;
+		}
+		
+		.nav-link {
+			position: relative;
+			font-family: 'Exo 2', sans-serif;
+			font-weight: 500;
+			color: var(--text-light);
+			text-decoration: none;
+			transition: all 0.3s ease;
+		}
+		
+		.nav-link:hover { color: var(--primary); }
+		
+		.nav-link::after {
+			content: '';
+			position: absolute;
+			width: 0;
+			height: 2px;
+			bottom: -5px;
+			left: 0;
+			background: var(--primary);
+			transition: width 0.3s ease;
+		}
+		
+		.nav-link:hover::after { width: 100%; }
+		
+		/* 下拉菜单 */
+		.dropdown { position: relative; }
+		
+		.dropdown-content {
+			position: absolute;
+			top: calc(100% + 8px);
+			left: 0;
+			min-width: 220px;
+			background: rgba(10, 10, 26, 0.98);
+			backdrop-filter: blur(10px);
+			border: 1px solid rgba(58, 134, 255, 0.25);
+			border-radius: 8px;
+			padding: 0.6rem 0;
+			box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+			opacity: 0;
+			visibility: hidden;
+			transform: translateY(6px);
+			transition: all 0.22s ease;
+			z-index: 200;
+			white-space: nowrap;
+		}
+		
+		.dropdown:hover .dropdown-content {
+			opacity: 1;
+			visibility: visible;
+			transform: translateY(0);
+		}
+		
+		.dropdown-link {
+			display: block;
+			padding: 0.5rem 1.25rem;
+			color: var(--text-light);
+			text-decoration: none;
+			transition: all 0.18s ease;
+			font-size: 0.95rem;
+			line-height: 1.6;
+		}
+		
+		.dropdown-link:hover {
+			background: rgba(58, 134, 255, 0.12);
+			color: var(--primary);
+			padding-left: 1.5rem;
+		}
+		
+		.menu-toggle {
+			display: none;
+			cursor: pointer;
+			font-size: 1.5rem;
+		}
+		
+		/* 页脚 */
+		.footer {
+			background: var(--dark-bg);
+			padding: 3rem 10%;
+			text-align: center;
+			border-top: 1px solid rgba(0, 240, 255, 0.2);
+		}
+
+		.footer-logo {
+			font-size: 1.8rem;
+			font-weight: 700;
+			background: linear-gradient(90deg, var(--primary), var(--secondary));
+			-webkit-background-clip: text;
+			background-clip: text;
+			color: transparent;
+			text-decoration: none;
+			margin-bottom: 1.5rem;
+			display: inline-block;
+			transition: all 0.3s ease;
+		}
+
+		.footer-links {
+			display: flex;
+			justify-content: center;
+			gap: 2rem;
+			margin-bottom: 2rem;
+			flex-wrap: wrap;
+		}
+
+		.footer-link {
+			color: var(--text-light);
+			text-decoration: none;
+			transition: all 0.2s ease;
+		}
+
+		.footer-link:hover {
+			color: var(--primary);
+		}
+
+		.footer-social {
+			display: flex;
+			justify-content: center;
+			gap: 1.5rem;
+			margin-bottom: 2rem;
+		}
+
+		.social-icon {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 40px;
+			height: 40px;
+			border-radius: 50%;
+			background-color: rgba(0, 240, 255, 0.1);
+			color: var(--primary);
+			transition: all 0.3s ease;
+		}
+
+		.social-icon:hover {
+			background-color: var(--primary);
+			color: #0a0a1a;
+			transform: translateY(-3px);
+		}
+
+		.copyright {
+			opacity: 0.7;
+			font-size: 0.9rem;
+		}
+		
+		/* 导航和页脚高亮样式 */
+		.nav-link.active,
+		.footer-link.active {
+			color: var(--primary) !important;
+			font-weight: 600;
+		}
+		
+		.nav-link.active::after {
+			width: 100% !important;
+		}
+		
+		.dropdown-link.active {
+			color: var(--primary) !important;
+			background: rgba(58, 134, 255, 0.15) !important;
+			padding-left: 1.5rem !important;
+			font-weight: 500;
+		}
+		
+		.footer-link.active::after {
+			content: '';
+			position: absolute;
+			width: 100%;
+			height: 2px;
+			bottom: -3px;
+			left: 0;
+			background: var(--primary);
+		}
+		
+		.footer-link.active {
+			position: relative;
+		}
+		
+		.footer-logo.active {
+			text-shadow: 0 0 15px rgba(58, 134, 255, 0.6);
+			transform: scale(1.05);
+		}
+		
+		/* 核心动画 */
+		@keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+		
+		/* 时间线样式 */
+		.timeline-line { 
+			background: linear-gradient(to bottom, #bf00ff 0%, #00f7ff 100%); 
+		}
+		
+		.timeline-dot::before { 
+			content: ''; 
+			position: absolute; 
+			width: 16px; 
+			height: 16px; 
+			border-radius: 50%; 
+			background: #bf00ff; 
+			left: -8px; 
+			top: 5px; 
+			z-index: 10;
+			box-shadow: 0 0 5px #bf00ff, 0 0 10px rgba(191,0,255,0.5);
+		}
+		
+		/* 交互效果 */
+		.activity-tag { 
+			transition: all 0.3s ease; 
+		}
+		.activity-tag:hover { 
+			transform: translateY(-3px); 
+		}
+		
+		/* 文章列表样式 */
+		.blog-section {
+			padding: 80px 0;
+			background: linear-gradient(135deg, rgba(10, 10, 26, 0.95) 0%, rgba(26, 26, 58, 0.95) 100%);
+		}
+		
+		.blog-container {
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 0 20px;
+		}
+		
+		.blog-main {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 40px;
+		}
+		
+		/* 文章卡片样式 */
+		.article-card {
+			background: rgba(26, 26, 46, 0.8);
+			border-radius: 16px;
+			overflow: hidden;
+			margin-bottom: 30px;
+			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+			transition: all 0.4s ease;
+			border: 1px solid rgba(58, 134, 255, 0.15);
+			backdrop-filter: blur(10px);
+		}
+		
+		.article-card:hover {
+			transform: translateY(-8px);
+			box-shadow: 0 20px 40px rgba(58, 134, 255, 0.25);
+			border-color: rgba(58, 134, 255, 0.4);
+		}
+		
+		.article-image {
+			height: 220px;
+			background: linear-gradient(45deg, #1a1a2e, #2a2a3a);
+			position: relative;
+			overflow: hidden;
+		}
+		
+		.article-content {
+			padding: 30px;
+		}
+		
+		.article-meta {
+			display: flex;
+			align-items: center;
+			margin-bottom: 18px;
+			color: rgba(224, 224, 255, 0.7);
+			font-size: 14px;
+			gap: 15px;
+		}
+		
+		.article-meta span {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+		
+		.article-meta i {
+			color: var(--primary);
+			font-style: normal;
+		}
+		
+		.article-title {
+			font-size: 24px;
+			margin-bottom: 16px;
+			color: var(--text-light);
+			font-weight: 600;
+			line-height: 1.3;
+		}
+		
+		.article-title a {
+			color: inherit;
+			text-decoration: none;
+			transition: color 0.3s ease;
+		}
+		
+		.article-title a:hover {
+			color: var(--primary);
+		}
+		
+		.article-excerpt {
+			color: rgba(224, 224, 255, 0.8);
+			margin-bottom: 24px;
+			line-height: 1.7;
+			font-size: 16px;
+		}
+		
+		.blog-read-more {
+			display: inline-block;
+			padding: 12px 24px;
+			background: linear-gradient(90deg, var(--primary), var(--secondary));
+			color: white;
+			text-decoration: none;
+			border-radius: 30px;
+			font-weight: 500;
+			transition: all 0.3s ease;
+			font-size: 14px;
+			box-shadow: 0 4px 15px rgba(58, 134, 255, 0.3);
+		}
+		
+		.blog-read-more:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 8px 25px rgba(58, 134, 255, 0.5);
+		}
+		
+		/* 博客标题区域 */
+		.blog-header {
+			text-align: center;
+			margin-bottom: 60px;
+		}
+		
+		.blog-header h2 {
+			font-size: clamp(2rem, 4vw, 3rem);
+			font-weight: 700;
+			background: linear-gradient(90deg, var(--primary), var(--secondary));
+			-webkit-background-clip: text;
+			background-clip: text;
+			color: transparent;
+			margin-bottom: 16px;
+		}
+		
+		.blog-header .subtitle {
+			color: rgba(224, 224, 255, 0.7);
+			font-size: 18px;
+			max-width: 600px;
+			margin: 0 auto;
+		}
+		
+			/* 分页样式 */
+	.pagination-container {
+		margin-top: 40px;
+		padding: 20px 0;
+		border-top: 1px solid rgba(58, 134, 255, 0.2);
+	}
+	
+	.pagination-info {
+		text-align: center;
+		margin-bottom: 20px;
+		color: rgba(224, 224, 255, 0.7);
+		font-size: 14px;
+	}
+	
+	.pagination-controls {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 15px;
+		flex-wrap: wrap;
+	}
+	
+	.pagination-btn {
+		padding: 10px 20px;
+		background: rgba(58, 134, 255, 0.1);
+		border: 1px solid rgba(58, 134, 255, 0.3);
+		color: var(--text-light);
+		border-radius: 8px;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		font-size: 14px;
+		font-weight: 500;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+	
+	.pagination-btn:hover:not(:disabled) {
+		background: rgba(58, 134, 255, 0.2);
+		border-color: rgba(58, 134, 255, 0.5);
+		transform: translateY(-2px);
+		box-shadow: 0 4px 15px rgba(58, 134, 255, 0.3);
+	}
+	
+	.pagination-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+		color: rgba(224, 224, 255, 0.4);
+	}
+	
+	.page-numbers {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+	}
+	
+	.page-number {
+		width: 40px;
+		height: 40px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(58, 134, 255, 0.1);
+		border: 1px solid rgba(58, 134, 255, 0.3);
+		color: var(--text-light);
+		border-radius: 8px;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		font-size: 14px;
+		font-weight: 500;
+	}
+	
+	.page-number:hover {
+		background: rgba(58, 134, 255, 0.2);
+		border-color: rgba(58, 134, 255, 0.5);
+		transform: translateY(-2px);
+		box-shadow: 0 4px 15px rgba(58, 134, 255, 0.3);
+	}
+	
+	.page-number.active {
+		background: linear-gradient(135deg, var(--primary), var(--secondary));
+		border-color: var(--primary);
+		color: white;
+		box-shadow: 0 4px 15px rgba(58, 134, 255, 0.4);
+	}
+	
+	.page-number.ellipsis {
+		cursor: default;
+		background: transparent;
+		border: none;
+		color: rgba(224, 224, 255, 0.5);
+	}
+	
+	.page-number.ellipsis:hover {
+		background: transparent;
+		border: none;
+		transform: none;
+		box-shadow: none;
+	}
+	
+	/* 响应式设计 */
+	@media (max-width: 768px) {
+		.blog-main {
+			grid-template-columns: 1fr;
+		}
+		
+		.article-content {
+			padding: 20px;
+		}
+		
+		.article-meta {
+			flex-wrap: wrap;
+			gap: 10px;
+		}
+		
+		.pagination-controls {
+			gap: 10px;
+		}
+		
+		.pagination-btn {
+			padding: 8px 16px;
+			font-size: 13px;
+		}
+		
+		.page-number {
+			width: 35px;
+			height: 35px;
+			font-size: 13px;
+		}
+	}
+
+	/* ========================= 统一滚动条美化样式 ========================= */
+	/* 全局滚动条 - 竖直方向 */
+	::-webkit-scrollbar {
+		width: 12px;
+		height: 12px;
+	}
+	
+	/* 滚动条轨道 */
+	::-webkit-scrollbar-track {
+		background: rgba(255, 255, 255, 0.08);
+		border-radius: 6px;
+		border: 1px solid rgba(58, 134, 255, 0.1);
+	}
+	
+	/* 滚动条滑块 */
+	::-webkit-scrollbar-thumb {
+		background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent2) 100%);
+		border-radius: 6px;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		transition: all 0.3s ease;
+		box-shadow: 0 2px 8px rgba(58, 134, 255, 0.2);
+	}
+	
+	::-webkit-scrollbar-thumb:hover {
+		background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 50%, var(--primary) 100%);
+		box-shadow: 0 4px 15px rgba(58, 134, 255, 0.4);
+		transform: scale(1.05);
+	}
+	
+	/* 滚动条箭头按钮 */
+	::-webkit-scrollbar-button {
+		width: 12px;
+		height: 12px;
+		background: linear-gradient(45deg, var(--primary), var(--secondary));
+		border-radius: 50%;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		transition: all 0.3s ease;
+	}
+	
+	/* 竖直滚动条上箭头 */
+	::-webkit-scrollbar-button:vertical:start:decrement {
+		background: linear-gradient(45deg, var(--primary), var(--secondary)),
+					url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 14l5-5 5 5z"/></svg>') center/60% no-repeat;
+	}
+	
+	/* 竖直滚动条下箭头 */
+	::-webkit-scrollbar-button:vertical:end:increment {
+		background: linear-gradient(45deg, var(--primary), var(--secondary)),
+					url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>') center/60% no-repeat;
+	}
+	
+	/* 水平滚动条左箭头 */
+	::-webkit-scrollbar-button:horizontal:start:decrement {
+		background: linear-gradient(45deg, var(--primary), var(--secondary)),
+					url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M14 7l-5 5 5 5z"/></svg>') center/60% no-repeat;
+	}
+	
+	/* 水平滚动条右箭头 */
+	::-webkit-scrollbar-button:horizontal:end:increment {
+		background: linear-gradient(45deg, var(--primary), var(--secondary)),
+					url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M10 7l5 5-5 5z"/></svg>') center/60% no-repeat;
+	}
+	
+	/* 箭头按钮悬停效果 */
+	::-webkit-scrollbar-button:hover {
+		background: linear-gradient(45deg, var(--accent), var(--accent2)) !important;
+		box-shadow: 0 0 10px rgba(58, 134, 255, 0.6);
+		transform: scale(1.1);
+	}
+	
+	/* 箭头按钮点击效果 */
+	::-webkit-scrollbar-button:active {
+		background: linear-gradient(45deg, var(--secondary), var(--primary)) !important;
+		transform: scale(0.95);
+	}
+	
+	/* 滚动条角落 */
+	::-webkit-scrollbar-corner {
+		background: rgba(255, 255, 255, 0.05);
+		border-radius: 6px;
+		border: 1px solid rgba(58, 134, 255, 0.1);
+	}
+	
+	/* 代码块滚动条样式 */
+	.code-block::-webkit-scrollbar,
+	.highlight::-webkit-scrollbar,
+	pre::-webkit-scrollbar {
+		width: 8px;
+		height: 8px;
+	}
+	
+	.code-block::-webkit-scrollbar-track,
+	.highlight::-webkit-scrollbar-track,
+	pre::-webkit-scrollbar-track {
+		background: rgba(0, 0, 0, 0.3);
+		border-radius: 4px;
+		border: 1px solid rgba(58, 134, 255, 0.2);
+	}
+	
+	.code-block::-webkit-scrollbar-thumb,
+	.highlight::-webkit-scrollbar-thumb,
+	pre::-webkit-scrollbar-thumb {
+		background: linear-gradient(45deg, var(--primary), var(--secondary));
+		border-radius: 4px;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		transition: all 0.3s ease;
+	}
+	
+	.code-block::-webkit-scrollbar-thumb:hover,
+	.highlight::-webkit-scrollbar-thumb:hover,
+	pre::-webkit-scrollbar-thumb:hover {
+		background: linear-gradient(45deg, var(--accent), var(--accent2));
+		box-shadow: 0 0 8px rgba(185, 103, 255, 0.5);
+		transform: scale(1.05);
+	}
+	
+	/* 代码块滚动条箭头 */
+	.code-block::-webkit-scrollbar-button,
+	.highlight::-webkit-scrollbar-button,
+	pre::-webkit-scrollbar-button {
+		width: 8px;
+		height: 8px;
+		background: linear-gradient(45deg, var(--primary), var(--secondary));
+		border-radius: 4px;
+	}
+	
+	/* 表格滚动条样式 */
+	table::-webkit-scrollbar,
+	.table-wrapper::-webkit-scrollbar {
+		width: 6px;
+		height: 6px;
+	}
+	
+	table::-webkit-scrollbar-track,
+	.table-wrapper::-webkit-scrollbar-track {
+		background: rgba(58, 134, 255, 0.1);
+		border-radius: 3px;
+		border: 1px solid rgba(58, 134, 255, 0.2);
+	}
+	
+	table::-webkit-scrollbar-thumb,
+	.table-wrapper::-webkit-scrollbar-thumb {
+		background: linear-gradient(90deg, var(--primary), var(--secondary));
+		border-radius: 3px;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		transition: all 0.3s ease;
+	}
+	
+	table::-webkit-scrollbar-thumb:hover,
+	.table-wrapper::-webkit-scrollbar-thumb:hover {
+		background: linear-gradient(90deg, var(--secondary), var(--accent));
+		box-shadow: 0 0 6px rgba(0, 255, 204, 0.6);
+		transform: scale(1.1);
+	}
+	
+	/* 特殊容器滚动条 */
+	.content-container::-webkit-scrollbar,
+	.modal-content::-webkit-scrollbar,
+	.sidebar::-webkit-scrollbar {
+		width: 8px;
+		height: 8px;
+	}
+	
+	.content-container::-webkit-scrollbar-track,
+	.modal-content::-webkit-scrollbar-track,
+	.sidebar::-webkit-scrollbar-track {
+		background: rgba(255, 255, 255, 0.05);
+		border-radius: 4px;
+	}
+	
+	.content-container::-webkit-scrollbar-thumb,
+	.modal-content::-webkit-scrollbar-thumb,
+	.sidebar::-webkit-scrollbar-thumb {
+		background: linear-gradient(135deg, var(--primary), var(--secondary));
+		border-radius: 4px;
+		transition: all 0.3s ease;
+	}
+	
+	.content-container::-webkit-scrollbar-thumb:hover,
+	.modal-content::-webkit-scrollbar-thumb:hover,
+	.sidebar::-webkit-scrollbar-thumb:hover {
+		background: linear-gradient(135deg, var(--accent), var(--accent2));
+		box-shadow: 0 0 8px rgba(58, 134, 255, 0.4);
+	}
+	
+	/* Firefox滚动条样式 */
+	* {
+		scrollbar-width: thin;
+		scrollbar-color: var(--primary) rgba(255, 255, 255, 0.08);
+	}
+	
+	.code-block,
+	.highlight,
+	pre {
+		scrollbar-width: thin;
+		scrollbar-color: var(--primary) rgba(0, 0, 0, 0.3);
+	}
+	
+	table,
+	.table-wrapper {
+		scrollbar-width: thin;
+		scrollbar-color: var(--primary) rgba(58, 134, 255, 0.1);
+	}
+	
+	/* 移动端滚动条优化 */
+	@media (max-width: 768px) {
+		::-webkit-scrollbar {
+			width: 6px;
+			height: 6px;
+		}
+		
+		.code-block::-webkit-scrollbar,
+		.highlight::-webkit-scrollbar,
+		pre::-webkit-scrollbar {
+			width: 4px;
+			height: 4px;
+		}
+		
+		table::-webkit-scrollbar,
+		.table-wrapper::-webkit-scrollbar {
+			width: 3px;
+			height: 3px;
+		}
+	}
+	/* ========================= 滚动条样式结束 ========================= */
+	</style>
+</head>
+<body>
+	<!-- 粒子背景 -->
+	<div id="particles-js"></div>
+	
+	<!-- 导航栏 -->
+	<nav class="navbar">
+		<a href="/" class="logo">ACM LAB</a>
+		<div class="nav-links">
+			<div class="dropdown">
+				<a href="/introduction" class="nav-link">概况</a>
+			</div>
+			
+			<a href="/team" class="nav-link">团队</a>
+			
+			<div class="dropdown">
+				<a href="/algorithm" class="nav-link">成果</a>
+				<div class="dropdown-content">
+						<a href="/algorithm" class="dropdown-link">算法</a>
+						<a href="/paper" class="dropdown-link">论文</a>
+						<a href="/innovation" class="dropdown-link">科创</a>
+				</div>
+			</div>
+			
+			<a href="/dynamic" class="nav-link">动态</a>
+			
+			<div class="dropdown">
+				<a href="/algorithm-recruitment" class="nav-link">加入我们</a>
+				<div class="dropdown-content">
+					<a href="/algorithm-recruitment" class="dropdown-link">算法组招生</a>
+						<a href="/project-recruitment" class="dropdown-link">项目组招生</a>
+				</div>
+			</div>
+			
+
+		</div>
+		<div class="menu-toggle">☰</div>
+		</nav>
+	
+	<!-- 主要内容包装器 -->
+	<main style="flex: 1;">
+	
+	<!-- 技术博客文章区 -->
+	<section class="blog-section">
+		<div class="blog-container">
+			<div class="blog-header">
+				<h2>资讯看板</h2>
+				<p class="subtitle">关于实验室的最新消息</p>
+			</div>
+			
+			<main class="blog-main">
+				<div class="content" id="notificationsContainer">
+					<!-- 加载中状态 -->
+					<div class="loading-container" style="text-align:center;padding:3rem;">
+						<div style="font-size:3rem;margin-bottom:1rem;">📡</div>
+						<h3 style="color:var(--primary);margin-bottom:1rem;">加载中...</h3>
+						<p style="color:rgba(255,255,255,0.7);">正在获取最新通知</p>
+					</div>
+				</div>
+				
+				<!-- 分页控件 -->
+				<div id="paginationContainer" class="pagination-container" style="display: none;">
+					<div class="pagination-info">
+						<span id="paginationInfo">显示第 1-6 条，共 0 条</span>
+					</div>
+					<div class="pagination-controls">
+						<button id="prevPage" class="pagination-btn" disabled>
+							<i class="fas fa-chevron-left"></i> 上一页
+						</button>
+						<div id="pageNumbers" class="page-numbers"></div>
+						<button id="nextPage" class="pagination-btn" disabled>
+							下一页 <i class="fas fa-chevron-right"></i>
+						</button>
+					</div>
+				</div>
+			</main>
+		</div>
+	</section>
+	
+	<!-- 活动时间线 -->
+	<section id="timeline" class="py-20 relative bg-slate-800/20">
+		<div class="container mx-auto px-4">
+			<div class="mb-16 text-center">
+				<h2 class="text-[clamp(1.5rem,4vw,2.5rem)] font-bold mb-4">
+					<span class="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-cyan-400 animate-glow">活动时间线</span>
+				</h2>
+				<div class="w-32 h-1 bg-gradient-to-r from-purple-500 to-cyan-400 mx-auto"></div>
+				<p class="mt-6 text-gray-400 max-w-2xl mx-auto">记录我们共同成长的每一个精彩瞬间</p>
+			</div>
+			
+			<div class="max-w-3xl mx-auto relative">
+				<!-- 时间线中轴线 -->
+				<div class="absolute left-0 md:left-1/2 top-0 bottom-0 w-0.5 timeline-line transform md:-translate-x-0.5"></div>
+				
+				<!-- 时间线项目1 -->
+				<div class="relative pl-8 md:pl-0 md:flex mb-16 opacity-0 animate-fade-up" style="animation-delay: 0.1s;">
+					<div class="md:w-1/2 md:pr-12 md:text-right order-2 md:order-1 mt-6 md:mt-0">
+						<span class="inline-block px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 text-xs mb-3">2024.10</span>
+						<h3 class="text-xl font-bold mb-2 text-white">秋季算法黑客马拉松</h3>
+						<p class="text-gray-400 text-sm mb-4">24小时极限编程挑战，团队合作解决8道高难度算法题，最终诞生3个创新算法方案</p>
+						<div class="flex flex-wrap gap-2 justify-end">
+							<span class="activity-tag px-3 py-1 bg-slate-700/50 text-xs rounded-full text-gray-300">编程</span>
+							<span class="activity-tag px-3 py-1 bg-slate-700/50 text-xs rounded-full text-gray-300">竞赛</span>
+							<span class="activity-tag px-3 py-1 bg-slate-700/50 text-xs rounded-full text-gray-300">协作</span>
+						</div>
+					</div>
+					<div class="md:w-1/2 md:pl-12 order-1 md:order-2 timeline-dot">
+						<div class="rounded-lg overflow-hidden h-48 md:h-56">
+							<img src="https://picsum.photos/id/180/600/400" alt="黑客马拉松" class="w-full h-full object-cover">
+						</div>
+					</div>
+				</div>
+				
+				<!-- 时间线项目2 -->
+				<div class="relative pl-8 md:pl-0 md:flex mb-16 opacity-0 animate-fade-up" style="animation-delay: 0.2s;">
+					<div class="md:w-1/2 md:pr-12 order-2 timeline-dot">
+						<div class="rounded-lg overflow-hidden h-48 md:h-56">
+							<img src="https://picsum.photos/id/1058/600/400" alt="户外拓展" class="w-full h-full object-cover">
+						</div>
+					</div>
+					<div class="md:w-1/2 md:pl-12 order-1 mt-6 md:mt-0">
+						<span class="inline-block px-3 py-1 rounded-full bg-cyan-400/10 text-cyan-400 text-xs mb-3">2024.07</span>
+						<h3 class="text-xl font-bold mb-2 text-white">夏日户外拓展</h3>
+						<p class="text-gray-400 text-sm mb-4">结合定向越野与算法谜题的户外挑战，在自然中放松身心，通过团队协作破解关卡</p>
+						<div class="flex flex-wrap gap-2">
+							<span class="activity-tag px-3 py-1 bg-slate-700/50 text-xs rounded-full text-gray-300">户外</span>
+							<span class="activity-tag px-3 py-1 bg-slate-700/50 text-xs rounded-full text-gray-300">解谜</span>
+							<span class="activity-tag px-3 py-1 bg-slate-700/50 text-xs rounded-full text-gray-300">运动</span>
+						</div>
+					</div>
+				</div>
+				
+				<!-- 时间线项目3 -->
+				<div class="relative pl-8 md:pl-0 md:flex mb-16 opacity-0 animate-fade-up" style="animation-delay: 0.3s;">
+					<div class="md:w-1/2 md:pr-12 md:text-right order-2 md:order-1 mt-6 md:mt-0">
+						<span class="inline-block px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs mb-3">2024.04</span>
+						<h3 class="text-xl font-bold mb-2 text-white">学术分享沙龙</h3>
+						<p class="text-gray-400 text-sm mb-4">邀请3位行业专家分享前沿算法研究，团队成员分组讨论并进行成果汇报，碰撞思想火花</p>
+						<div class="flex flex-wrap gap-2 justify-end">
+							<span class="activity-tag px-3 py-1 bg-slate-700/50 text-xs rounded-full text-gray-300">学术</span>
+							<span class="activity-tag px-3 py-1 bg-slate-700/50 text-xs rounded-full text-gray-300">分享</span>
+							<span class="activity-tag px-3 py-1 bg-slate-700/50 text-xs rounded-full text-gray-300">交流</span>
+						</div>
+					</div>
+					<div class="md:w-1/2 md:pl-12 order-1 md:order-2 timeline-dot">
+						<div class="rounded-lg overflow-hidden h-48 md:h-56">
+							<img src="https://picsum.photos/id/366/600/400" alt="学术沙龙" class="w-full h-full object-cover">
+						</div>
+					</div>
+				</div>
+				
+				<!-- 时间线项目4 -->
+				<div class="relative pl-8 md:pl-0 md:flex opacity-0 animate-fade-up" style="animation-delay: 0.4s;">
+					<div class="md:w-1/2 md:pr-12 order-2 timeline-dot">
+						<div class="rounded-lg overflow-hidden h-48 md:h-56">
+							<img src="https://picsum.photos/id/1067/600/400" alt="年度庆典" class="w-full h-full object-cover">
+						</div>
+					</div>
+					<div class="md:w-1/2 md:pl-12 order-1 mt-6 md:mt-0">
+						<span class="inline-block px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 text-xs mb-3">2024.01</span>
+						<h3 class="text-xl font-bold mb-2 text-white">年度成果庆典</h3>
+						<p class="text-gray-400 text-sm mb-4">总结年度成果，颁发"最佳算法创新"、"最佳团队贡献"等奖项，团队共同规划新一年目标</p>
+						<div class="flex flex-wrap gap-2">
+							<span class="activity-tag px-3 py-1 bg-slate-700/50 text-xs rounded-full text-gray-300">庆典</span>
+							<span class="activity-tag px-3 py-1 bg-slate-700/50 text-xs rounded-full text-gray-300">总结</span>
+							<span class="activity-tag px-3 py-1 bg-slate-700/50 text-xs rounded-full text-gray-300">规划</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+	</main>
+	<!-- 页脚 -->
+	<footer id="footer" class="footer">
+		<a href="/" class="footer-logo">ACM实验室</a>
+		
+		<div class="footer-links">
+			<a href="/introduction" class="footer-link">概况</a>
+			<a href="/team" class="footer-link">团队</a>
+			<a href="/algorithm" class="footer-link">算法</a>
+			<a href="/paper" class="footer-link">论文</a>
+			<a href="/innovation" class="footer-link">科创</a>
+			<a href="/dynamic" class="footer-link">动态</a>
+			<a href="/algorithm-recruitment" class="footer-link">算法组招生</a>
+			<a href="/project-recruitment" class="footer-link">项目组招生</a>
+		</div>
+		
+		<div class="footer-social">
+			<a href="#" class="social-icon" title="微信"><i class="fab fa-weixin"></i></a>
+			            <a href="https://s1.imagehub.cc/images/2025/08/28/d80fe4abf0cd9a20fde76c7a3d5849a8.png" class="social-icon" title="微博"><i class="fab fa-weibo"></i></a>
+            <a href="https://s1.imagehub.cc/images/2025/08/28/4859e46f5945f5d8210456ecc89f7494.jpeg" class="social-icon" title="小红书"><i class="fas fa-book-open"></i></a>
+			<a href="#" class="social-icon" title="GitHub"><i class="fab fa-github"></i></a>
+			<a href="https://mp.weixin.qq.com/s/your-wechat-official-account" class="social-icon" title="微信公众号"><i class="fas fa-newspaper"></i></a>
+			        <a href="https://space.bilibili.com/1599858052?spm_id_from=333.788.upinfo.head.click" class="social-icon" title="哔哩哔哩"><i class="fab fa-bilibili"></i></a>
+			<a href="#" class="social-icon" title="邮箱"><i class="fas fa-envelope"></i></a>
+		</div>
+		
+		<p class="copyright">© 2023 ACM算法与科研创新实验室. 保留所有权利.</p>
+	</footer>
+	
+	<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+	<script>
+		// 粒子背景初始化
+		particlesJS('particles-js', {
+			particles: {
+				number: { value: 80, density: { enable: true, value_area: 800 } },
+				color: { value: '#3a86ff' },
+				shape: { type: 'circle' },
+				opacity: { value: 0.5 },
+				size: { value: 3, random: true },
+				line_linked: { enable: true, distance: 150, color: '#3a86ff', opacity: 0.4, width: 1 },
+				move: { enable: true, speed: 2, direction: 'none', random: false, straight: false, out_mode: 'out', bounce: false }
+			},
+			interactivity: {
+				detect_on: 'canvas',
+				events: { onhover: { enable: true, mode: 'grab' }, onclick: { enable: true, mode: 'push' }, resize: true },
+				modes: {
+					grab: { distance: 140, line_linked: { opacity: 1 } },
+					push: { particles_nb: 4 },
+					remove: { particles_nb: 2 }
+				}
+			},
+			retina_detect: true
+		});
+		
+		// 页面加载动画
+		document.addEventListener('DOMContentLoaded', () => {
+			// 设置当前页面
+			if (typeof setCurrentPage === 'function') {
+				setCurrentPage('dynamic');
+			}
+			
+			// 触发时间线动画
+			const animateElements = document.querySelectorAll('.animate-fade-up');
+			animateElements.forEach(el => {
+				el.style.opacity = '1';
+			});
+		});
+	</script>
+	
+	<!-- 动态加载通知内容 -->
+	<script>
+		// 分页相关变量
+		let allNotifications = [];
+		let currentPage = 1;
+		const itemsPerPage = 6;
+		
+		// 加载通知数据
+		async function loadNotifications() {
+			console.log('🔄 开始重新加载通知数据...');
+			try {
+				const response = await fetch('/api/notifications');
+				if (response.ok) {
+					const notifications = await response.json();
+					console.log('✅ 获取到通知数据:', notifications.length, '条');
+					
+					// 只显示已发布的通知
+					allNotifications = notifications.filter(n => n.status === 'published');
+					
+					// 重置到第一页
+					currentPage = 1;
+					
+					// 渲染分页内容
+					renderPagedNotifications();
+					console.log('✅ 通知数据渲染完成');
+				} else {
+					console.error('❌ 加载通知失败，状态码:', response.status);
+					showError('加载通知失败');
+				}
+			} catch (error) {
+				console.error('❌ 加载通知时出错:', error);
+				showError('网络错误，无法加载通知');
+			}
+		}
+
+		// 渲染分页通知列表
+		function renderPagedNotifications() {
+			const container = document.getElementById('notificationsContainer');
+			const paginationContainer = document.getElementById('paginationContainer');
+			
+			if (allNotifications.length === 0) {
+				container.innerHTML = `
+					<div style="text-align:center;padding:3rem;">
+						<div style="font-size:3rem;margin-bottom:1rem;">📭</div>
+						<h3 style="color:var(--primary);margin-bottom:1rem;">暂无通知</h3>
+						<p style="color:rgba(255,255,255,0.7);">当前没有发布任何通知</p>
+					</div>
+				`;
+				paginationContainer.style.display = 'none';
+				return;
+			}
+
+			// 计算分页
+			const totalPages = Math.ceil(allNotifications.length / itemsPerPage);
+			const startIndex = (currentPage - 1) * itemsPerPage;
+			const endIndex = Math.min(startIndex + itemsPerPage, allNotifications.length);
+			const currentPageNotifications = allNotifications.slice(startIndex, endIndex);
+			
+			// 渲染当前页的通知
+			const notificationsHtml = currentPageNotifications.map(notification => {
+				const publishDate = notification.publish_date ? new Date(notification.publish_date) : new Date();
+				const formattedDate = publishDate.toLocaleDateString('zh-CN', {
+					year: 'numeric',
+					month: '2-digit',
+					day: '2-digit'
+				});
+				
+				// 处理标签
+				const tags = notification.tags ? notification.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
+				const primaryTag = tags.length > 0 ? tags[0] : notification.category;
+				
+				// 截取摘要
+				const excerpt = notification.excerpt || (notification.content ? notification.content.substring(0, 150) + '...' : '暂无摘要');
+				
+				// 解析卡片样式配置
+				let cardStyle = null;
+				try {
+					cardStyle = notification.card_style ? JSON.parse(notification.card_style) : null;
+				} catch (e) {
+					console.error('解析卡片样式失败:', e);
+				}
+
+				// 生成卡片样式
+				let cardImageStyle = '';
+				let cardOverlayStyle = '';
+				
+				if (cardStyle) {
+					if (cardStyle.type === 'gradient' && cardStyle.gradient) {
+						cardImageStyle = `background: ${cardStyle.gradient};`;
+						cardOverlayStyle = 'background: rgba(0,0,0,0.3);';
+					} else if (cardStyle.type === 'image' && cardStyle.imageUrl) {
+						cardImageStyle = `background: url('${cardStyle.imageUrl}') center/cover no-repeat;`;
+						cardOverlayStyle = 'background: rgba(0,0,0,0.5);';
+					} else {
+						// 默认样式
+						cardImageStyle = 'background: linear-gradient(45deg, #1a1a2e, #2a2a3a);';
+						cardOverlayStyle = 'background: linear-gradient(45deg, rgba(58, 134, 255, 0.25) 0%, rgba(0, 247, 255, 0.25) 100%); opacity: 0.7;';
+					}
+				} else {
+					// 没有样式配置时使用默认样式
+					cardImageStyle = 'background: linear-gradient(45deg, #1a1a2e, #2a2a3a);';
+					cardOverlayStyle = 'background: linear-gradient(45deg, rgba(58, 134, 255, 0.25) 0%, rgba(0, 247, 255, 0.25) 100%); opacity: 0.7;';
+				}
+				
+				return `
+					<article class="article-card">
+						<div class="article-image" style="${cardImageStyle}">
+							<div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; ${cardOverlayStyle}"></div>
+						</div>
+						<div class="article-content">
+							<div class="article-meta">
+								<span><i>📅</i> ${formattedDate}</span>
+								<span><i>⏱️</i> ${notification.reading_time || 5}分钟阅读</span>
+								<span><i>🏷️</i> ${primaryTag}</span>
+							</div>
+							<h2 class="article-title">
+								<a href="/notification/${notification.id}">${notification.title}</a>
+							</h2>
+							<p class="article-excerpt">${excerpt}</p>
+							<a href="/notification/${notification.id}" class="blog-read-more">查看详情</a>
+						</div>
+					</article>
+				`;
+			}).join('');
+
+			container.innerHTML = notificationsHtml;
+			
+			// 渲染分页控件
+			renderPagination(totalPages, startIndex, endIndex);
+		}
+
+		// 渲染分页控件
+		function renderPagination(totalPages, startIndex, endIndex) {
+			const paginationContainer = document.getElementById('paginationContainer');
+			const paginationInfo = document.getElementById('paginationInfo');
+			const prevBtn = document.getElementById('prevPage');
+			const nextBtn = document.getElementById('nextPage');
+			const pageNumbers = document.getElementById('pageNumbers');
+			
+			// 显示分页信息
+			paginationInfo.textContent = `显示第 ${startIndex + 1}-${endIndex} 条，共 ${allNotifications.length} 条`;
+			
+			// 更新按钮状态
+			prevBtn.disabled = currentPage === 1;
+			nextBtn.disabled = currentPage === totalPages;
+			
+			// 生成页码按钮
+			pageNumbers.innerHTML = '';
+			
+			if (totalPages <= 7) {
+				// 如果总页数少于等于7页，显示所有页码
+				for (let i = 1; i <= totalPages; i++) {
+					pageNumbers.appendChild(createPageNumber(i, i === currentPage));
+				}
+			} else {
+				// 如果总页数大于7页，显示省略号
+				if (currentPage <= 4) {
+					// 当前页在前4页
+					for (let i = 1; i <= 5; i++) {
+						pageNumbers.appendChild(createPageNumber(i, i === currentPage));
+					}
+					pageNumbers.appendChild(createEllipsis());
+					pageNumbers.appendChild(createPageNumber(totalPages, false));
+				} else if (currentPage >= totalPages - 3) {
+					// 当前页在后4页
+					pageNumbers.appendChild(createPageNumber(1, false));
+					pageNumbers.appendChild(createEllipsis());
+					for (let i = totalPages - 4; i <= totalPages; i++) {
+						pageNumbers.appendChild(createPageNumber(i, i === currentPage));
+					}
+				} else {
+					// 当前页在中间
+					pageNumbers.appendChild(createPageNumber(1, false));
+					pageNumbers.appendChild(createEllipsis());
+					for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+						pageNumbers.appendChild(createPageNumber(i, i === currentPage));
+					}
+					pageNumbers.appendChild(createEllipsis());
+					pageNumbers.appendChild(createPageNumber(totalPages, false));
+				}
+			}
+			
+			// 显示分页容器
+			paginationContainer.style.display = 'block';
+		}
+
+		// 创建页码按钮
+		function createPageNumber(pageNum, isActive) {
+			const button = document.createElement('button');
+			button.className = `page-number ${isActive ? 'active' : ''}`;
+			button.textContent = pageNum;
+			button.onclick = () => goToPage(pageNum);
+			return button;
+		}
+
+		// 创建省略号
+		function createEllipsis() {
+			const span = document.createElement('span');
+			span.className = 'page-number ellipsis';
+			span.textContent = '...';
+			return span;
+		}
+
+		// 跳转到指定页
+		function goToPage(pageNum) {
+			if (pageNum === currentPage) return;
+			currentPage = pageNum;
+			renderPagedNotifications();
+			
+			// 滚动到页面顶部
+			document.querySelector('.blog-section').scrollIntoView({ 
+				behavior: 'smooth',
+				block: 'start'
+			});
+		}
+
+		// 上一页
+		function prevPage() {
+			if (currentPage > 1) {
+				goToPage(currentPage - 1);
+			}
+		}
+
+		// 下一页
+		function nextPage() {
+			const totalPages = Math.ceil(allNotifications.length / itemsPerPage);
+			if (currentPage < totalPages) {
+				goToPage(currentPage + 1);
+			}
+		}
+
+		// 显示错误信息
+		function showError(message) {
+			const container = document.getElementById('notificationsContainer');
+			const paginationContainer = document.getElementById('paginationContainer');
+			
+			container.innerHTML = `
+				<div style="text-align:center;padding:3rem;">
+					<div style="font-size:3rem;margin-bottom:1rem;">⚠️</div>
+					<h3 style="color:var(--accent);margin-bottom:1rem;">加载失败</h3>
+					<p style="color:rgba(255,255,255,0.7);margin-bottom:2rem;">${message}</p>
+					<button onclick="loadNotifications()" style="
+						padding:0.8rem 2rem;
+						background:linear-gradient(135deg, var(--primary), var(--secondary));
+						color:white;
+						border:none;
+						border-radius:8px;
+						cursor:pointer;
+						font-weight:600;
+						transition:all 0.3s ease;
+					" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+						重新加载
+					</button>
+				</div>
+			`;
+			
+			paginationContainer.style.display = 'none';
+		}
+
+		// 页面加载完成后加载通知
+		document.addEventListener('DOMContentLoaded', function() {
+			// 延迟一点时间以确保页面完全加载
+			setTimeout(loadNotifications, 500);
+			
+			// 绑定分页按钮事件
+			document.getElementById('prevPage').addEventListener('click', prevPage);
+			document.getElementById('nextPage').addEventListener('click', nextPage);
+		});
+	</script>
+	
+	<!-- 导航栏和页脚高亮显示当前页面 -->
+	<script>
+		(function() {
+			// 定义setCurrentPage函数（如果不存在）
+			if (typeof window.setCurrentPage === 'undefined') {
+				window.setCurrentPage = function(pageName) {
+					console.log('设置当前页面:', pageName);
+					// 可以在这里添加页面特定的逻辑
+				};
+			}
+			
+			document.addEventListener('DOMContentLoaded', function() {
+				const currentPage = window.location.pathname || '/';
+				
+				const pageMapping = {
+					'/': { navSelector: '.logo', footerText: 'ACM实验室' },
+					'/introduction': { navText: '实验室概况', dropdownText: '实验室简介', footerText: '实验室简介' },
+					'/charter': { navText: '实验室概况', dropdownText: '实验室章程', footerText: '实验室章程' },
+					'/team': { navText: '团队', footerText: '团队' },
+					'/paper': { navText: '成果性展示', dropdownText: '论文', footerText: '论文' },
+					'/algorithm': { navText: '成果性展示', dropdownText: '算法', footerText: '算法' },
+					'/innovation': { navText: '成果性展示', dropdownText: '科创', footerText: '科创' },
+					'/dynamic': { navText: '动态', footerText: '动态' },
+					'/algorithm-recruitment': { navText: '加入我们', dropdownText: '算法组招生', footerText: '算法组招生' },
+					'/project-recruitment': { navText: '加入我们', dropdownText: '项目组招生', footerText: '项目组招生' }
+				};
+				
+				const currentPageInfo = pageMapping[currentPage];
+				if (!currentPageInfo) return;
+				
+				// 处理导航栏高亮
+				if (currentPageInfo.navSelector) {
+					const element = document.querySelector(currentPageInfo.navSelector);
+					if (element) element.classList.add('active');
+				} else if (currentPageInfo.navText) {
+					const navLinks = document.querySelectorAll('.nav-link');
+					navLinks.forEach(link => {
+						if (link.textContent.trim() === currentPageInfo.navText) {
+							link.classList.add('active');
+						}
+					});
+					
+					if (currentPageInfo.dropdownText) {
+						const dropdownLinks = document.querySelectorAll('.dropdown-link');
+						dropdownLinks.forEach(link => {
+							if (link.textContent.trim() === currentPageInfo.dropdownText) {
+								link.classList.add('active');
+							}
+						});
+					}
+				}
+				
+				// 处理页脚高亮
+				if (currentPageInfo.footerText) {
+					const footerLinks = document.querySelectorAll('.footer-link');
+					footerLinks.forEach(link => {
+						if (link.textContent.trim() === currentPageInfo.footerText) {
+							link.classList.add('active');
+						}
+					});
+				}
+				
+				// 首页特殊处理
+				if (currentPage === '/') {
+					const footerLogo = document.querySelector('.footer-logo');
+					if (footerLogo) footerLogo.classList.add('active');
+				}
+			});
+		})();
+	</script>
+	
+	<!-- 访客统计追踪系统 -->
+	<!-- 访问统计系统已移除 -->
+</body>
+</html>

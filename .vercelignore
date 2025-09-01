@@ -1,0 +1,87 @@
+# Python相关
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# 虚拟环境
+.venv/
+venv/
+ENV/
+env/
+
+# 开发工具
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 日志文件
+logs/
+*.log
+
+# 数据库文件（如果使用SQLite，考虑是否需要排除）
+# acm_lab.db
+
+# 备份文件
+backups/
+*.backup
+*.bak
+
+# 临时文件
+tmp/
+temp/
+.tmp/
+
+# 缓存文件
+.cache/
+*.cache
+
+# OS相关
+.DS_Store
+Thumbs.db
+
+# Git相关
+.git/
+.gitignore
+
+# 测试相关
+test/
+tests/
+pytest_cache/
+.coverage
+htmlcov/
+
+# 文档
+README.md
+INSTALL.md
+docs/
+
+# 配置文件
+.env
+.env.local
+.env.production
+
+# 其他不需要部署的文件
+auto_backup.py
+debug_*.html
+test_*.html
+simple_test.html

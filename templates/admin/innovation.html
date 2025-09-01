@@ -1,0 +1,3772 @@
+{% extends 'admin/base.html' %}
+{% block title %}ACM实验室 - 科创管理{% endblock %}
+{% block page_title %}科创管理{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<style>
+/* 整体页面美化 */
+body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.main-content {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* 消息提示系统 */
+.message-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    max-width: 400px;
+}
+
+.message {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translateX(450px);
+    transition: transform 0.3s ease;
+}
+
+.message.show {
+    transform: translateX(0);
+}
+
+.message.success { border-left-color: #22c55e; color: #166534; }
+.message.error { border-left-color: #ef4444; color: #dc2626; }
+.message.info { border-left-color: #3b82f6; color: #1d4ed8; }
+
+.message-icon {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* 卡片美化 */
+.card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* 表格美化 */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.data-table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 16px;
+    font-weight: 600;
+    text-align: left;
+    border: none;
+}
+
+.data-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background-color 0.3s ease;
+}
+
+.sortable-item {
+    transition: all 0.3s ease;
+    cursor: move;
+}
+
+.sortable-item:hover {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+    transform: scale(1.01);
+}
+
+.sortable-chosen {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3)) !important;
+    transform: rotate(2deg) scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.sortable-ghost {
+    opacity: 0.4;
+    transform: scale(0.95);
+}
+
+/* 拖拽手柄美化 */
+.sort-handle {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 6px;
+    cursor: grab;
+    position: relative;
+    transition: all 0.3s ease;
+    margin-right: 8px;
+}
+
+.sort-handle:before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>') no-repeat center;
+    background-size: contain;
+}
+
+.sort-handle:hover {
+    transform: scale(1.1) rotate(15deg);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.sort-handle:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+}
+
+/* 按钮美化 */
+.btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+    color: #1f2937;
+}
+
+.btn-success:hover {
+    color: #1f2937;
+    box-shadow: 0 8px 25px rgba(132, 250, 176, 0.4);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+}
+
+.btn-danger:hover {
+    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 8px;
+}
+
+/* 表单控件美化 */
+input, select, textarea {
+    background: rgba(26, 26, 46, 0.85);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #ffffff;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+    background: rgba(102, 126, 234, 0.2);
+}
+
+input::placeholder, textarea::placeholder {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* 美化下拉选项 */
+select option {
+    background: #1a1a2e;
+    color: #ffffff;
+    padding: 8px;
+}
+
+/* 特别优化状态选择框 */
+#statsStatusInput, #fieldsStatusInput, #achievementsStatusInput, #carouselStatusInput {
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+#statsStatusInput:hover, #fieldsStatusInput:hover, #achievementsStatusInput:hover, #carouselStatusInput:hover {
+    border-color: #667eea;
+    background-color: rgba(102, 126, 234, 0.1);
+}
+
+/* 确保选择框在模态框中的层级 */
+.modal select {
+    position: relative;
+    z-index: 10001;
+}
+
+/* 模态框样式已统一到base.html中 */
+
+/* 状态徽章美化 */
+.status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-active {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+}
+
+.status-inactive {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    color: white;
+}
+
+/* 搜索和筛选区域美化 */
+.table-actions {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* 表格响应式 */
+.table-responsive {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+/* 颜色选择器 */
+.color-picker {
+    width: 60px;
+    height: 40px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* 动画增强 */
+.card, .btn, .sortable-item {
+    will-change: transform;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2, #667eea);
+}
+
+/* 轮播图特殊样式 */
+.carousel-preview-container {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.carousel-preview-container:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.image-upload-area {
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.image-upload-area:hover {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.image-upload-area.dragover {
+    border-color: #764ba2;
+    background: rgba(118, 75, 162, 0.2);
+    transform: scale(1.02);
+}
+
+.range-slider {
+    appearance: none;
+    height: 6px;
+    border-radius: 5px;
+    background: linear-gradient(90deg, #1a1a2e 0%, #667eea 100%);
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.range-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+}
+
+.range-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.6);
+}
+
+.preview-overlay-text {
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+</style>
+{% endblock %}
+{% block content %}
+<!-- 消息提示容器 -->
+<div class="message-container" id="messageContainer"></div>
+
+<!-- 项目统计管理 -->
+<div class="card">
+    <h2 style="color: #ffffff; margin-bottom: 24px; font-size: 24px; font-weight: 600; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">📊 项目统计管理</h2>
+    <div class="table-actions" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input id="statsSearchInput" type="text" placeholder="搜索统计项名称..." style="padding:10px 14px;min-width:220px;">
+        </div>
+        <div class="btn-group">
+            <button id="addStatsBtn" class="btn btn-primary">➕ 新增统计</button>
+            <button id="saveStatsOrderBtn" class="btn btn-success" style="display:none;">💾 保存排序</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table" id="statsTable">
+            <thead>
+                <tr>
+                    <th style="width:40px;">排序</th>
+                    <th>名称</th>
+                    <th>数值</th>
+                    <th>图标</th>
+                    <th>描述</th>
+                    <th>状态</th>
+                    <th style="width:160px;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="statsTbody">
+                <!-- 动态渲染 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+<!-- 轮播图管理 -->
+<div class="card">
+    <h2 style="color: #ffffff; margin-bottom: 24px; font-size: 24px; font-weight: 600; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🖼️ 轮播图管理</h2>
+    <div class="table-actions" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input id="carouselSearchInput" type="text" placeholder="搜索轮播图标题..." style="padding:10px 14px;min-width:220px;">
+        </div>
+        <div class="btn-group">
+            <button id="addCarouselBtn" class="btn btn-primary">🖼️ 新增轮播图</button>
+            <button id="saveCarouselOrderBtn" class="btn btn-success" style="display:none;">💾 保存排序</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table" id="carouselTable">
+            <thead>
+                <tr>
+                    <th style="width:40px;">排序</th>
+                    <th>预览</th>
+                    <th>标题</th>
+                    <th>描述</th>
+                    <th>位置</th>
+                    <th>状态</th>
+                    <th style="width:160px;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="carouselTbody">
+                <!-- 动态渲染 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 成果与荣誉管理 -->
+<div class="card">
+    <h2 style="color: #ffffff; margin-bottom: 24px; font-size: 24px; font-weight: 600; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🏆 成果与荣誉管理</h2>
+    <div class="table-actions" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input id="achievementsSearchInput" type="text" placeholder="搜索成果标题..." style="padding:10px 14px;min-width:220px;">
+            <select id="typeFilter" style="padding:10px 14px;">
+                <option value="">全部类型</option>
+                <option value="award">项目获奖</option>
+                <option value="patent">知识产权</option>
+            </select>
+        </div>
+        <div class="btn-group">
+            <button id="addAchievementBtn" class="btn btn-primary">🏆 新增成果</button>
+            <button id="saveAchievementsOrderBtn" class="btn btn-success" style="display:none;">💾 保存排序</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table" id="achievementsTable">
+            <thead>
+                <tr>
+                    <th style="width:40px;">排序</th>
+                    <th>标题</th>
+                    <th>类型</th>
+                    <th>描述</th>
+                    <th>日期</th>
+                    <th>状态</th>
+                    <th style="width:160px;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="achievementsTbody">
+                <!-- 动态渲染 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 大学生创新创业训练计划管理 -->
+<div class="card">
+    <h2 style="color: #ffffff; margin-bottom: 24px; font-size: 24px; font-weight: 600; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🎓 大学生创新创业训练计划管理</h2>
+    <div class="table-actions" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input id="trainingProjectsSearchInput" type="text" placeholder="搜索项目标题..." style="padding:10px 14px;min-width:220px;">
+            <select id="categoryFilter" style="padding:10px 14px;">
+                <option value="">全部类别</option>
+                <option value="人工智能">人工智能</option>
+                <option value="大数据">大数据</option>
+                <option value="物联网">物联网</option>
+                <option value="区块链">区块链</option>
+                <option value="云计算">云计算</option>
+            </select>
+        </div>
+        <div class="btn-group">
+            <button id="addTrainingProjectBtn" class="btn btn-primary">🎓 新增项目</button>
+            <button id="saveTrainingProjectsOrderBtn" class="btn btn-success" style="display:none;">💾 保存排序</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table" id="trainingProjectsTable">
+            <thead>
+                <tr>
+                    <th style="width:40px;">排序</th>
+                    <th>预览</th>
+                    <th>标题</th>
+                    <th>类别</th>
+                    <th>进度</th>
+                    <th>负责人</th>
+                    <th>状态</th>
+                    <th style="width:160px;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="trainingProjectsTbody">
+                <!-- 动态渲染 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 知识产权管理 -->
+<div class="card">
+    <h2 style="color: #ffffff; margin-bottom: 24px; font-size: 24px; font-weight: 600; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">📋 知识产权管理</h2>
+    <div class="table-actions" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input id="intellectualPropertiesSearchInput" type="text" placeholder="搜索知识产权标题..." style="padding:10px 14px;min-width:220px;">
+            <select id="propertyTypeFilter" style="padding:10px 14px;">
+                <option value="">全部类型</option>
+                <option value="patent">专利</option>
+                <option value="copyright">著作权</option>
+                <option value="trademark">商标</option>
+            </select>
+        </div>
+        <div class="btn-group">
+            <button id="addIntellectualPropertyBtn" class="btn btn-primary">📋 新增知识产权</button>
+            <button id="saveIntellectualPropertiesOrderBtn" class="btn btn-success" style="display:none;">💾 保存排序</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table" id="intellectualPropertiesTable">
+            <thead>
+                <tr>
+                    <th style="width:40px;">排序</th>
+                    <th>预览</th>
+                    <th>标题</th>
+                    <th>类型</th>
+                    <th>专利号</th>
+                    <th>发明人</th>
+                    <th>状态</th>
+                    <th style="width:160px;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="intellectualPropertiesTbody">
+                <!-- 动态渲染 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 校企合作管理 -->
+<div class="card">
+    <h2 style="color: #ffffff; margin-bottom: 24px; font-size: 24px; font-weight: 600; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🤝 校企合作管理</h2>
+    <div class="table-actions" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input id="enterpriseCooperationsSearchInput" type="text" placeholder="搜索合作项目标题..." style="padding:10px 14px;min-width:220px;">
+            <select id="enterpriseFilter" style="padding:10px 14px;">
+                <option value="">全部企业</option>
+                <option value="华为技术">华为技术</option>
+                <option value="腾讯科技">腾讯科技</option>
+                <option value="阿里巴巴">阿里巴巴</option>
+                <option value="百度">百度</option>
+                <option value="字节跳动">字节跳动</option>
+            </select>
+        </div>
+        <div class="btn-group">
+            <button id="addEnterpriseCooperationBtn" class="btn btn-primary">🤝 新增合作</button>
+            <button id="saveEnterpriseCooperationsOrderBtn" class="btn btn-success" style="display:none;">💾 保存排序</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table" id="enterpriseCooperationsTable">
+            <thead>
+                <tr>
+                    <th style="width:40px;">排序</th>
+                    <th>预览</th>
+                    <th>项目标题</th>
+                    <th>合作企业</th>
+                    <th>类别</th>
+                    <th>负责人</th>
+                    <th>状态</th>
+                    <th style="width:160px;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="enterpriseCooperationsTbody">
+                <!-- 动态渲染 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 弹窗：新增/编辑项目统计 -->
+<div id="statsModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:9999;">
+            <div class="modal-content" style="min-width:340px;max-width:640px;width:92vw;padding:16px 16px 8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <h3 id="statsModalTitle" style="margin:0;font-size:18px;color:#ffffff;">新增项目统计</h3>
+                <button id="statsModalClose" class="btn" style="border:none;background:rgba(255,255,255,0.1);font-size:20px;cursor:pointer;color:#ffffff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+        <form id="statsForm" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <input type="hidden" id="statsId">
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>名称</span>
+                <input id="statsNameInput" required placeholder="例如：已完成项目">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>数值</span>
+                <input id="statsValueInput" type="number" required placeholder="例如：25">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>图标</span>
+                <input id="statsIconInput" placeholder="例如：fa-lightbulb-o">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>状态</span>
+                <select id="statsStatusInput" required>
+                    <option value="active">启用</option>
+                    <option value="inactive">禁用</option>
+                </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>描述</span>
+                <textarea id="statsDescInput" rows="3" placeholder="描述信息"></textarea>
+            </label>
+            <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+                <button type="button" id="statsCancelBtn" class="btn">❌ 取消</button>
+                <button type="submit" class="btn btn-primary">💾 保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+<!-- 弹窗：新增/编辑轮播图 -->
+<div id="carouselModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:9999;">
+    <div class="modal-content" style="min-width:400px;max-width:700px;width:95vw;padding:16px 16px 8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h3 id="carouselModalTitle" style="margin:0;font-size:18px;color:#ffffff;">新增轮播图</h3>
+            <button id="carouselModalClose" class="btn" style="border:none;background:rgba(255,255,255,0.1);font-size:20px;cursor:pointer;color:#ffffff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+        <form id="carouselForm" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <input type="hidden" id="carouselId">
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>标题</span>
+                <input id="carouselTitleInput" required placeholder="例如：智能视觉分析系统">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>描述</span>
+                <textarea id="carouselDescInput" rows="3" placeholder="项目描述" required></textarea>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>图片</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <input id="carouselImageInput" type="file" accept="image/*" style="display:none;">
+                    <button type="button" id="carouselImageBtn" class="btn" style="padding:8px 12px;font-size:14px;">📁 选择图片</button>
+                    <span id="carouselImageName" style="font-size:12px;color:#666;"></span>
+                </div>
+                <input id="carouselImageUrlInput" placeholder="或输入图片URL" style="margin-top:4px;">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>链接地址 (可选)</span>
+                <input id="carouselLinkInput" placeholder="例如：https://example.com">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>文字位置</span>
+                <select id="carouselTextPositionInput" required>
+                    <option value="bottom-left">左下角</option>
+                    <option value="bottom-right">右下角</option>
+                    <option value="center">居中</option>
+                </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>遮罩透明度</span>
+                <input id="carouselOpacityInput" type="range" min="0" max="1" step="0.1" value="0.3" class="range-slider" style="margin-bottom:4px;">
+                <span id="carouselOpacityValue" style="font-size:12px;color:#666;">0.3</span>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>状态</span>
+                <select id="carouselStatusInput" required>
+                    <option value="active">启用</option>
+                    <option value="inactive">禁用</option>
+                </select>
+            </label>
+            <!-- 图片预览区域 -->
+            <div id="carouselPreview" style="grid-column:1 / -1;display:none;margin-top:8px;">
+                <label style="color:#666;font-size:14px;margin-bottom:8px;">预览：</label>
+                <div class="carousel-preview-container" style="position:relative;width:100%;height:200px;border:1px solid #ddd;background:#f5f5f5;">
+                    <img id="carouselPreviewImg" style="width:100%;height:100%;object-fit:cover;">
+                    <div id="carouselPreviewOverlay" style="position:absolute;inset:0;background:rgba(0,0,0,0.3);display:flex;align-items:end;padding:16px;">
+                        <div id="carouselPreviewText" class="preview-overlay-text" style="background:rgba(15,23,42,0.8);padding:12px;border-radius:8px;color:white;max-width:60%;">
+                            <h4 id="carouselPreviewTitle" style="margin:0 0 4px 0;font-size:16px;">标题预览</h4>
+                            <p id="carouselPreviewDesc" style="margin:0;font-size:14px;opacity:0.9;">描述预览</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+                <button type="button" id="carouselCancelBtn" class="btn">❌ 取消</button>
+                <button type="submit" class="btn btn-primary">💾 保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 弹窗：新增/编辑成果与荣誉 -->
+<div id="achievementsModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:9999;">
+    <div class="modal-content" style="min-width:340px;max-width:640px;width:92vw;padding:16px 16px 8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h3 id="achievementsModalTitle" style="margin:0;font-size:18px;color:#ffffff;">新增成果与荣誉</h3>
+            <button id="achievementsModalClose" class="btn" style="border:none;background:rgba(255,255,255,0.1);font-size:20px;cursor:pointer;color:#ffffff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+        <form id="achievementsForm" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <input type="hidden" id="achievementsId">
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>标题</span>
+                <input id="achievementsTitleInput" required placeholder="例如：全国大学生创新创业大赛金奖">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>类型</span>
+                <select id="achievementsTypeInput" required>
+                    <option value="award">项目获奖</option>
+                    <option value="patent">知识产权</option>
+                </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>日期</span>
+                <input id="achievementsDateInput" type="date">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>图标</span>
+                <input id="achievementsIconInput" placeholder="例如：fa-trophy">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>状态</span>
+                <select id="achievementsStatusInput" required>
+                    <option value="active">启用</option>
+                    <option value="inactive">禁用</option>
+                </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>描述</span>
+                <textarea id="achievementsDescInput" rows="3" placeholder="成果描述" required></textarea>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>扩展数据 (JSON格式，可选)</span>
+                <textarea id="achievementsExtraInput" rows="3" placeholder='例如：{"progress": 90, "category": "发明专利"}'></textarea>
+            </label>
+            <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+                <button type="button" id="achievementsCancelBtn" class="btn">❌ 取消</button>
+                <button type="submit" class="btn btn-primary">💾 保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 弹窗：新增/编辑大学生创新创业训练计划 -->
+<div id="trainingProjectsModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:9999;">
+    <div class="modal-content" style="min-width:400px;max-width:800px;width:95vw;padding:16px 16px 8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h3 id="trainingProjectsModalTitle" style="margin:0;font-size:18px;color:#ffffff;">新增大学生创新创业训练计划</h3>
+            <button id="trainingProjectsModalClose" class="btn" style="border:none;background:rgba(255,255,255,0.1);font-size:20px;cursor:pointer;color:#ffffff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+        <form id="trainingProjectsForm" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <input type="hidden" id="trainingProjectsId">
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>项目标题</span>
+                <input id="trainingProjectsTitleInput" required placeholder="例如：智能视觉分析系统">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>项目描述</span>
+                <textarea id="trainingProjectsDescInput" rows="3" placeholder="项目详细描述" required></textarea>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>项目类别</span>
+                <select id="trainingProjectsCategoryInput" required>
+                    <option value="人工智能">人工智能</option>
+                    <option value="大数据">大数据</option>
+                    <option value="物联网">物联网</option>
+                    <option value="区块链">区块链</option>
+                    <option value="云计算">云计算</option>
+                </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>项目进度 (%)</span>
+                <input id="trainingProjectsProgressInput" type="number" min="0" max="100" value="0" required>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>开始时间</span>
+                <input id="trainingProjectsStartDateInput" type="date">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>结束时间</span>
+                <input id="trainingProjectsEndDateInput" type="date">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>项目经费</span>
+                <input id="trainingProjectsBudgetInput" placeholder="例如：¥2,800,000">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>项目负责人</span>
+                <input id="trainingProjectsLeaderInput" placeholder="例如：李教授">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>参与人员数量</span>
+                <input id="trainingProjectsMembersCountInput" type="number" min="0" value="0">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>联系邮箱</span>
+                <input id="trainingProjectsContactEmailInput" type="email" placeholder="例如：li@acmlab.edu.cn">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>联系电话</span>
+                <input id="trainingProjectsContactPhoneInput" placeholder="例如：138-1234-5678">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>微信号</span>
+                <input id="trainingProjectsContactWechatInput" placeholder="例如：li_professor_2024">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>状态</span>
+                <select id="trainingProjectsStatusInput" required>
+                    <option value="active">启用</option>
+                    <option value="inactive">禁用</option>
+                </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>项目图片</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <input id="trainingProjectsImageInput" type="file" accept="image/*" style="display:none;">
+                    <button type="button" id="trainingProjectsImageBtn" class="btn" style="padding:8px 12px;font-size:14px;">📁 选择图片</button>
+                    <span id="trainingProjectsImageName" style="font-size:12px;color:#666;"></span>
+                </div>
+                <input id="trainingProjectsImageUrlInput" placeholder="或输入图片URL" style="margin-top:4px;">
+            </label>
+            <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+                <button type="button" id="trainingProjectsCancelBtn" class="btn">❌ 取消</button>
+                <button type="submit" class="btn btn-primary">💾 保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 弹窗：新增/编辑知识产权 -->
+<div id="intellectualPropertiesModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:9999;">
+    <div class="modal-content" style="min-width:400px;max-width:800px;width:95vw;padding:16px 16px 8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h3 id="intellectualPropertiesModalTitle" style="margin:0;font-size:18px;color:#ffffff;">新增知识产权</h3>
+            <button id="intellectualPropertiesModalClose" class="btn" style="border:none;background:rgba(255,255,255,0.1);font-size:20px;cursor:pointer;color:#ffffff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+        <form id="intellectualPropertiesForm" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <input type="hidden" id="intellectualPropertiesId">
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>知识产权标题</span>
+                <input id="intellectualPropertiesTitleInput" required placeholder="例如：一种基于深度学习的图像识别方法">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>描述内容</span>
+                <textarea id="intellectualPropertiesDescInput" rows="3" placeholder="知识产权详细描述" required></textarea>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>类型</span>
+                <select id="intellectualPropertiesTypeInput" required>
+                    <option value="patent">专利</option>
+                    <option value="copyright">著作权</option>
+                    <option value="trademark">商标</option>
+                </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>技术类别</span>
+                <input id="intellectualPropertiesCategoryInput" placeholder="例如：人工智能">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>申请时间</span>
+                <input id="intellectualPropertiesApplicationDateInput" type="date">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>授权时间</span>
+                <input id="intellectualPropertiesGrantDateInput" type="date">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>专利号</span>
+                <input id="intellectualPropertiesPatentNumberInput" placeholder="例如：CN123456789A">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>发明人</span>
+                <input id="intellectualPropertiesInventorsInput" placeholder="例如：张三、李四">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>状态</span>
+                <select id="intellectualPropertiesStatusInput" required>
+                    <option value="active">启用</option>
+                    <option value="inactive">禁用</option>
+                </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>图片</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <input id="intellectualPropertiesImageInput" type="file" accept="image/*" style="display:none;">
+                    <button type="button" id="intellectualPropertiesImageBtn" class="btn" style="padding:8px 12px;font-size:14px;">📁 选择图片</button>
+                    <span id="intellectualPropertiesImageName" style="font-size:12px;color:#666;"></span>
+                </div>
+                <input id="intellectualPropertiesImageUrlInput" placeholder="或输入图片URL" style="margin-top:4px;">
+            </label>
+            <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+                <button type="button" id="intellectualPropertiesCancelBtn" class="btn">❌ 取消</button>
+                <button type="submit" class="btn btn-primary">💾 保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 弹窗：新增/编辑校企合作 -->
+<div id="enterpriseCooperationsModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:9999;">
+    <div class="modal-content" style="min-width:400px;max-width:800px;width:95vw;padding:16px 16px 8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h3 id="enterpriseCooperationsModalTitle" style="margin:0;font-size:18px;color:#ffffff;">新增校企合作</h3>
+            <button id="enterpriseCooperationsModalClose" class="btn" style="border:none;background:rgba(255,255,255,0.1);font-size:20px;cursor:pointer;color:#ffffff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+        <form id="enterpriseCooperationsForm" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <input type="hidden" id="enterpriseCooperationsId">
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>合作项目标题</span>
+                <input id="enterpriseCooperationsTitleInput" required placeholder="例如：AI算法优化与芯片适配">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>项目描述</span>
+                <textarea id="enterpriseCooperationsDescInput" rows="3" placeholder="合作项目详细描述" required></textarea>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>合作企业名称</span>
+                <input id="enterpriseCooperationsEnterpriseNameInput" required placeholder="例如：华为技术有限公司">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>合作类别</span>
+                <input id="enterpriseCooperationsCategoryInput" placeholder="例如：技术研发">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>开始时间</span>
+                <input id="enterpriseCooperationsStartDateInput" type="date">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>结束时间</span>
+                <input id="enterpriseCooperationsEndDateInput" type="date">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>合作经费</span>
+                <input id="enterpriseCooperationsBudgetInput" placeholder="例如：¥1,500,000">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>项目负责人</span>
+                <input id="enterpriseCooperationsLeaderInput" placeholder="例如：王教授">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>状态</span>
+                <select id="enterpriseCooperationsStatusInput" required>
+                    <option value="active">启用</option>
+                    <option value="inactive">禁用</option>
+                </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>合作成果</span>
+                <textarea id="enterpriseCooperationsAchievementInput" rows="3" placeholder="合作取得的成果和影响"></textarea>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>企业Logo URL</span>
+                <input id="enterpriseCooperationsEnterpriseLogoInput" placeholder="企业logo图片URL">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>项目图片</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <input id="enterpriseCooperationsImageInput" type="file" accept="image/*" style="display:none;">
+                    <button type="button" id="enterpriseCooperationsImageBtn" class="btn" style="padding:8px 12px;font-size:14px;">📁 选择图片</button>
+                    <span id="enterpriseCooperationsImageName" style="font-size:12px;color:#666;"></span>
+                </div>
+                <input id="enterpriseCooperationsImageUrlInput" placeholder="或输入图片URL" style="margin-top:4px;">
+            </label>
+            <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+                <button type="button" id="enterpriseCooperationsCancelBtn" class="btn">❌ 取消</button>
+                <button type="submit" class="btn btn-primary">💾 保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// 消息提示系统
+function showMessage(text, type = 'info') {
+    const container = document.getElementById('messageContainer');
+    const message = document.createElement('div');
+    message.className = `message ${type}`;
+    
+    const iconMap = {
+        success: '✓',
+        error: '✕',
+        info: 'ⓘ'
+    };
+    
+    message.innerHTML = `
+        <span class="message-icon">${iconMap[type] || 'ⓘ'}</span>
+        <span>${text}</span>
+    `;
+    
+    container.appendChild(message);
+    
+    // 触发显示动画
+    setTimeout(() => message.classList.add('show'), 100);
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+        message.classList.remove('show');
+        setTimeout(() => {
+            if (message.parentNode) {
+                message.parentNode.removeChild(message);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// ============ 项目统计管理 ============
+(function(){
+    const tbody = document.getElementById('statsTbody');
+    const addBtn = document.getElementById('addStatsBtn');
+    const modal = document.getElementById('statsModal');
+    const modalClose = document.getElementById('statsModalClose');
+    const cancelBtn = document.getElementById('statsCancelBtn');
+    const form = document.getElementById('statsForm');
+    const modalTitle = document.getElementById('statsModalTitle');
+    const searchInput = document.getElementById('statsSearchInput');
+
+    const idInput = document.getElementById('statsId');
+    const nameInput = document.getElementById('statsNameInput');
+    const valueInput = document.getElementById('statsValueInput');
+    const iconInput = document.getElementById('statsIconInput');
+    const descInput = document.getElementById('statsDescInput');
+    const statusInput = document.getElementById('statsStatusInput');
+
+    let rawData = [];
+    let sortableInstance = null;
+    let hasUnsavedChanges = false;
+
+    // 初始化拖拽排序
+    function initSortable() {
+        if (sortableInstance) {
+            sortableInstance.destroy();
+        }
+        
+        sortableInstance = new Sortable(tbody, {
+            handle: '.sort-handle',
+            animation: 150,
+            onUpdate: function (evt) {
+                hasUnsavedChanges = true;
+                document.getElementById('saveStatsOrderBtn').style.display = 'inline-block';
+            }
+        });
+    }
+
+    // 保存排序
+    async function saveOrder() {
+        const rows = tbody.querySelectorAll('tr[data-id]');
+        const statsIds = Array.from(rows).map(row => parseInt(row.getAttribute('data-id')));
+        
+        try {
+            const res = await fetch('/api/innovation/stats/reorder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stats_ids: statsIds })
+            });
+            
+            if (res.ok) {
+                hasUnsavedChanges = false;
+                document.getElementById('saveStatsOrderBtn').style.display = 'none';
+                showMessage('项目统计排序已保存', 'success');
+                await fetchData();
+                
+                // 通知其他标签页数据已更新
+                localStorage.setItem('innovation_data_updated', Date.now().toString());
+                setTimeout(() => localStorage.removeItem('innovation_data_updated'), 1000);
+            } else {
+                const err = await res.json().catch(() => ({error: '保存失败'}));
+                showMessage(err.error || '保存失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，保存失败', 'error');
+        }
+    }
+
+    function statusBadge(text){
+        const map = { 'active': 'status-active', 'inactive': 'status-inactive' };
+        const cls = map[text] || 'status-inactive';
+        const displayText = text === 'active' ? '启用' : '禁用';
+        return `<span class="status ${cls}">${displayText}</span>`;
+    }
+
+    function openModal(editData){
+        modal.style.display = 'flex';
+        if(editData){
+            modalTitle.textContent = '编辑项目统计';
+            idInput.value = editData.id;
+            nameInput.value = editData.name || '';
+            valueInput.value = editData.value || 0;
+            iconInput.value = editData.icon || '';
+            descInput.value = editData.description || '';
+            statusInput.value = editData.status || 'active';
+        }else{
+            modalTitle.textContent = '新增项目统计';
+            form.reset();
+            idInput.value = '';
+            statusInput.value = 'active';
+        }
+    }
+    function closeModal(){ modal.style.display = 'none'; }
+
+    function render(data){
+        tbody.innerHTML = data.map(item => `
+            <tr class="sortable-item" data-id="${item.id}">
+                <td><span class="sort-handle" title="拖拽排序"></span></td>
+                <td>${item.name || ''}</td>
+                <td>${item.value || 0}</td>
+                <td><i class="fa ${item.icon || ''}"></i> ${item.icon || ''}</td>
+                <td>${item.description || ''}</td>
+                <td>${statusBadge(item.status || '')}</td>
+                <td>
+                    <button class="btn btn-sm" data-action="edit" data-id="${item.id}">✏️ 编辑</button>
+                    <button class="btn btn-sm btn-danger" data-action="delete" data-id="${item.id}">🗑️ 删除</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        initSortable();
+    }
+
+    async function fetchData(){
+        try {
+            const res = await fetch('/api/innovation/stats');
+            rawData = await res.json();
+            applyFilter();
+        } catch (e) {
+            console.error(e);
+            showMessage('数据加载失败', 'error');
+        }
+    }
+
+    function applyFilter(){
+        const kw = (searchInput.value || '').trim().toLowerCase();
+        console.log('🔍 项目统计搜索关键词:', kw);
+        const filtered = rawData.filter(item => {
+            const nameMatch = !kw || (item.name && item.name.toLowerCase().includes(kw));
+            const descMatch = !kw || (item.description && item.description.toLowerCase().includes(kw));
+            return nameMatch || descMatch;
+        });
+        console.log('📋 过滤后的项目统计数据:', filtered);
+        render(filtered);
+    }
+
+    tbody.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button');
+        if(!btn) return;
+        const id = Number(btn.getAttribute('data-id'));
+        const action = btn.getAttribute('data-action');
+        const current = rawData.find(x => x.id === id);
+        if(action === 'edit'){
+            openModal(current);
+        }
+        if(action === 'delete'){
+            if(!confirm('确认删除该统计项？此操作不可恢复！')) return;
+            try {
+                const res = await fetch(`/api/innovation/stats/${id}`, { method: 'DELETE' });
+                if(res.ok){ 
+                    await fetchData(); 
+                    showMessage('统计项删除成功', 'success');
+                    
+                    // 通知其他标签页数据已更新
+                    localStorage.setItem('innovation_data_updated', Date.now().toString());
+                    setTimeout(() => localStorage.removeItem('innovation_data_updated'), 1000);
+                } else {
+                    const err = await res.json().catch(() => ({error: '删除失败'}));
+                    showMessage(err.error || '删除失败', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showMessage('网络错误，删除失败', 'error');
+            }
+        }
+    });
+
+    addBtn.addEventListener('click', () => openModal());
+    modalClose.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!nameInput.value.trim()) {
+            showMessage('请填写统计项名称', 'error');
+            nameInput.focus();
+            return;
+        }
+        
+        const payload = {
+            name: nameInput.value.trim(),
+            value: parseInt(valueInput.value) || 0,
+            icon: iconInput.value.trim(),
+            description: descInput.value.trim(),
+            status: statusInput.value
+        };
+        const id = idInput.value;
+        const isEdit = !!id;
+        
+        try {
+            const res = await fetch(isEdit ? `/api/innovation/stats/${id}` : '/api/innovation/stats', {
+                method: isEdit ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if(res.ok){
+                closeModal();
+                await fetchData();
+                showMessage(isEdit ? '统计项更新成功' : '统计项添加成功', 'success');
+                
+                // 通知其他标签页数据已更新
+                localStorage.setItem('innovation_data_updated', Date.now().toString());
+                setTimeout(() => localStorage.removeItem('innovation_data_updated'), 1000);
+            }else{
+                const err = await res.json().catch(()=>({error:'提交失败'}));
+                showMessage(err.error || '提交失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，提交失败', 'error');
+        }
+    });
+
+    // 直接绑定搜索事件监听器
+    searchInput.addEventListener('input', () => {
+        console.log('🔍 项目统计搜索输入:', searchInput.value);
+        applyFilter();
+    });
+    
+    const saveStatsOrderBtn = document.getElementById('saveStatsOrderBtn');
+    if (saveStatsOrderBtn) {
+        saveStatsOrderBtn.addEventListener('click', saveOrder);
+        console.log('✅ 项目统计保存排序按钮事件监听器已设置');
+    }
+
+    fetchData();
+})();
+
+
+
+// ============ 成果与荣誉管理 ============
+(function(){
+    const tbody = document.getElementById('achievementsTbody');
+    const addBtn = document.getElementById('addAchievementBtn');
+    const modal = document.getElementById('achievementsModal');
+    const modalClose = document.getElementById('achievementsModalClose');
+    const cancelBtn = document.getElementById('achievementsCancelBtn');
+    const form = document.getElementById('achievementsForm');
+    const modalTitle = document.getElementById('achievementsModalTitle');
+    const searchInput = document.getElementById('achievementsSearchInput');
+    const typeFilter = document.getElementById('typeFilter');
+
+    const idInput = document.getElementById('achievementsId');
+    const titleInput = document.getElementById('achievementsTitleInput');
+    const typeInput = document.getElementById('achievementsTypeInput');
+    const dateInput = document.getElementById('achievementsDateInput');
+    const iconInput = document.getElementById('achievementsIconInput');
+    const descInput = document.getElementById('achievementsDescInput');
+    const statusInput = document.getElementById('achievementsStatusInput');
+    const extraInput = document.getElementById('achievementsExtraInput');
+
+    let rawData = [];
+    let sortableInstance = null;
+    let hasUnsavedChanges = false;
+
+    function initSortable() {
+        if (sortableInstance) {
+            sortableInstance.destroy();
+        }
+        
+        sortableInstance = new Sortable(tbody, {
+            handle: '.sort-handle',
+            animation: 150,
+            onUpdate: function (evt) {
+                hasUnsavedChanges = true;
+                document.getElementById('saveAchievementsOrderBtn').style.display = 'inline-block';
+            }
+        });
+    }
+
+    async function saveOrder() {
+        const rows = tbody.querySelectorAll('tr[data-id]');
+        const achievementIds = Array.from(rows).map(row => parseInt(row.getAttribute('data-id')));
+        
+        try {
+            const res = await fetch('/api/innovation/achievements/reorder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ achievement_ids: achievementIds })
+            });
+            
+            if (res.ok) {
+                hasUnsavedChanges = false;
+                document.getElementById('saveAchievementsOrderBtn').style.display = 'none';
+                showMessage('成果荣誉排序已保存', 'success');
+                await fetchData();
+                
+                // 通知其他标签页数据已更新
+                localStorage.setItem('innovation_data_updated', Date.now().toString());
+                setTimeout(() => localStorage.removeItem('innovation_data_updated'), 1000);
+            } else {
+                const err = await res.json().catch(() => ({error: '保存失败'}));
+                showMessage(err.error || '保存失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，保存失败', 'error');
+        }
+    }
+
+    function statusBadge(text){
+        const map = { 'active': 'status-active', 'inactive': 'status-inactive' };
+        const cls = map[text] || 'status-inactive';
+        const displayText = text === 'active' ? '启用' : '禁用';
+        return `<span class="status ${cls}">${displayText}</span>`;
+    }
+
+    function typeDisplay(text) {
+        const map = { 'award': '项目获奖', 'patent': '知识产权' };
+        return map[text] || text;
+    }
+
+    function truncate(text, n){
+        const s = (text||'').trim();
+        return s.length > n ? (s.slice(0, n) + '...') : s;
+    }
+
+    function openModal(editData){
+        modal.style.display = 'flex';
+        if(editData){
+            modalTitle.textContent = '编辑成果与荣誉';
+            idInput.value = editData.id;
+            titleInput.value = editData.title || '';
+            typeInput.value = editData.type || 'award';
+            dateInput.value = editData.date || '';
+            iconInput.value = editData.icon || '';
+            descInput.value = editData.description || '';
+            statusInput.value = editData.status || 'active';
+            extraInput.value = editData.extra_data ? JSON.stringify(editData.extra_data, null, 2) : '';
+        }else{
+            modalTitle.textContent = '新增成果与荣誉';
+            form.reset();
+            idInput.value = '';
+            typeInput.value = 'award';
+            statusInput.value = 'active';
+        }
+    }
+    function closeModal(){ modal.style.display = 'none'; }
+
+    function render(data){
+        tbody.innerHTML = data.map(item => `
+            <tr class="sortable-item" data-id="${item.id}">
+                <td><span class="sort-handle" title="拖拽排序"></span></td>
+                <td>${item.title || ''}</td>
+                <td>${typeDisplay(item.type)}</td>
+                <td title="${(item.description||'').replace(/\"/g,'&quot;')}">${truncate(item.description, 30)}</td>
+                <td>${item.date || ''}</td>
+                <td>${statusBadge(item.status || '')}</td>
+                <td>
+                    <button class="btn btn-sm" data-action="edit" data-id="${item.id}">✏️ 编辑</button>
+                    <button class="btn btn-sm btn-danger" data-action="delete" data-id="${item.id}">🗑️ 删除</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        initSortable();
+    }
+
+    async function fetchData(){
+        try {
+            const res = await fetch('/api/innovation/achievements');
+            rawData = await res.json();
+            applyFilter();
+        } catch (e) {
+            console.error(e);
+            showMessage('数据加载失败', 'error');
+        }
+    }
+
+    function applyFilter(){
+        const kw = (searchInput.value || '').trim().toLowerCase();
+        const type = typeFilter.value || '';
+        console.log('🔍 成果荣誉搜索条件:', { kw, type });
+        const filtered = rawData.filter(item => {
+            const titleMatch = !kw || (item.title && item.title.toLowerCase().includes(kw));
+            const descMatch = !kw || (item.description && item.description.toLowerCase().includes(kw));
+            const typeMatch = !type || item.type === type;
+            return (titleMatch || descMatch) && typeMatch;
+        });
+        console.log('📋 过滤后的成果荣誉数据:', filtered);
+        render(filtered);
+    }
+
+    tbody.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button');
+        if(!btn) return;
+        const id = Number(btn.getAttribute('data-id'));
+        const action = btn.getAttribute('data-action');
+        const current = rawData.find(x => x.id === id);
+        if(action === 'edit'){
+            openModal(current);
+        }
+        if(action === 'delete'){
+            if(!confirm('确认删除该成果？此操作不可恢复！')) return;
+            try {
+                const res = await fetch(`/api/innovation/achievements/${id}`, { method: 'DELETE' });
+                if(res.ok){ 
+                    await fetchData(); 
+                    showMessage('成果删除成功', 'success');
+                    
+                    // 通知其他标签页数据已更新
+                    localStorage.setItem('innovation_data_updated', Date.now().toString());
+                    setTimeout(() => localStorage.removeItem('innovation_data_updated'), 1000);
+                } else {
+                    const err = await res.json().catch(() => ({error: '删除失败'}));
+                    showMessage(err.error || '删除失败', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showMessage('网络错误，删除失败', 'error');
+            }
+        }
+    });
+
+    addBtn.addEventListener('click', () => openModal());
+    modalClose.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!titleInput.value.trim()) {
+            showMessage('请填写成果标题', 'error');
+            titleInput.focus();
+            return;
+        }
+        
+        if (!descInput.value.trim()) {
+            showMessage('请填写成果描述', 'error');
+            descInput.focus();
+            return;
+        }
+
+        let extraData = null;
+        if (extraInput.value.trim()) {
+            try {
+                extraData = JSON.parse(extraInput.value.trim());
+            } catch (e) {
+                showMessage('扩展数据格式错误，请输入正确的JSON格式', 'error');
+                extraInput.focus();
+                return;
+            }
+        }
+        
+        const payload = {
+            title: titleInput.value.trim(),
+            type: typeInput.value,
+            description: descInput.value.trim(),
+            date: dateInput.value || null,
+            icon: iconInput.value.trim(),
+            status: statusInput.value,
+            extra_data: extraData
+        };
+        const id = idInput.value;
+        const isEdit = !!id;
+        
+        try {
+            const res = await fetch(isEdit ? `/api/innovation/achievements/${id}` : '/api/innovation/achievements', {
+                method: isEdit ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if(res.ok){
+                closeModal();
+                await fetchData();
+                showMessage(isEdit ? '成果更新成功' : '成果添加成功', 'success');
+                
+                // 通知其他标签页数据已更新
+                localStorage.setItem('innovation_data_updated', Date.now().toString());
+                setTimeout(() => localStorage.removeItem('innovation_data_updated'), 1000);
+            }else{
+                const err = await res.json().catch(()=>({error:'提交失败'}));
+                showMessage(err.error || '提交失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，提交失败', 'error');
+        }
+    });
+
+    // 直接绑定搜索和筛选事件监听器
+    searchInput.addEventListener('input', () => {
+        console.log('🔍 成果荣誉搜索输入:', searchInput.value);
+        applyFilter();
+    });
+    
+    typeFilter.addEventListener('change', () => {
+        console.log('🔍 成果荣誉类型筛选:', typeFilter.value);
+        applyFilter();
+    });
+    
+    const saveAchievementsOrderBtn = document.getElementById('saveAchievementsOrderBtn');
+    if (saveAchievementsOrderBtn) {
+        saveAchievementsOrderBtn.addEventListener('click', saveOrder);
+        console.log('✅ 成果荣誉保存排序按钮事件监听器已设置');
+    }
+
+    fetchData();
+})();
+
+// ============ 轮播图管理 ============
+(function(){
+    console.log('🖼️ 轮播图管理模块开始初始化...');
+    
+    const tbody = document.getElementById('carouselTbody');
+    const addBtn = document.getElementById('addCarouselBtn');
+    const modal = document.getElementById('carouselModal');
+    const modalClose = document.getElementById('carouselModalClose');
+    const cancelBtn = document.getElementById('carouselCancelBtn');
+    const form = document.getElementById('carouselForm');
+    const modalTitle = document.getElementById('carouselModalTitle');
+    const searchInput = document.getElementById('carouselSearchInput');
+    
+    console.log('轮播图元素检查:', {
+        tbody: !!tbody,
+        addBtn: !!addBtn,
+        modal: !!modal,
+        searchInput: !!searchInput
+    });
+
+    const idInput = document.getElementById('carouselId');
+    const titleInput = document.getElementById('carouselTitleInput');
+    const descInput = document.getElementById('carouselDescInput');
+    const imageInput = document.getElementById('carouselImageInput');
+    const imageBtn = document.getElementById('carouselImageBtn');
+    const imageName = document.getElementById('carouselImageName');
+    const imageUrlInput = document.getElementById('carouselImageUrlInput');
+    const linkInput = document.getElementById('carouselLinkInput');
+    const textPositionInput = document.getElementById('carouselTextPositionInput');
+    const opacityInput = document.getElementById('carouselOpacityInput');
+    const opacityValue = document.getElementById('carouselOpacityValue');
+    const statusInput = document.getElementById('carouselStatusInput');
+    
+    // 预览相关元素
+    const previewContainer = document.getElementById('carouselPreview');
+    const previewImg = document.getElementById('carouselPreviewImg');
+    const previewOverlay = document.getElementById('carouselPreviewOverlay');
+    const previewText = document.getElementById('carouselPreviewText');
+    const previewTitle = document.getElementById('carouselPreviewTitle');
+    const previewDesc = document.getElementById('carouselPreviewDesc');
+
+    let rawData = [];
+    let sortableInstance = null;
+    let hasUnsavedChanges = false;
+    let uploadedImageUrl = null;
+
+    function initSortable() {
+        if (sortableInstance) {
+            sortableInstance.destroy();
+        }
+        
+        sortableInstance = new Sortable(tbody, {
+            handle: '.sort-handle',
+            animation: 150,
+            onUpdate: function (evt) {
+                hasUnsavedChanges = true;
+                document.getElementById('saveCarouselOrderBtn').style.display = 'inline-block';
+            }
+        });
+    }
+
+    async function saveOrder() {
+        const rows = tbody.querySelectorAll('tr[data-id]');
+        const carouselIds = Array.from(rows).map(row => parseInt(row.getAttribute('data-id')));
+        
+        try {
+            const res = await fetch('/api/innovation/carousel/reorder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ carousel_ids: carouselIds })
+            });
+            
+            if (res.ok) {
+                hasUnsavedChanges = false;
+                document.getElementById('saveCarouselOrderBtn').style.display = 'none';
+                showMessage('轮播图排序已保存', 'success');
+                await fetchData();
+                
+                // 通知其他标签页数据已更新
+                localStorage.setItem('innovation_data_updated', Date.now().toString());
+                setTimeout(() => localStorage.removeItem('innovation_data_updated'), 1000);
+                
+                // 通知前端页面更新轮播图数据
+                try {
+                    if (window.opener && !window.opener.closed) {
+                        window.opener.postMessage({
+                            type: 'INNOVATION_CAROUSEL_UPDATED',
+                            timestamp: Date.now()
+                        }, '*');
+                    }
+                } catch (e) {
+                    console.log('无法通知前端页面');
+                }
+            } else {
+                const err = await res.json().catch(() => ({error: '保存失败'}));
+                showMessage(err.error || '保存失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，保存失败', 'error');
+        }
+    }
+
+    function statusBadge(text){
+        const map = { 'active': 'status-active', 'inactive': 'status-inactive' };
+        const cls = map[text] || 'status-inactive';
+        const displayText = text === 'active' ? '启用' : '禁用';
+        return `<span class="status ${cls}">${displayText}</span>`;
+    }
+
+    function textPositionDisplay(position) {
+        const map = { 
+            'bottom-left': '左下角', 
+            'bottom-right': '右下角', 
+            'center': '居中' 
+        };
+        return map[position] || position;
+    }
+
+    function truncate(text, n){
+        const s = (text||'').trim();
+        return s.length > n ? (s.slice(0, n) + '...') : s;
+    }
+
+    function updatePreview() {
+        const title = titleInput.value.trim();
+        const desc = descInput.value.trim();
+        const opacity = parseFloat(opacityInput.value);
+        const textPosition = textPositionInput.value;
+        const imageUrl = uploadedImageUrl || imageUrlInput.value.trim();
+
+        if (title || desc || imageUrl) {
+            previewContainer.style.display = 'block';
+            
+            if (imageUrl) {
+                previewImg.src = imageUrl;
+                previewImg.style.display = 'block';
+            } else {
+                previewImg.style.display = 'none';
+            }
+            
+            previewTitle.textContent = title || '标题预览';
+            previewDesc.textContent = desc || '描述预览';
+            previewOverlay.style.background = `rgba(0,0,0,${opacity})`;
+            
+            // 调整文字位置
+            previewOverlay.style.alignItems = textPosition === 'center' ? 'center' : 'end';
+            previewOverlay.style.justifyContent = textPosition === 'bottom-right' ? 'end' : 
+                                               textPosition === 'center' ? 'center' : 'start';
+            previewText.style.maxWidth = textPosition === 'center' ? '80%' : '60%';
+            previewText.style.textAlign = textPosition === 'center' ? 'center' : 'left';
+        } else {
+            previewContainer.style.display = 'none';
+        }
+    }
+
+    // 图片上传处理
+    imageBtn.addEventListener('click', () => imageInput.click());
+    
+    imageInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        imageName.textContent = '上传中...';
+        imageBtn.disabled = true;
+        
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const res = await fetch('/api/innovation/carousel/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (res.ok) {
+                const result = await res.json();
+                uploadedImageUrl = result.url;
+                imageName.textContent = file.name;
+                imageUrlInput.value = result.url;
+                showMessage('图片上传成功', 'success');
+                updatePreview();
+            } else {
+                const err = await res.json().catch(() => ({error: '上传失败'}));
+                showMessage(err.error || '上传失败', 'error');
+                imageName.textContent = '';
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，上传失败', 'error');
+            imageName.textContent = '';
+        } finally {
+            imageBtn.disabled = false;
+        }
+    });
+
+    // 监听预览更新
+    titleInput.addEventListener('input', updatePreview);
+    descInput.addEventListener('input', updatePreview);
+    imageUrlInput.addEventListener('input', updatePreview);
+    textPositionInput.addEventListener('change', updatePreview);
+    opacityInput.addEventListener('input', () => {
+        opacityValue.textContent = opacityInput.value;
+        updatePreview();
+    });
+
+    function openModal(editData){
+        modal.style.display = 'flex';
+        uploadedImageUrl = null;
+        
+        if(editData){
+            modalTitle.textContent = '编辑轮播图';
+            idInput.value = editData.id;
+            titleInput.value = editData.title || '';
+            descInput.value = editData.description || '';
+            imageUrlInput.value = editData.image_display_url || editData.image_url || '';
+            linkInput.value = editData.link_url || '';
+            textPositionInput.value = editData.text_position || 'bottom-left';
+            opacityInput.value = editData.overlay_opacity || 0.3;
+            opacityValue.textContent = editData.overlay_opacity || 0.3;
+            statusInput.value = editData.status || 'active';
+            imageName.textContent = editData.image_file || '';
+        } else {
+            modalTitle.textContent = '新增轮播图';
+            form.reset();
+            idInput.value = '';
+            textPositionInput.value = 'bottom-left';
+            opacityInput.value = 0.3;
+            opacityValue.textContent = '0.3';
+            statusInput.value = 'active';
+            imageName.textContent = '';
+        }
+        
+        updatePreview();
+    }
+    
+    function closeModal() { 
+        modal.style.display = 'none'; 
+        previewContainer.style.display = 'none';
+        uploadedImageUrl = null;
+    }
+
+    function render(data){
+        console.log('🎨 渲染轮播图列表，数据条数:', data.length);
+        tbody.innerHTML = data.map(item => `
+            <tr class="sortable-item" data-id="${item.id}">
+                <td><span class="sort-handle" title="拖拽排序"></span></td>
+                <td>
+                    ${item.image_display_url ? 
+                        `<img src="${item.image_display_url}" style="width:60px;height:40px;object-fit:cover;border-radius:4px;">` : 
+                        '<span style="color:#999;">无图片</span>'
+                    }
+                </td>
+                <td>${item.title || ''}</td>
+                <td title="${(item.description||'').replace(/\"/g,'&quot;')}">${truncate(item.description, 30)}</td>
+                <td>${textPositionDisplay(item.text_position)}</td>
+                <td>${statusBadge(item.status || '')}</td>
+                <td>
+                    <button class="btn btn-sm" data-action="edit" data-id="${item.id}">✏️ 编辑</button>
+                    <button class="btn btn-sm btn-danger" data-action="delete" data-id="${item.id}">🗑️ 删除</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        console.log('📝 轮播图表格HTML已更新');
+        initSortable();
+    }
+
+    async function fetchData(){
+        try {
+            console.log('🔄 开始获取轮播图数据...');
+            const res = await fetch('/api/innovation/carousel');
+            rawData = await res.json();
+            console.log('📊 轮播图数据:', rawData);
+            applyFilter();
+        } catch (e) {
+            console.error('❌ 轮播图数据加载失败:', e);
+            showMessage('数据加载失败', 'error');
+        }
+    }
+
+    function applyFilter(){
+        const kw = (searchInput.value || '').trim();
+        const filtered = rawData.filter(item => {
+            const hitKw = !kw || [item.title, item.description].some(v => (v||'').includes(kw));
+            return hitKw;
+        });
+        render(filtered);
+    }
+
+    tbody.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button');
+        if(!btn) return;
+        const id = Number(btn.getAttribute('data-id'));
+        const action = btn.getAttribute('data-action');
+        const current = rawData.find(x => x.id === id);
+        if(action === 'edit'){
+            openModal(current);
+        }
+        if(action === 'delete'){
+            if(!confirm('确认删除该轮播图？此操作不可恢复！')) return;
+            try {
+                const res = await fetch(`/api/innovation/carousel/${id}`, { method: 'DELETE' });
+                if(res.ok){ 
+                    await fetchData(); 
+                    showMessage('轮播图删除成功', 'success');
+                    
+                    // 通知其他标签页数据已更新
+                    localStorage.setItem('innovation_data_updated', Date.now().toString());
+                    setTimeout(() => localStorage.removeItem('innovation_data_updated'), 1000);
+                    
+                    // 通知前端页面更新轮播图数据
+                    try {
+                        if (window.opener && !window.opener.closed) {
+                            window.opener.postMessage({
+                                type: 'INNOVATION_CAROUSEL_UPDATED',
+                                timestamp: Date.now()
+                            }, '*');
+                        }
+                    } catch (e) {
+                        console.log('无法通知前端页面');
+                    }
+                } else {
+                    const err = await res.json().catch(() => ({error: '删除失败'}));
+                    showMessage(err.error || '删除失败', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showMessage('网络错误，删除失败', 'error');
+            }
+        }
+    });
+
+    addBtn.addEventListener('click', () => openModal());
+    modalClose.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!titleInput.value.trim()) {
+            showMessage('请填写轮播图标题', 'error');
+            titleInput.focus();
+            return;
+        }
+        
+        if (!descInput.value.trim()) {
+            showMessage('请填写轮播图描述', 'error');
+            descInput.focus();
+            return;
+        }
+
+        const imageUrl = uploadedImageUrl || imageUrlInput.value.trim();
+        if (!imageUrl) {
+            showMessage('请选择图片或输入图片URL', 'error');
+            return;
+        }
+        
+        const payload = {
+            title: titleInput.value.trim(),
+            description: descInput.value.trim(),
+            image_url: imageUrl,
+            link_url: linkInput.value.trim(),
+            text_position: textPositionInput.value,
+            overlay_opacity: parseFloat(opacityInput.value),
+            status: statusInput.value
+        };
+        const id = idInput.value;
+        const isEdit = !!id;
+        
+        try {
+            const res = await fetch(isEdit ? `/api/innovation/carousel/${id}` : '/api/innovation/carousel', {
+                method: isEdit ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if(res.ok){
+                closeModal();
+                await fetchData();
+                showMessage(isEdit ? '轮播图更新成功' : '轮播图添加成功', 'success');
+                
+                // 通知其他标签页数据已更新
+                localStorage.setItem('innovation_data_updated', Date.now().toString());
+                setTimeout(() => localStorage.removeItem('innovation_data_updated'), 1000);
+                
+                // 通知前端页面更新轮播图数据
+                try {
+                    if (window.opener && !window.opener.closed) {
+                        window.opener.postMessage({
+                            type: 'INNOVATION_CAROUSEL_UPDATED',
+                            timestamp: Date.now()
+                        }, '*');
+                    }
+                } catch (e) {
+                    console.log('无法通知前端页面');
+                }
+            }else{
+                const err = await res.json().catch(()=>({error:'提交失败'}));
+                showMessage(err.error || '提交失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，提交失败', 'error');
+        }
+    });
+
+    // 直接绑定搜索事件监听器
+    searchInput.addEventListener('input', () => {
+        console.log('🔍 轮播图搜索输入:', searchInput.value);
+        applyFilter();
+    });
+    
+    const saveCarouselOrderBtn = document.getElementById('saveCarouselOrderBtn');
+    if (saveCarouselOrderBtn) {
+        saveCarouselOrderBtn.addEventListener('click', saveOrder);
+        console.log('✅ 轮播图保存排序按钮事件监听器已设置');
+    }
+
+    fetchData();
+})();
+
+    // 页面加载完成后的调试信息
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔍 页面DOM加载完成，开始初始化科创管理页面...');
+    
+    // 移除调试代码，专注于功能修复
+    console.log('📊 开始修复三个模块的功能问题...');
+    
+    // 初始化测试信息
+    updateTestInfo();
+    
+    // 简化初始化，直接绑定事件和获取数据
+    console.log('🚀 开始初始化三个模块...');
+    
+    // 初始化事件监听器
+    initThreeModulesEvents();
+    
+    // 获取初始数据
+    Promise.all([
+        fetchTrainingProjectsData(),
+        fetchIntellectualPropertiesData(),
+        fetchEnterpriseCooperationsData()
+    ]).then(() => {
+        console.log('✅ 所有模块数据初始化完成');
+        showMessage('科创管理页面加载完成', 'success');
+    }).catch(e => {
+        console.error('❌ 模块数据初始化失败:', e);
+        showMessage('部分数据加载失败，请检查网络连接', 'error');
+    });
+    
+    // Socket.IO实时刷新功能
+    function initSocketIOFeatures() {
+        console.log('🔌 初始化Socket.IO功能...');
+        
+        // 设置当前页面
+        if (typeof setCurrentPage === 'function') {
+            setCurrentPage('innovation');
+        }
+        
+        // 初始化Socket.IO连接
+        if (typeof initSocketIO === 'function') {
+            initSocketIO();
+        }
+        
+        // 监听页面刷新事件
+        if (typeof socket !== 'undefined' && socket) {
+            socket.on('page_refresh', function(data) {
+                console.log('收到科创数据更新通知:', data);
+                
+                // 如果是科创相关数据更新，重新加载内容
+                if (data.page === 'innovation' || data.page === 'all') {
+                    console.log('刷新科创管理内容...');
+                    // 重新获取所有数据
+                    Promise.all([
+                        fetchTrainingProjectsData(),
+                        fetchIntellectualPropertiesData(),
+                        fetchEnterpriseCooperationsData()
+                    ]).then(() => {
+                        console.log('✅ 数据刷新完成');
+                    }).catch(e => {
+                        console.error('❌ 数据刷新失败:', e);
+                    });
+                }
+            });
+        }
+        
+        // 监听存储变化事件（多标签页同步）
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'innovation_data_updated') {
+                console.log('检测到其他标签页数据更新，刷新当前页面数据');
+                // 重新获取所有数据
+                Promise.all([
+                    fetchTrainingProjectsData(),
+                    fetchIntellectualPropertiesData(),
+                    fetchEnterpriseCooperationsData()
+                ]).then(() => {
+                    console.log('✅ 数据同步完成');
+                }).catch(e => {
+                    console.error('❌ 数据同步失败:', e);
+                });
+            }
+        });
+        
+        console.log('科创管理 - Socket.IO实时刷新已初始化');
+        
+        // 添加测试区域
+        addTestArea();
+    }
+    
+    // 添加测试区域
+    function addTestArea() {
+        const testArea = document.createElement('div');
+        testArea.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            z-index: 10000;
+            max-width: 300px;
+        `;
+        
+        testArea.innerHTML = `
+            <div style="margin-bottom: 10px; font-weight: bold;">🧪 实时同步测试</div>
+            <div>最后更新: <span id="lastUpdateTime">-</span></div>
+            <div>数据状态: <span id="dataStatus">正常</span></div>
+            <button id="testRefreshBtn" style="margin-top: 10px; padding: 5px 10px; background: #667eea; border: none; border-radius: 5px; color: white; cursor: pointer;">测试刷新</button>
+        `;
+        
+        document.body.appendChild(testArea);
+        
+        // 测试刷新按钮
+        const testRefreshBtn = document.getElementById('testRefreshBtn');
+        if (testRefreshBtn) {
+            testRefreshBtn.addEventListener('click', () => {
+                console.log('🧪 手动测试数据刷新...');
+                updateTestInfo();
+                
+                // 刷新所有数据
+                Promise.all([
+                    fetchTrainingProjectsData(),
+                    fetchIntellectualPropertiesData(),
+                    fetchEnterpriseCooperationsData()
+                ]).then(() => {
+                    console.log('✅ 测试刷新完成');
+                    showMessage('测试刷新完成', 'success');
+                }).catch(e => {
+                    console.error('❌ 测试刷新失败:', e);
+                    showMessage('测试刷新失败', 'error');
+                });
+            });
+        }
+        
+        // 监听数据更新
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'innovation_data_updated') {
+                console.log('🧪 检测到数据更新事件');
+                updateTestInfo();
+            }
+        });
+        
+        // 初始化测试信息
+        updateTestInfo();
+    }
+    
+    // ============ 大学生创新创业训练计划管理 ============
+    
+    // 数据变量
+    let trainingProjectsData = [];
+    let trainingProjectsSortable = null;
+    let trainingProjectsHasUnsavedChanges = false;
+    let trainingProjectsUploadedImageUrl = null;
+    let trainingProjectsSubmitting = false; // 防重复提交标志
+    
+    // 辅助函数
+    function openTrainingProjectModal() {
+        document.getElementById('trainingProjectsForm').reset();
+        document.getElementById('trainingProjectsId').value = '';
+        document.getElementById('trainingProjectsImageName').textContent = '';
+        trainingProjectsUploadedImageUrl = null;
+        
+        document.getElementById('trainingProjectsCategoryInput').value = '人工智能';
+        document.getElementById('trainingProjectsProgressInput').value = '0';
+        document.getElementById('trainingProjectsMembersCountInput').value = '0';
+        document.getElementById('trainingProjectsStatusInput').value = 'active';
+        
+        document.getElementById('trainingProjectsModalTitle').textContent = '新增大学生创新创业训练计划';
+        document.getElementById('trainingProjectsModal').style.display = 'flex';
+    }
+    
+    function closeTrainingProjectModal() {
+        document.getElementById('trainingProjectsModal').style.display = 'none';
+    }
+    
+    // 知识产权数据变量
+    let intellectualPropertiesData = [];
+    let intellectualPropertiesSortable = null;
+    let intellectualPropertiesHasUnsavedChanges = false;
+    let intellectualPropertiesUploadedImageUrl = null;
+    let intellectualPropertiesSubmitting = false; // 防重复提交标志
+    
+    // 知识产权辅助函数
+    function openIntellectualPropertyModal() {
+        document.getElementById('intellectualPropertiesForm').reset();
+        document.getElementById('intellectualPropertiesId').value = '';
+        document.getElementById('intellectualPropertiesImageName').textContent = '';
+        intellectualPropertiesUploadedImageUrl = null;
+        
+        document.getElementById('intellectualPropertiesTypeInput').value = 'patent';
+        document.getElementById('intellectualPropertiesStatusInput').value = 'active';
+        
+        document.getElementById('intellectualPropertiesModalTitle').textContent = '新增知识产权';
+        document.getElementById('intellectualPropertiesModal').style.display = 'flex';
+    }
+    
+    function closeIntellectualPropertyModal() {
+        document.getElementById('intellectualPropertiesModal').style.display = 'none';
+    }
+    
+    // 校企合作数据变量
+    let enterpriseCooperationsData = [];
+    let enterpriseCooperationsSortable = null;
+    let enterpriseCooperationsHasUnsavedChanges = false;
+    let enterpriseCooperationsUploadedImageUrl = null;
+    let enterpriseCooperationsSubmitting = false; // 防重复提交标志
+    
+    // 校企合作辅助函数
+    function openEnterpriseCooperationModal() {
+        document.getElementById('enterpriseCooperationsForm').reset();
+        document.getElementById('enterpriseCooperationsId').value = '';
+        document.getElementById('enterpriseCooperationsImageName').textContent = '';
+        enterpriseCooperationsUploadedImageUrl = null;
+        
+        document.getElementById('enterpriseCooperationsStatusInput').value = 'active';
+        
+        document.getElementById('enterpriseCooperationsModalTitle').textContent = '新增校企合作';
+        document.getElementById('enterpriseCooperationsModal').style.display = 'flex';
+    }
+    
+    function closeEnterpriseCooperationModal() {
+        document.getElementById('enterpriseCooperationsModal').style.display = 'none';
+    }
+    
+    // 表单提交处理函数
+    async function handleIntellectualPropertySubmit(e) {
+        e.preventDefault();
+        console.log('📋 知识产权表单提交...');
+        
+        const formData = {
+            title: document.getElementById('intellectualPropertiesTitleInput').value,
+            description: document.getElementById('intellectualPropertiesDescInput').value,
+            type: document.getElementById('intellectualPropertiesTypeInput').value,
+            category: document.getElementById('intellectualPropertiesCategoryInput').value,
+            application_date: document.getElementById('intellectualPropertiesApplicationDateInput').value,
+            grant_date: document.getElementById('intellectualPropertiesGrantDateInput').value,
+            patent_number: document.getElementById('intellectualPropertiesPatentNumberInput').value,
+            inventors: document.getElementById('intellectualPropertiesInventorsInput').value,
+            status: document.getElementById('intellectualPropertiesStatusInput').value,
+            image_url: intellectualPropertiesUploadedImageUrl || document.getElementById('intellectualPropertiesImageUrlInput').value
+        };
+        
+        const id = document.getElementById('intellectualPropertiesId').value;
+        const url = id ? `/api/innovation/intellectual-properties/${id}` : '/api/innovation/intellectual-properties';
+        const method = id ? 'PUT' : 'POST';
+        
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            
+            if (res.ok) {
+                showMessage(id ? '更新成功' : '创建成功', 'success');
+                closeIntellectualPropertyModal();
+                await fetchIntellectualPropertiesData();
+                
+                localStorage.setItem('innovation_data_updated', Date.now().toString());
+                setTimeout(() => localStorage.removeItem('innovation_data_updated'), 1000);
+            } else {
+                const err = await res.json().catch(() => ({error: '操作失败'}));
+                showMessage(err.error || '操作失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，操作失败', 'error');
+        }
+    }
+    
+    async function handleEnterpriseCooperationSubmit(e) {
+        e.preventDefault();
+        console.log('🤝 校企合作表单提交...');
+        
+        const formData = {
+            title: document.getElementById('enterpriseCooperationsTitleInput').value,
+            description: document.getElementById('enterpriseCooperationsDescInput').value,
+            enterprise_name: document.getElementById('enterpriseCooperationsEnterpriseNameInput').value,
+            category: document.getElementById('enterpriseCooperationsCategoryInput').value,
+            start_date: document.getElementById('enterpriseCooperationsStartDateInput').value,
+            end_date: document.getElementById('enterpriseCooperationsEndDateInput').value,
+            budget: document.getElementById('enterpriseCooperationsBudgetInput').value,
+            leader: document.getElementById('enterpriseCooperationsLeaderInput').value,
+            status: document.getElementById('enterpriseCooperationsStatusInput').value,
+            achievement: document.getElementById('enterpriseCooperationsAchievementInput').value,
+            enterprise_logo: document.getElementById('enterpriseCooperationsEnterpriseLogoInput').value,
+            image_url: enterpriseCooperationsUploadedImageUrl || document.getElementById('enterpriseCooperationsImageUrlInput').value
+        };
+        
+        const id = document.getElementById('enterpriseCooperationsId').value;
+        const url = id ? `/api/innovation/enterprise-cooperations/${id}` : '/api/innovation/enterprise-cooperations';
+        const method = id ? 'PUT' : 'POST';
+        
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            
+            if (res.ok) {
+                showMessage(id ? '更新成功' : '创建成功', 'success');
+                closeEnterpriseCooperationModal();
+                await fetchEnterpriseCooperationsData();
+                
+                localStorage.setItem('innovation_data_updated', Date.now().toString());
+                setTimeout(() => localStorage.removeItem('innovation_data_updated'), 1000);
+            } else {
+                const err = await res.json().catch(() => ({error: '操作失败'}));
+                showMessage(err.error || '操作失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，操作失败', 'error');
+        }
+    }
+    
+    console.log('🎓 训练计划管理模块初始化...');
+    
+    // 工具函数
+    function truncate(text, n) {
+        const s = (text || '').trim();
+        return s.length > n ? (s.slice(0, n) + '...') : s;
+    }
+    
+    function statusBadge(text) {
+        const map = { 'active': 'status-active', 'inactive': 'status-inactive' };
+        const cls = map[text] || 'status-inactive';
+        const displayText = text === 'active' ? '启用' : '禁用';
+        return `<span class="status ${cls}">${displayText}</span>`;
+    }
+    
+    // 初始化训练计划排序
+    function initTrainingProjectsSortable() {
+        const tbody = document.getElementById('trainingProjectsTbody');
+        if (trainingProjectsSortable) {
+            trainingProjectsSortable.destroy();
+        }
+        
+        trainingProjectsSortable = new Sortable(tbody, {
+            handle: '.sort-handle',
+            animation: 150,
+            onUpdate: function (evt) {
+                console.log('🎓 训练计划排序已更改');
+                trainingProjectsHasUnsavedChanges = true;
+                const saveBtn = document.getElementById('saveTrainingProjectsOrderBtn');
+                if (saveBtn) {
+                    saveBtn.style.display = 'inline-block';
+                    saveBtn.disabled = false;
+                    saveBtn.style.opacity = '1';
+                    saveBtn.style.cursor = 'pointer';
+                }
+                console.log('✅ 训练计划保存排序按钮已启用');
+            }
+        });
+    }
+    
+    // 初始化知识产权排序
+    function initIntellectualPropertiesSortable() {
+        const tbody = document.getElementById('intellectualPropertiesTbody');
+        if (intellectualPropertiesSortable) {
+            intellectualPropertiesSortable.destroy();
+        }
+        
+        intellectualPropertiesSortable = new Sortable(tbody, {
+            handle: '.sort-handle',
+            animation: 150,
+            onUpdate: function (evt) {
+                console.log('📋 知识产权排序已更改');
+                intellectualPropertiesHasUnsavedChanges = true;
+                const saveBtn = document.getElementById('saveIntellectualPropertiesOrderBtn');
+                if (saveBtn) {
+                    saveBtn.style.display = 'inline-block';
+                    saveBtn.disabled = false;
+                    saveBtn.style.opacity = '1';
+                    saveBtn.style.cursor = 'pointer';
+                }
+                console.log('✅ 知识产权保存排序按钮已启用');
+            }
+        });
+    }
+    
+    // 初始化校企合作排序
+    function initEnterpriseCooperationsSortable() {
+        const tbody = document.getElementById('enterpriseCooperationsTbody');
+        if (enterpriseCooperationsSortable) {
+            enterpriseCooperationsSortable.destroy();
+        }
+        
+        enterpriseCooperationsSortable = new Sortable(tbody, {
+            handle: '.sort-handle',
+            animation: 150,
+            onUpdate: function (evt) {
+                console.log('🤝 校企合作排序已更改');
+                enterpriseCooperationsHasUnsavedChanges = true;
+                const saveBtn = document.getElementById('saveEnterpriseCooperationsOrderBtn');
+                if (saveBtn) {
+                    saveBtn.style.display = 'inline-block';
+                    saveBtn.disabled = false;
+                    saveBtn.style.opacity = '1';
+                    saveBtn.style.cursor = 'pointer';
+                }
+                console.log('✅ 校企合作保存排序按钮已启用');
+            }
+        });
+    }
+    
+    // 获取训练计划数据
+    async function fetchTrainingProjectsData() {
+        try {
+            console.log('🔄 开始获取训练计划数据...');
+            const res = await fetch('/api/innovation/training-projects');
+            console.log('📡 训练计划API响应状态:', res.status);
+            
+            if (res.ok) {
+                trainingProjectsData = await res.json();
+                console.log('📊 训练计划数据:', trainingProjectsData);
+                renderTrainingProjectsTable();
+                initTrainingProjectsSortable();
+                console.log('✅ 训练计划数据获取成功');
+            } else {
+                const errorText = await res.text();
+                console.error('❌ 获取训练计划数据失败:', errorText);
+                showMessage('获取训练计划数据失败', 'error');
+            }
+        } catch (e) {
+            console.error('❌ 训练计划数据获取异常:', e);
+            showMessage('网络错误，获取数据失败', 'error');
+        }
+    }
+    
+    // 获取知识产权数据
+    async function fetchIntellectualPropertiesData() {
+        try {
+            console.log('🔄 开始获取知识产权数据...');
+            const res = await fetch('/api/innovation/intellectual-properties');
+            console.log('📡 知识产权API响应状态:', res.status);
+            
+            if (res.ok) {
+                intellectualPropertiesData = await res.json();
+                console.log('📊 知识产权数据:', intellectualPropertiesData);
+                renderIntellectualPropertiesTable();
+                initIntellectualPropertiesSortable();
+                console.log('✅ 知识产权数据获取成功');
+            } else {
+                const errorText = await res.text();
+                console.error('❌ 获取知识产权数据失败:', errorText);
+                showMessage('获取知识产权数据失败', 'error');
+            }
+        } catch (e) {
+            console.error('❌ 知识产权数据获取异常:', e);
+            showMessage('网络错误，获取数据失败', 'error');
+        }
+    }
+    
+    // 获取校企合作数据
+    async function fetchEnterpriseCooperationsData() {
+        try {
+            console.log('🔄 开始获取校企合作数据...');
+            const res = await fetch('/api/innovation/enterprise-cooperations');
+            console.log('📡 校企合作API响应状态:', res.status);
+            
+            if (res.ok) {
+                enterpriseCooperationsData = await res.json();
+                console.log('📊 校企合作数据:', enterpriseCooperationsData);
+                renderEnterpriseCooperationsTable();
+                initEnterpriseCooperationsSortable();
+                console.log('✅ 校企合作数据获取成功');
+            } else {
+                const errorText = await res.text();
+                console.error('❌ 获取校企合作数据失败:', errorText);
+                showMessage('获取校企合作数据失败', 'error');
+            }
+        } catch (e) {
+            console.error('❌ 校企合作数据获取异常:', e);
+            showMessage('网络错误，获取数据失败', 'error');
+        }
+    }
+    
+    // 渲染训练计划表格
+    function renderTrainingProjectsTable() {
+        console.log('🎨 开始渲染训练计划表格...');
+        const tbody = document.getElementById('trainingProjectsTbody');
+        if (!tbody) {
+            console.error('❌ 找不到训练计划表格体元素');
+            return;
+        }
+        
+        const searchInput = document.getElementById('trainingProjectsSearchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+        
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const categoryValue = categoryFilter ? categoryFilter.value : '';
+        
+        console.log('🔍 训练计划搜索条件:', { searchTerm, categoryValue });
+        console.log('📊 原始数据条数:', trainingProjectsData.length);
+        
+        const filteredData = trainingProjectsData.filter(item => {
+            const titleMatch = !searchTerm || (item.title && item.title.toLowerCase().includes(searchTerm));
+            const descMatch = !searchTerm || (item.description && item.description.toLowerCase().includes(searchTerm));
+            const categoryMatch = !categoryValue || item.category === categoryValue;
+            
+            return (titleMatch || descMatch) && categoryMatch;
+        });
+        
+        console.log('📋 过滤后的训练计划数据:', filteredData);
+        
+        tbody.innerHTML = filteredData.map(item => `
+            <tr class="sortable-item" data-id="${item.id}">
+                <td><span class="sort-handle" title="拖拽排序"></span></td>
+                <td>
+                    ${item.image_display_url ? 
+                        `<img src="${item.image_display_url}" alt="${item.title}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">` : 
+                        '<div style="width:40px;height:40px;background:#f0f0f0;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#999;">无图</div>'
+                    }
+                </td>
+                <td>${truncate(item.title, 30)}</td>
+                <td>${item.category}</td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="flex:1;height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;">
+                            <div style="width:${item.progress}%;height:100%;background:linear-gradient(90deg,#667eea,#764ba2);"></div>
+                        </div>
+                        <span style="font-size:12px;color:#666;">${item.progress}%</span>
+                    </div>
+                </td>
+                <td>${item.leader || '-'}</td>
+                <td>${statusBadge(item.status)}</td>
+                <td>
+                    <button class="btn btn-sm" data-action="edit" data-id="${item.id}">✏️ 编辑</button>
+                    <button class="btn btn-sm btn-danger" data-action="delete" data-id="${item.id}">🗑️ 删除</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        console.log('✅ 训练计划表格渲染完成');
+        
+        // 重新绑定表格事件监听器
+        bindTrainingProjectsTableEvents();
+    }
+    
+    // 绑定训练计划表格事件
+    function bindTrainingProjectsTableEvents() {
+        const tbody = document.getElementById('trainingProjectsTbody');
+        if (!tbody) return;
+        
+        // 移除旧的事件监听器
+        tbody.removeEventListener('click', handleTrainingProjectsTableClick);
+        
+        // 添加新的事件监听器
+        tbody.addEventListener('click', handleTrainingProjectsTableClick);
+        console.log('✅ 训练计划表格事件监听器已重新绑定');
+    }
+    
+    // 训练计划表格点击处理函数
+    async function handleTrainingProjectsTableClick(e) {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        
+        const id = Number(btn.getAttribute('data-id'));
+        const action = btn.getAttribute('data-action');
+        console.log('🎓 训练计划表格点击:', { id, action });
+        
+        if (action === 'edit') {
+            window.editTrainingProject(id);
+        } else if (action === 'delete') {
+            await window.deleteTrainingProject(id);
+        }
+    }
+    
+    // 保存训练计划排序
+    async function saveTrainingProjectsOrder() {
+        console.log('🎓 保存训练计划排序...');
+        const tbody = document.getElementById('trainingProjectsTbody');
+        const rows = tbody.querySelectorAll('tr[data-id]');
+        const projectIds = Array.from(rows).map(row => parseInt(row.getAttribute('data-id')));
+        
+        console.log('📋 排序后的项目ID:', projectIds);
+        
+        try {
+            const res = await fetch('/api/innovation/training-projects/reorder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ project_ids: projectIds })
+            });
+            
+            if (res.ok) {
+                trainingProjectsHasUnsavedChanges = false;
+                const saveBtn = document.getElementById('saveTrainingProjectsOrderBtn');
+                if (saveBtn) {
+                    saveBtn.style.display = 'none';
+                    saveBtn.disabled = true;
+                    saveBtn.style.opacity = '0.5';
+                    saveBtn.style.cursor = 'not-allowed';
+                }
+                showMessage('训练计划排序已保存', 'success');
+                await fetchTrainingProjectsData();
+                // 重新绑定表格事件监听器
+                bindTrainingProjectsTableEvents();
+                console.log('✅ 训练计划排序保存成功');
+            } else {
+                const err = await res.json().catch(() => ({error: '保存失败'}));
+                showMessage(err.error || '保存失败', 'error');
+            }
+        } catch (e) {
+            console.error('❌ 保存训练计划排序失败:', e);
+            showMessage('网络错误，保存失败', 'error');
+        }
+    }
+    
+    // 编辑训练计划 - 修复编辑功能
+    window.editTrainingProject = function(id) {
+        console.log('🎓 编辑训练计划，ID:', id);
+        const item = trainingProjectsData.find(item => item.id === id);
+        if (!item) {
+            console.error('❌ 找不到训练计划数据，ID:', id);
+            showMessage('找不到要编辑的数据', 'error');
+            return;
+        }
+        
+        console.log('📝 训练计划数据:', item);
+        
+        // 填充表单数据
+        document.getElementById('trainingProjectsModalTitle').textContent = '编辑大学生创新创业训练计划';
+        document.getElementById('trainingProjectsId').value = item.id;
+        document.getElementById('trainingProjectsTitleInput').value = item.title || '';
+        document.getElementById('trainingProjectsDescInput').value = item.description || '';
+        document.getElementById('trainingProjectsCategoryInput').value = item.category || '人工智能';
+        document.getElementById('trainingProjectsProgressInput').value = item.progress || 0;
+        document.getElementById('trainingProjectsStartDateInput').value = item.start_date || '';
+        document.getElementById('trainingProjectsEndDateInput').value = item.end_date || '';
+        document.getElementById('trainingProjectsBudgetInput').value = item.budget || '';
+        document.getElementById('trainingProjectsLeaderInput').value = item.leader || '';
+        document.getElementById('trainingProjectsMembersCountInput').value = item.members_count || 0;
+        document.getElementById('trainingProjectsContactEmailInput').value = item.contact_email || '';
+        document.getElementById('trainingProjectsContactPhoneInput').value = item.contact_phone || '';
+        document.getElementById('trainingProjectsContactWechatInput').value = item.contact_wechat || '';
+        document.getElementById('trainingProjectsStatusInput').value = item.status || 'active';
+        document.getElementById('trainingProjectsImageUrlInput').value = item.image_url || '';
+        document.getElementById('trainingProjectsImageName').textContent = item.image_file || '';
+        
+        trainingProjectsUploadedImageUrl = item.image_display_url;
+        
+        // 显示模态框
+        document.getElementById('trainingProjectsModal').style.display = 'flex';
+        console.log('✅ 训练计划编辑模态框已显示');
+    };
+    
+    // 删除训练计划
+    window.deleteTrainingProject = async function(id) {
+        if (!confirm('确定要删除这个训练计划吗？')) return;
+        
+        try {
+            const res = await fetch(`/api/innovation/training-projects/${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (res.ok) {
+                showMessage('删除成功', 'success');
+                await fetchTrainingProjectsData();
+                // 重新绑定表格事件监听器
+                bindTrainingProjectsTableEvents();
+            } else {
+                const err = await res.json().catch(() => ({error: '删除失败'}));
+                showMessage(err.error || '删除失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，删除失败', 'error');
+        }
+    };
+    
+    // 上传训练计划图片
+    async function uploadTrainingProjectImage(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+            const res = await fetch('/api/innovation/training-projects/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (res.ok) {
+                const result = await res.json();
+                trainingProjectsUploadedImageUrl = result.url;
+                document.getElementById('trainingProjectsImageName').textContent = result.filename;
+                document.getElementById('trainingProjectsImageUrlInput').value = result.url;
+                showMessage('图片上传成功', 'success');
+            } else {
+                const err = await res.json().catch(() => ({error: '上传失败'}));
+                showMessage(err.error || '上传失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，上传失败', 'error');
+        }
+    }
+    
+    // ============ 知识产权管理 ============
+    
+    // 渲染知识产权表格
+    function renderIntellectualPropertiesTable() {
+        console.log('🎨 开始渲染知识产权表格...');
+        const tbody = document.getElementById('intellectualPropertiesTbody');
+        if (!tbody) {
+            console.error('❌ 找不到知识产权表格体元素');
+            return;
+        }
+        
+        const searchInput = document.getElementById('intellectualPropertiesSearchInput');
+        const typeFilter = document.getElementById('propertyTypeFilter');
+        
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const typeValue = typeFilter ? typeFilter.value : '';
+        
+        console.log('🔍 知识产权搜索条件:', { searchTerm, typeValue });
+        console.log('📊 原始数据条数:', intellectualPropertiesData.length);
+        
+        const filteredData = intellectualPropertiesData.filter(item => {
+            const titleMatch = !searchTerm || (item.title && item.title.toLowerCase().includes(searchTerm));
+            const descMatch = !searchTerm || (item.description && item.description.toLowerCase().includes(searchTerm));
+            const typeMatch = !typeValue || item.type === typeValue;
+            
+            return (titleMatch || descMatch) && typeMatch;
+        });
+        
+        console.log('📋 过滤后的知识产权数据:', filteredData);
+        
+        tbody.innerHTML = filteredData.map(item => `
+            <tr class="sortable-item" data-id="${item.id}">
+                <td><span class="sort-handle" title="拖拽排序"></span></td>
+                <td>
+                    ${item.image_display_url ? 
+                        `<img src="${item.image_display_url}" alt="${item.title}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">` : 
+                        '<div style="width:40px;height:40px;background:#f0f0f0;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#999;">无图</div>'
+                    }
+                </td>
+                <td>${truncate(item.title, 30)}</td>
+                <td>${item.type === 'patent' ? '专利' : item.type === 'copyright' ? '著作权' : '商标'}</td>
+                <td>${item.patent_number || '-'}</td>
+                <td>${item.inventors || '-'}</td>
+                <td>${statusBadge(item.status)}</td>
+                <td>
+                    <button class="btn btn-sm" data-action="edit" data-id="${item.id}">✏️ 编辑</button>
+                    <button class="btn btn-sm btn-danger" data-action="delete" data-id="${item.id}">🗑️ 删除</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        // 重新绑定表格事件监听器
+        bindIntellectualPropertiesTableEvents();
+    }
+    
+    // 绑定知识产权表格事件
+    function bindIntellectualPropertiesTableEvents() {
+        const tbody = document.getElementById('intellectualPropertiesTbody');
+        if (!tbody) return;
+        
+        // 移除旧的事件监听器
+        tbody.removeEventListener('click', handleIntellectualPropertiesTableClick);
+        
+        // 添加新的事件监听器
+        tbody.addEventListener('click', handleIntellectualPropertiesTableClick);
+        console.log('✅ 知识产权表格事件监听器已重新绑定');
+    }
+    
+    // 知识产权表格点击处理函数
+    async function handleIntellectualPropertiesTableClick(e) {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        
+        const id = Number(btn.getAttribute('data-id'));
+        const action = btn.getAttribute('data-action');
+        console.log('📋 知识产权表格点击:', { id, action });
+        
+        if (action === 'edit') {
+            window.editIntellectualProperty(id);
+        } else if (action === 'delete') {
+            await window.deleteIntellectualProperty(id);
+        }
+    }
+    
+    // 保存知识产权排序
+    async function saveIntellectualPropertiesOrder() {
+        console.log('📋 保存知识产权排序...');
+        const tbody = document.getElementById('intellectualPropertiesTbody');
+        const rows = tbody.querySelectorAll('tr[data-id]');
+        const propertyIds = Array.from(rows).map(row => parseInt(row.getAttribute('data-id')));
+        
+        console.log('📋 排序后的知识产权ID:', propertyIds);
+        
+        try {
+            const res = await fetch('/api/innovation/intellectual-properties/reorder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ property_ids: propertyIds })
+            });
+            
+            if (res.ok) {
+                intellectualPropertiesHasUnsavedChanges = false;
+                const saveBtn = document.getElementById('saveIntellectualPropertiesOrderBtn');
+                if (saveBtn) {
+                    saveBtn.style.display = 'none';
+                    saveBtn.disabled = true;
+                    saveBtn.style.opacity = '0.5';
+                    saveBtn.style.cursor = 'not-allowed';
+                }
+                showMessage('知识产权排序已保存', 'success');
+                await fetchIntellectualPropertiesData();
+                // 重新绑定表格事件监听器
+                bindIntellectualPropertiesTableEvents();
+                console.log('✅ 知识产权排序保存成功');
+            } else {
+                const err = await res.json().catch(() => ({error: '保存失败'}));
+                showMessage(err.error || '保存失败', 'error');
+            }
+        } catch (e) {
+            console.error('❌ 保存知识产权排序失败:', e);
+            showMessage('网络错误，保存失败', 'error');
+        }
+    }
+    
+    // 编辑知识产权 - 修复编辑功能
+    window.editIntellectualProperty = function(id) {
+        console.log('📋 编辑知识产权，ID:', id);
+        const item = intellectualPropertiesData.find(item => item.id === id);
+        if (!item) {
+            console.error('❌ 找不到知识产权数据，ID:', id);
+            showMessage('找不到要编辑的数据', 'error');
+            return;
+        }
+        
+        console.log('📝 知识产权数据:', item);
+        
+        // 填充表单数据
+        document.getElementById('intellectualPropertiesModalTitle').textContent = '编辑知识产权';
+        document.getElementById('intellectualPropertiesId').value = item.id;
+        document.getElementById('intellectualPropertiesTitleInput').value = item.title || '';
+        document.getElementById('intellectualPropertiesDescInput').value = item.description || '';
+        document.getElementById('intellectualPropertiesTypeInput').value = item.type || 'patent';
+        document.getElementById('intellectualPropertiesCategoryInput').value = item.category || '';
+        document.getElementById('intellectualPropertiesApplicationDateInput').value = item.application_date || '';
+        document.getElementById('intellectualPropertiesGrantDateInput').value = item.grant_date || '';
+        document.getElementById('intellectualPropertiesPatentNumberInput').value = item.patent_number || '';
+        document.getElementById('intellectualPropertiesInventorsInput').value = item.inventors || '';
+        document.getElementById('intellectualPropertiesStatusInput').value = item.status || 'active';
+        document.getElementById('intellectualPropertiesImageUrlInput').value = item.image_url || '';
+        document.getElementById('intellectualPropertiesImageName').textContent = item.image_file || '';
+        
+        intellectualPropertiesUploadedImageUrl = item.image_display_url;
+        
+        // 显示模态框
+        document.getElementById('intellectualPropertiesModal').style.display = 'flex';
+        console.log('✅ 知识产权编辑模态框已显示');
+    };
+    
+    // 删除知识产权
+    window.deleteIntellectualProperty = async function(id) {
+        if (!confirm('确定要删除这个知识产权吗？')) return;
+        
+        try {
+            const res = await fetch(`/api/innovation/intellectual-properties/${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (res.ok) {
+                showMessage('删除成功', 'success');
+                await fetchIntellectualPropertiesData();
+                // 重新绑定表格事件监听器
+                bindIntellectualPropertiesTableEvents();
+            } else {
+                const err = await res.json().catch(() => ({error: '删除失败'}));
+                showMessage(err.error || '删除失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，删除失败', 'error');
+        }
+    };
+    
+    // 上传知识产权图片
+    async function uploadIntellectualPropertyImage(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+            const res = await fetch('/api/innovation/intellectual-properties/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (res.ok) {
+                const result = await res.json();
+                intellectualPropertiesUploadedImageUrl = result.url;
+                document.getElementById('intellectualPropertiesImageName').textContent = result.filename;
+                document.getElementById('intellectualPropertiesImageUrlInput').value = result.url;
+                showMessage('图片上传成功', 'success');
+            } else {
+                const err = await res.json().catch(() => ({error: '上传失败'}));
+                showMessage(err.error || '上传失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，上传失败', 'error');
+        }
+    }
+    
+    // ============ 校企合作管理 ============
+    
+    // 渲染校企合作表格
+    function renderEnterpriseCooperationsTable() {
+        console.log('🎨 开始渲染校企合作表格...');
+        const tbody = document.getElementById('enterpriseCooperationsTbody');
+        if (!tbody) {
+            console.error('❌ 找不到校企合作表格体元素');
+            return;
+        }
+        
+        const searchInput = document.getElementById('enterpriseCooperationsSearchInput');
+        const enterpriseFilter = document.getElementById('enterpriseFilter');
+        
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const enterpriseValue = enterpriseFilter ? enterpriseFilter.value : '';
+        
+        console.log('🔍 校企合作搜索条件:', { searchTerm, enterpriseValue });
+        console.log('📊 原始数据条数:', enterpriseCooperationsData.length);
+        
+        const filteredData = enterpriseCooperationsData.filter(item => {
+            const titleMatch = !searchTerm || (item.title && item.title.toLowerCase().includes(searchTerm));
+            const descMatch = !searchTerm || (item.description && item.description.toLowerCase().includes(searchTerm));
+            const enterpriseMatch = !enterpriseValue || item.enterprise_name === enterpriseValue;
+            
+            return (titleMatch || descMatch) && enterpriseMatch;
+        });
+        
+        console.log('📋 过滤后的校企合作数据:', filteredData);
+        
+        tbody.innerHTML = filteredData.map(item => `
+            <tr class="sortable-item" data-id="${item.id}">
+                <td><span class="sort-handle" title="拖拽排序"></span></td>
+                <td>
+                    ${item.image_display_url ? 
+                        `<img src="${item.image_display_url}" alt="${item.title}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">` : 
+                        '<div style="width:40px;height:40px;background:#f0f0f0;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#999;">无图</div>'
+                    }
+                </td>
+                <td>${truncate(item.title, 30)}</td>
+                <td>${item.enterprise_name}</td>
+                <td>${item.category || '-'}</td>
+                <td>${item.leader || '-'}</td>
+                <td>${statusBadge(item.status)}</td>
+                <td>
+                    <button class="btn btn-sm" data-action="edit" data-id="${item.id}">✏️ 编辑</button>
+                    <button class="btn btn-sm btn-danger" data-action="delete" data-id="${item.id}">🗑️ 删除</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        // 重新绑定表格事件监听器
+        bindEnterpriseCooperationsTableEvents();
+    }
+    
+    // 绑定校企合作表格事件
+    function bindEnterpriseCooperationsTableEvents() {
+        const tbody = document.getElementById('enterpriseCooperationsTbody');
+        if (!tbody) return;
+        
+        // 移除旧的事件监听器
+        tbody.removeEventListener('click', handleEnterpriseCooperationsTableClick);
+        
+        // 添加新的事件监听器
+        tbody.addEventListener('click', handleEnterpriseCooperationsTableClick);
+        console.log('✅ 校企合作表格事件监听器已重新绑定');
+    }
+    
+    // 校企合作表格点击处理函数
+    async function handleEnterpriseCooperationsTableClick(e) {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        
+        const id = Number(btn.getAttribute('data-id'));
+        const action = btn.getAttribute('data-action');
+        console.log('🤝 校企合作表格点击:', { id, action });
+        
+        if (action === 'edit') {
+            window.editEnterpriseCooperation(id);
+        } else if (action === 'delete') {
+            await window.deleteEnterpriseCooperation(id);
+        }
+    }
+    
+    // 保存校企合作排序
+    async function saveEnterpriseCooperationsOrder() {
+        console.log('🤝 保存校企合作排序...');
+        const tbody = document.getElementById('enterpriseCooperationsTbody');
+        const rows = tbody.querySelectorAll('tr[data-id]');
+        const cooperationIds = Array.from(rows).map(row => parseInt(row.getAttribute('data-id')));
+        
+        console.log('📋 排序后的校企合作ID:', cooperationIds);
+        
+        try {
+            const res = await fetch('/api/innovation/enterprise-cooperations/reorder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cooperation_ids: cooperationIds })
+            });
+            
+            if (res.ok) {
+                enterpriseCooperationsHasUnsavedChanges = false;
+                const saveBtn = document.getElementById('saveEnterpriseCooperationsOrderBtn');
+                if (saveBtn) {
+                    saveBtn.style.display = 'none';
+                    saveBtn.disabled = true;
+                    saveBtn.style.opacity = '0.5';
+                    saveBtn.style.cursor = 'not-allowed';
+                }
+                showMessage('校企合作排序已保存', 'success');
+                await fetchEnterpriseCooperationsData();
+                // 重新绑定表格事件监听器
+                bindEnterpriseCooperationsTableEvents();
+                console.log('✅ 校企合作排序保存成功');
+            } else {
+                const err = await res.json().catch(() => ({error: '保存失败'}));
+                showMessage(err.error || '保存失败', 'error');
+            }
+        } catch (e) {
+            console.error('❌ 保存校企合作排序失败:', e);
+            showMessage('网络错误，保存失败', 'error');
+        }
+    }
+    
+    // 编辑校企合作 - 修复编辑功能
+    window.editEnterpriseCooperation = function(id) {
+        console.log('🤝 编辑校企合作，ID:', id);
+        const item = enterpriseCooperationsData.find(item => item.id === id);
+        if (!item) {
+            console.error('❌ 找不到校企合作数据，ID:', id);
+            showMessage('找不到要编辑的数据', 'error');
+            return;
+        }
+        
+        console.log('📝 校企合作数据:', item);
+        
+        // 填充表单数据
+        document.getElementById('enterpriseCooperationsModalTitle').textContent = '编辑校企合作';
+        document.getElementById('enterpriseCooperationsId').value = item.id;
+        document.getElementById('enterpriseCooperationsTitleInput').value = item.title || '';
+        document.getElementById('enterpriseCooperationsDescInput').value = item.description || '';
+        document.getElementById('enterpriseCooperationsEnterpriseNameInput').value = item.enterprise_name || '';
+        document.getElementById('enterpriseCooperationsCategoryInput').value = item.category || '';
+        document.getElementById('enterpriseCooperationsStartDateInput').value = item.start_date || '';
+        document.getElementById('enterpriseCooperationsEndDateInput').value = item.end_date || '';
+        document.getElementById('enterpriseCooperationsBudgetInput').value = item.budget || '';
+        document.getElementById('enterpriseCooperationsLeaderInput').value = item.leader || '';
+        document.getElementById('enterpriseCooperationsStatusInput').value = item.status || 'active';
+        document.getElementById('enterpriseCooperationsAchievementInput').value = item.achievement || '';
+        document.getElementById('enterpriseCooperationsEnterpriseLogoInput').value = item.enterprise_logo || '';
+        document.getElementById('enterpriseCooperationsImageUrlInput').value = item.image_url || '';
+        document.getElementById('enterpriseCooperationsImageName').textContent = item.image_file || '';
+        
+        enterpriseCooperationsUploadedImageUrl = item.image_display_url;
+        
+        // 显示模态框
+        document.getElementById('enterpriseCooperationsModal').style.display = 'flex';
+        console.log('✅ 校企合作编辑模态框已显示');
+    };
+    
+    // 删除校企合作
+    window.deleteEnterpriseCooperation = async function(id) {
+        if (!confirm('确定要删除这个校企合作吗？')) return;
+        
+        try {
+            const res = await fetch(`/api/innovation/enterprise-cooperations/${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (res.ok) {
+                showMessage('删除成功', 'success');
+                await fetchEnterpriseCooperationsData();
+                // 重新绑定表格事件监听器
+                bindEnterpriseCooperationsTableEvents();
+            } else {
+                const err = await res.json().catch(() => ({error: '删除失败'}));
+                showMessage(err.error || '删除失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，删除失败', 'error');
+        }
+    };
+    
+    // 上传校企合作图片
+    async function uploadEnterpriseCooperationImage(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+            const res = await fetch('/api/innovation/enterprise-cooperations/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (res.ok) {
+                const result = await res.json();
+                enterpriseCooperationsUploadedImageUrl = result.url;
+                document.getElementById('enterpriseCooperationsImageName').textContent = result.filename;
+                document.getElementById('enterpriseCooperationsImageUrlInput').value = result.url;
+                showMessage('图片上传成功', 'success');
+            } else {
+                const err = await res.json().catch(() => ({error: '上传失败'}));
+                showMessage(err.error || '上传失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，上传失败', 'error');
+        }
+    }
+    
+    // ============ 简化的事件监听器初始化 ============
+    
+    function initThreeModulesEvents() {
+        console.log('📄 开始初始化三个模块的事件监听器...');
+        
+        // === 训练计划模块事件绑定 ===
+        const trainingSearchInput = document.getElementById('trainingProjectsSearchInput');
+        if (trainingSearchInput) {
+            trainingSearchInput.addEventListener('input', renderTrainingProjectsTable);
+            console.log('✅ 训练计划搜索事件已绑定');
+        }
+        
+        const categoryFilter = document.getElementById('categoryFilter');
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', renderTrainingProjectsTable);
+            console.log('✅ 训练计划类别筛选事件已绑定');
+        }
+        
+        // 训练计划新增按钮
+        const addTrainingProjectBtn = document.getElementById('addTrainingProjectBtn');
+        if (addTrainingProjectBtn) {
+            addTrainingProjectBtn.addEventListener('click', openTrainingProjectModal);
+            console.log('✅ 训练计划新增按钮事件已绑定');
+        }
+        
+        // 训练计划保存排序按钮
+        const saveTrainingProjectsOrderBtn = document.getElementById('saveTrainingProjectsOrderBtn');
+        if (saveTrainingProjectsOrderBtn) {
+            saveTrainingProjectsOrderBtn.addEventListener('click', saveTrainingProjectsOrder);
+            console.log('✅ 训练计划保存排序按钮事件已绑定');
+        }
+        
+        // 训练计划模态框关闭功能
+        const trainingProjectsModalClose = document.getElementById('trainingProjectsModalClose');
+        const trainingProjectsCancelBtn = document.getElementById('trainingProjectsCancelBtn');
+        const trainingProjectsModal = document.getElementById('trainingProjectsModal');
+        
+        if (trainingProjectsModalClose) {
+            trainingProjectsModalClose.addEventListener('click', closeTrainingProjectModal);
+        }
+        if (trainingProjectsCancelBtn) {
+            trainingProjectsCancelBtn.addEventListener('click', closeTrainingProjectModal);
+        }
+        if (trainingProjectsModal) {
+            trainingProjectsModal.addEventListener('click', (e) => {
+                if (e.target === trainingProjectsModal) closeTrainingProjectModal();
+            });
+        }
+        
+        // 训练计划图片上传
+        const trainingProjectsImageBtn = document.getElementById('trainingProjectsImageBtn');
+        const trainingProjectsImageInput = document.getElementById('trainingProjectsImageInput');
+        
+        if (trainingProjectsImageBtn) {
+            trainingProjectsImageBtn.addEventListener('click', () => {
+                trainingProjectsImageInput.click();
+            });
+        }
+        if (trainingProjectsImageInput) {
+            trainingProjectsImageInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) uploadTrainingProjectImage(file);
+            });
+        }
+        
+        // 训练计划表单提交
+        const trainingProjectsForm = document.getElementById('trainingProjectsForm');
+        if (trainingProjectsForm) {
+            trainingProjectsForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                // 防重复提交检查
+                if (trainingProjectsSubmitting) {
+                    console.log('🎓 训练计划正在提交中，忽略重复提交');
+                    return;
+                }
+                
+                trainingProjectsSubmitting = true;
+                console.log('🎓 训练计划表单提交...');
+                
+                const formData = {
+                    title: document.getElementById('trainingProjectsTitleInput').value,
+                    description: document.getElementById('trainingProjectsDescInput').value,
+                    category: document.getElementById('trainingProjectsCategoryInput').value,
+                    progress: parseInt(document.getElementById('trainingProjectsProgressInput').value),
+                    start_date: document.getElementById('trainingProjectsStartDateInput').value,
+                    end_date: document.getElementById('trainingProjectsEndDateInput').value,
+                    budget: document.getElementById('trainingProjectsBudgetInput').value,
+                    leader: document.getElementById('trainingProjectsLeaderInput').value,
+                    members_count: parseInt(document.getElementById('trainingProjectsMembersCountInput').value),
+                    contact_email: document.getElementById('trainingProjectsContactEmailInput').value,
+                    contact_phone: document.getElementById('trainingProjectsContactPhoneInput').value,
+                    contact_wechat: document.getElementById('trainingProjectsContactWechatInput').value,
+                    status: document.getElementById('trainingProjectsStatusInput').value,
+                    image_url: trainingProjectsUploadedImageUrl || document.getElementById('trainingProjectsImageUrlInput').value
+                };
+                
+                const id = document.getElementById('trainingProjectsId').value;
+                const url = id ? `/api/innovation/training-projects/${id}` : '/api/innovation/training-projects';
+                const method = id ? 'PUT' : 'POST';
+                
+                try {
+                    const res = await fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    if (res.ok) {
+                        showMessage(id ? '更新成功' : '创建成功', 'success');
+                        closeTrainingProjectModal();
+                        await fetchTrainingProjectsData();
+                        bindTrainingProjectsTableEvents();
+                        localStorage.setItem('innovation_data_updated', Date.now().toString());
+                        setTimeout(() => localStorage.removeItem('innovation_data_updated'), 1000);
+                    } else {
+                        const err = await res.json().catch(() => ({error: '操作失败'}));
+                        showMessage(err.error || '操作失败', 'error');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    showMessage('网络错误，操作失败', 'error');
+                } finally {
+                    // 重置提交状态
+                    trainingProjectsSubmitting = false;
+                }
+            });
+            console.log('✅ 训练计划表单提交事件已绑定');
+        }
+        
+        // === 知识产权模块事件绑定 ===
+        const intellectualSearchInput = document.getElementById('intellectualPropertiesSearchInput');
+        if (intellectualSearchInput) {
+            intellectualSearchInput.addEventListener('input', renderIntellectualPropertiesTable);
+            console.log('✅ 知识产权搜索事件已绑定');
+        }
+        
+        const propertyTypeFilter = document.getElementById('propertyTypeFilter');
+        if (propertyTypeFilter) {
+            propertyTypeFilter.addEventListener('change', renderIntellectualPropertiesTable);
+            console.log('✅ 知识产权类型筛选事件已绑定');
+        }
+        
+        // 知识产权相关按钮
+        const addIntellectualPropertyBtn = document.getElementById('addIntellectualPropertyBtn');
+        if (addIntellectualPropertyBtn) {
+            addIntellectualPropertyBtn.addEventListener('click', openIntellectualPropertyModal);
+            console.log('✅ 知识产权新增按钮事件已绑定');
+        }
+        
+        // 知识产权保存排序按钮和模态框
+        const saveIntellectualPropertiesOrderBtn = document.getElementById('saveIntellectualPropertiesOrderBtn');
+        if (saveIntellectualPropertiesOrderBtn) {
+            saveIntellectualPropertiesOrderBtn.addEventListener('click', saveIntellectualPropertiesOrder);
+        }
+        
+        // 知识产权模态框关闭
+        const intellectualModalClose = document.getElementById('intellectualPropertiesModalClose');
+        const intellectualCancelBtn = document.getElementById('intellectualPropertiesCancelBtn');
+        const intellectualModal = document.getElementById('intellectualPropertiesModal');
+        
+        if (intellectualModalClose) intellectualModalClose.addEventListener('click', closeIntellectualPropertyModal);
+        if (intellectualCancelBtn) intellectualCancelBtn.addEventListener('click', closeIntellectualPropertyModal);
+        if (intellectualModal) intellectualModal.addEventListener('click', (e) => {
+            if (e.target === intellectualModal) closeIntellectualPropertyModal();
+        });
+        
+        // 知识产权表单提交（已在后续代码中处理）
+        
+        // === 校企合作模块事件绑定 ===
+        const enterpriseSearchInput = document.getElementById('enterpriseCooperationsSearchInput');
+        if (enterpriseSearchInput) {
+            enterpriseSearchInput.addEventListener('input', renderEnterpriseCooperationsTable);
+        }
+        
+        const enterpriseFilter = document.getElementById('enterpriseFilter');
+        if (enterpriseFilter) {
+            enterpriseFilter.addEventListener('change', renderEnterpriseCooperationsTable);
+        }
+        
+        // 校企合作相关按钮
+        const addEnterpriseBtn = document.getElementById('addEnterpriseCooperationBtn');
+        if (addEnterpriseBtn) {
+            addEnterpriseBtn.addEventListener('click', openEnterpriseCooperationModal);
+        }
+        
+        const saveEnterpriseOrderBtn = document.getElementById('saveEnterpriseCooperationsOrderBtn');
+        if (saveEnterpriseOrderBtn) {
+            saveEnterpriseOrderBtn.addEventListener('click', saveEnterpriseCooperationsOrder);
+        }
+        
+        // 校企合作模态框关闭
+        const enterpriseModalClose = document.getElementById('enterpriseCooperationsModalClose');
+        const enterpriseCancelBtn = document.getElementById('enterpriseCooperationsCancelBtn');
+        const enterpriseModal = document.getElementById('enterpriseCooperationsModal');
+        
+        if (enterpriseModalClose) enterpriseModalClose.addEventListener('click', closeEnterpriseCooperationModal);
+        if (enterpriseCancelBtn) enterpriseCancelBtn.addEventListener('click', closeEnterpriseCooperationModal);
+        if (enterpriseModal) enterpriseModal.addEventListener('click', (e) => {
+            if (e.target === enterpriseModal) closeEnterpriseCooperationModal();
+        });
+        
+        // 校企合作表单提交（已在后续代码中处理）
+        
+        console.log('✅ 三个模块的事件监听器初始化完成');
+    }
+        
+        const intellectualPropertiesModalClose = document.getElementById('intellectualPropertiesModalClose');
+        if (intellectualPropertiesModalClose) {
+            intellectualPropertiesModalClose.addEventListener('click', () => {
+                console.log('📋 点击知识产权模态框关闭按钮');
+                document.getElementById('intellectualPropertiesModal').style.display = 'none';
+            });
+            console.log('✅ 知识产权模态框关闭按钮事件监听器已设置');
+        } else {
+            console.error('❌ 找不到知识产权模态框关闭按钮');
+        }
+        
+        const intellectualPropertiesCancelBtn = document.getElementById('intellectualPropertiesCancelBtn');
+        if (intellectualPropertiesCancelBtn) {
+            intellectualPropertiesCancelBtn.addEventListener('click', () => {
+                console.log('📋 点击知识产权模态框取消按钮');
+                document.getElementById('intellectualPropertiesModal').style.display = 'none';
+            });
+            console.log('✅ 知识产权模态框取消按钮事件监听器已设置');
+        } else {
+            console.error('❌ 找不到知识产权模态框取消按钮');
+        }
+        
+        // 添加知识产权模态框背景点击关闭
+        const intellectualPropertiesModal = document.getElementById('intellectualPropertiesModal');
+        if (intellectualPropertiesModal) {
+            intellectualPropertiesModal.addEventListener('click', (e) => {
+                if (e.target === intellectualPropertiesModal) {
+                    console.log('📋 点击知识产权模态框背景关闭');
+                    intellectualPropertiesModal.style.display = 'none';
+                }
+            });
+            console.log('✅ 知识产权模态框背景点击关闭事件监听器已设置');
+        }
+        
+        const intellectualPropertiesImageBtn = document.getElementById('intellectualPropertiesImageBtn');
+        if (intellectualPropertiesImageBtn) {
+            intellectualPropertiesImageBtn.addEventListener('click', () => {
+                document.getElementById('intellectualPropertiesImageInput').click();
+            });
+        }
+        
+        const intellectualPropertiesImageInput = document.getElementById('intellectualPropertiesImageInput');
+        if (intellectualPropertiesImageInput) {
+            intellectualPropertiesImageInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    uploadIntellectualPropertyImage(file);
+                }
+            });
+        }
+        
+        const intellectualPropertiesForm = document.getElementById('intellectualPropertiesForm');
+        if (intellectualPropertiesForm) {
+            intellectualPropertiesForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                // 防重复提交检查
+                if (intellectualPropertiesSubmitting) {
+                    console.log('📋 知识产权正在提交中，忽略重复提交');
+                    return;
+                }
+                
+                intellectualPropertiesSubmitting = true;
+                console.log('📋 知识产权表单提交...');
+                
+                const formData = {
+                    title: document.getElementById('intellectualPropertiesTitleInput').value,
+                    description: document.getElementById('intellectualPropertiesDescInput').value,
+                    type: document.getElementById('intellectualPropertiesTypeInput').value,
+                    category: document.getElementById('intellectualPropertiesCategoryInput').value,
+                    application_date: document.getElementById('intellectualPropertiesApplicationDateInput').value,
+                    grant_date: document.getElementById('intellectualPropertiesGrantDateInput').value,
+                    patent_number: document.getElementById('intellectualPropertiesPatentNumberInput').value,
+                    inventors: document.getElementById('intellectualPropertiesInventorsInput').value,
+                    status: document.getElementById('intellectualPropertiesStatusInput').value,
+                    image_url: intellectualPropertiesUploadedImageUrl || document.getElementById('intellectualPropertiesImageUrlInput').value
+                };
+                
+                console.log('📝 知识产权表单数据:', formData);
+                
+                const id = document.getElementById('intellectualPropertiesId').value;
+                const url = id ? `/api/innovation/intellectual-properties/${id}` : '/api/innovation/intellectual-properties';
+                const method = id ? 'PUT' : 'POST';
+                
+                try {
+                    const res = await fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    if (res.ok) {
+                        showMessage(id ? '更新成功' : '创建成功', 'success');
+                        document.getElementById('intellectualPropertiesModal').style.display = 'none';
+                        
+                        // 立即刷新数据
+                        await fetchIntellectualPropertiesData();
+                        console.log('✅ 知识产权数据已刷新');
+                        
+                        // 通知其他标签页
+                        localStorage.setItem('innovation_data_updated', Date.now().toString());
+                        setTimeout(() => localStorage.removeItem('innovation_data_updated'), 1000);
+                    } else {
+                        const err = await res.json().catch(() => ({error: '操作失败'}));
+                        showMessage(err.error || '操作失败', 'error');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    showMessage('网络错误，操作失败', 'error');
+                } finally {
+                    // 重置提交状态
+                    intellectualPropertiesSubmitting = false;
+                }
+            });
+        }
+        
+        // 校企合作事件监听器 - 搜索和筛选
+        const enterpriseSearchInput = document.getElementById('enterpriseCooperationsSearchInput');
+        if (enterpriseSearchInput) {
+            // 移除旧的事件监听器并重新绑定
+            const newEnterpriseSearchInput = enterpriseSearchInput.cloneNode(true);
+            enterpriseSearchInput.parentNode.replaceChild(newEnterpriseSearchInput, enterpriseSearchInput);
+            const freshEnterpriseSearchInput = document.getElementById('enterpriseCooperationsSearchInput');
+            
+            freshEnterpriseSearchInput.addEventListener('input', () => {
+                console.log('🔍 校企合作搜索输入:', freshEnterpriseSearchInput.value);
+                renderEnterpriseCooperationsTable();
+            });
+            console.log('✅ 校企合作搜索输入框事件监听器已设置');
+        } else {
+            console.error('❌ 找不到校企合作搜索输入框');
+        }
+        
+        const enterpriseFilter = document.getElementById('enterpriseFilter');
+        if (enterpriseFilter) {
+            // 移除旧的事件监听器并重新绑定
+            const newEnterpriseFilter = enterpriseFilter.cloneNode(true);
+            enterpriseFilter.parentNode.replaceChild(newEnterpriseFilter, enterpriseFilter);
+            const freshEnterpriseFilter = document.getElementById('enterpriseFilter');
+            
+            freshEnterpriseFilter.addEventListener('change', () => {
+                console.log('🔍 校企合作企业筛选:', freshEnterpriseFilter.value);
+                renderEnterpriseCooperationsTable();
+            });
+            console.log('✅ 企业筛选器事件监听器已设置');
+        } else {
+            console.error('❌ 找不到企业筛选器');
+        }
+        
+        const addEnterpriseCooperationBtn = document.getElementById('addEnterpriseCooperationBtn');
+        if (addEnterpriseCooperationBtn) {
+            addEnterpriseCooperationBtn.addEventListener('click', () => {
+                console.log('🤝 点击新增校企合作按钮');
+                // 重置表单
+                document.getElementById('enterpriseCooperationsForm').reset();
+                document.getElementById('enterpriseCooperationsId').value = '';
+                document.getElementById('enterpriseCooperationsImageName').textContent = '';
+                enterpriseCooperationsUploadedImageUrl = null;
+                
+                // 设置默认值
+                document.getElementById('enterpriseCooperationsStatusInput').value = 'active';
+                
+                // 显示模态框
+                document.getElementById('enterpriseCooperationsModalTitle').textContent = '新增校企合作';
+                document.getElementById('enterpriseCooperationsModal').style.display = 'flex';
+                console.log('✅ 校企合作新增模态框已显示');
+            });
+            console.log('✅ 校企合作新增按钮事件监听器已设置');
+        } else {
+            console.error('❌ 找不到校企合作新增按钮');
+        }
+        
+        const saveEnterpriseCooperationsOrderBtn = document.getElementById('saveEnterpriseCooperationsOrderBtn');
+        if (saveEnterpriseCooperationsOrderBtn) {
+            // 移除旧的事件监听器并重新绑定
+            const newSaveEnterpriseCooperationsOrderBtn = saveEnterpriseCooperationsOrderBtn.cloneNode(true);
+            saveEnterpriseCooperationsOrderBtn.parentNode.replaceChild(newSaveEnterpriseCooperationsOrderBtn, saveEnterpriseCooperationsOrderBtn);
+            const freshSaveEnterpriseCooperationsOrderBtn = document.getElementById('saveEnterpriseCooperationsOrderBtn');
+            
+            freshSaveEnterpriseCooperationsOrderBtn.addEventListener('click', saveEnterpriseCooperationsOrder);
+            console.log('✅ 校企合作保存排序按钮事件监听器已设置');
+        } else {
+            console.error('❌ 找不到校企合作保存排序按钮');
+        }
+        
+        const enterpriseCooperationsModalClose = document.getElementById('enterpriseCooperationsModalClose');
+        if (enterpriseCooperationsModalClose) {
+            enterpriseCooperationsModalClose.addEventListener('click', () => {
+                console.log('🤝 点击校企合作模态框关闭按钮');
+                document.getElementById('enterpriseCooperationsModal').style.display = 'none';
+            });
+            console.log('✅ 校企合作模态框关闭按钮事件监听器已设置');
+        } else {
+            console.error('❌ 找不到校企合作模态框关闭按钮');
+        }
+        
+        const enterpriseCooperationsCancelBtn = document.getElementById('enterpriseCooperationsCancelBtn');
+        if (enterpriseCooperationsCancelBtn) {
+            enterpriseCooperationsCancelBtn.addEventListener('click', () => {
+                console.log('🤝 点击校企合作模态框取消按钮');
+                document.getElementById('enterpriseCooperationsModal').style.display = 'none';
+            });
+            console.log('✅ 校企合作模态框取消按钮事件监听器已设置');
+        } else {
+            console.error('❌ 找不到校企合作模态框取消按钮');
+        }
+        
+        // 添加校企合作模态框背景点击关闭
+        const enterpriseCooperationsModal = document.getElementById('enterpriseCooperationsModal');
+        if (enterpriseCooperationsModal) {
+            enterpriseCooperationsModal.addEventListener('click', (e) => {
+                if (e.target === enterpriseCooperationsModal) {
+                    console.log('🤝 点击校企合作模态框背景关闭');
+                    enterpriseCooperationsModal.style.display = 'none';
+                }
+            });
+            console.log('✅ 校企合作模态框背景点击关闭事件监听器已设置');
+        }
+        
+        const enterpriseCooperationsImageBtn = document.getElementById('enterpriseCooperationsImageBtn');
+        if (enterpriseCooperationsImageBtn) {
+            enterpriseCooperationsImageBtn.addEventListener('click', () => {
+                document.getElementById('enterpriseCooperationsImageInput').click();
+            });
+        }
+        
+        const enterpriseCooperationsImageInput = document.getElementById('enterpriseCooperationsImageInput');
+        if (enterpriseCooperationsImageInput) {
+            enterpriseCooperationsImageInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    uploadEnterpriseCooperationImage(file);
+                }
+            });
+        }
+        
+        const enterpriseCooperationsForm = document.getElementById('enterpriseCooperationsForm');
+        if (enterpriseCooperationsForm) {
+            enterpriseCooperationsForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                // 防重复提交检查
+                if (enterpriseCooperationsSubmitting) {
+                    console.log('🤝 校企合作正在提交中，忽略重复提交');
+                    return;
+                }
+                
+                enterpriseCooperationsSubmitting = true;
+                console.log('🤝 校企合作表单提交...');
+                
+                const formData = {
+                    title: document.getElementById('enterpriseCooperationsTitleInput').value,
+                    description: document.getElementById('enterpriseCooperationsDescInput').value,
+                    enterprise_name: document.getElementById('enterpriseCooperationsEnterpriseNameInput').value,
+                    category: document.getElementById('enterpriseCooperationsCategoryInput').value,
+                    start_date: document.getElementById('enterpriseCooperationsStartDateInput').value,
+                    end_date: document.getElementById('enterpriseCooperationsEndDateInput').value,
+                    budget: document.getElementById('enterpriseCooperationsBudgetInput').value,
+                    leader: document.getElementById('enterpriseCooperationsLeaderInput').value,
+                    status: document.getElementById('enterpriseCooperationsStatusInput').value,
+                    achievement: document.getElementById('enterpriseCooperationsAchievementInput').value,
+                    enterprise_logo: document.getElementById('enterpriseCooperationsEnterpriseLogoInput').value,
+                    image_url: enterpriseCooperationsUploadedImageUrl || document.getElementById('enterpriseCooperationsImageUrlInput').value
+                };
+                
+                console.log('📝 校企合作表单数据:', formData);
+                
+                const id = document.getElementById('enterpriseCooperationsId').value;
+                const url = id ? `/api/innovation/enterprise-cooperations/${id}` : '/api/innovation/enterprise-cooperations';
+                const method = id ? 'PUT' : 'POST';
+                
+                try {
+                    const res = await fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    if (res.ok) {
+                        showMessage(id ? '更新成功' : '创建成功', 'success');
+                        document.getElementById('enterpriseCooperationsModal').style.display = 'none';
+                        
+                        // 立即刷新数据
+                        await fetchEnterpriseCooperationsData();
+                        console.log('✅ 校企合作数据已刷新');
+                        
+                        // 重新绑定表格事件监听器
+                        bindEnterpriseCooperationsTableEvents();
+                        
+                        // 通知其他标签页
+                        localStorage.setItem('innovation_data_updated', Date.now().toString());
+                        setTimeout(() => localStorage.removeItem('innovation_data_updated'), 1000);
+                    } else {
+                        const err = await res.json().catch(() => ({error: '操作失败'}));
+                        showMessage(err.error || '操作失败', 'error');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    showMessage('网络错误，操作失败', 'error');
+                } finally {
+                    // 重置提交状态
+                    enterpriseCooperationsSubmitting = false;
+                }
+            });
+        }
+        
+        // 初始化数据
+        console.log('🚀 开始初始化数据...');
+        
+        // 显示加载状态
+        showMessage('正在加载科创管理数据...', 'info');
+        
+        // 使用Promise.all确保所有数据都加载完成
+        Promise.all([
+            fetchTrainingProjectsData(),
+            fetchIntellectualPropertiesData(),
+            fetchEnterpriseCooperationsData()
+        ]).then(() => {
+            console.log('✅ 所有模块数据初始化完成');
+            showMessage('科创管理页面加载完成', 'success');
+            
+            // 初始化完成后检查按钮状态
+            setTimeout(() => {
+                checkButtonStates();
+            }, 1000);
+        }).catch(e => {
+            console.error('❌ 模块数据初始化失败:', e);
+            showMessage('部分数据加载失败，请检查网络连接', 'error');
+        });
+        
+        // 检查按钮状态的函数
+        function checkButtonStates() {
+            const buttons = [
+                'saveTrainingProjectsOrderBtn',
+                'saveIntellectualPropertiesOrderBtn', 
+                'saveEnterpriseCooperationsOrderBtn'
+            ];
+            
+            buttons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    console.log(`🔍 检查按钮 ${btnId}:`, {
+                        display: btn.style.display,
+                        disabled: btn.disabled,
+                        opacity: btn.style.opacity
+                    });
+                }
+            });
+        }
+        
+            // 添加全局刷新函数
+    window.refreshAllInnovationData = async function() {
+        console.log('🔄 刷新所有科创数据...');
+        try {
+            await Promise.all([
+                fetchTrainingProjectsData(),
+                fetchIntellectualPropertiesData(),
+                fetchEnterpriseCooperationsData()
+            ]);
+            console.log('✅ 所有科创数据刷新完成');
+            showMessage('数据刷新完成', 'success');
+        } catch (e) {
+            console.error('❌ 刷新科创数据失败:', e);
+            showMessage('数据刷新失败', 'error');
+        }
+    };
+    
+    // 添加全局错误处理
+    window.addEventListener('error', function(e) {
+        console.error('❌ 全局错误:', e.error);
+        showMessage('页面出现错误，请刷新重试', 'error');
+    });
+    
+    // 添加未处理的Promise拒绝处理
+    window.addEventListener('unhandledrejection', function(e) {
+        console.error('❌ 未处理的Promise拒绝:', e.reason);
+        showMessage('操作失败，请重试', 'error');
+    });
+    
+    // 添加页面加载完成后的调试信息
+    console.log('🔧 科创管理页面JavaScript修复完成');
+    console.log('📊 已修复的功能:');
+    console.log('  - 事件监听器重复绑定问题');
+    console.log('  - 搜索和筛选功能');
+    console.log('  - 保存排序按钮状态管理');
+    console.log('  - 数据刷新和同步');
+    console.log('  - 错误处理机制');
+        
+        // 监听页面可见性变化，当页面重新可见时刷新数据
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                console.log('📱 页面重新可见，刷新数据...');
+                window.refreshAllInnovationData();
+            }
+        });
+        
+        // 监听存储变化事件（多标签页同步）
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'innovation_data_updated') {
+                console.log('🔄 检测到其他标签页数据更新，刷新当前页面数据');
+                // 重新获取所有数据
+                Promise.all([
+                    fetchTrainingProjectsData(),
+                    fetchIntellectualPropertiesData(),
+                    fetchEnterpriseCooperationsData()
+                ]).then(() => {
+                    console.log('✅ 数据同步完成');
+                }).catch(e => {
+                    console.error('❌ 数据同步失败:', e);
+                });
+            }
+        });
+        
+        // 添加错误处理和重试机制
+        window.retryFetchData = async function(fetchFunction, maxRetries = 3) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    await fetchFunction();
+                    return;
+                } catch (e) {
+                    console.error(`❌ 第${i + 1}次尝试失败:`, e);
+                    if (i === maxRetries - 1) {
+                        showMessage('数据加载失败，请刷新页面重试', 'error');
+                    } else {
+                        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+                    }
+                }
+            }
+        };
+        
+        // 使用重试机制初始化数据
+        Promise.all([
+            window.retryFetchData(fetchTrainingProjectsData),
+            window.retryFetchData(fetchIntellectualPropertiesData),
+            window.retryFetchData(fetchEnterpriseCooperationsData)
+        ]).then(() => {
+            console.log('🎉 所有科创数据初始化完成');
+            showMessage('科创管理页面加载完成', 'success');
+        }).catch(e => {
+            console.error('❌ 科创数据初始化失败:', e);
+            showMessage('部分数据加载失败，请检查网络连接', 'error');
+        });
+    });
+
+// 初始化测试信息
+function updateTestInfo() {
+    const lastUpdateEl = document.getElementById('lastUpdateTime');
+    const dataStatusEl = document.getElementById('dataStatus');
+    
+    if (lastUpdateEl) {
+        lastUpdateEl.textContent = new Date().toLocaleTimeString();
+    }
+    
+    if (dataStatusEl) {
+        dataStatusEl.textContent = '正常';
+        dataStatusEl.style.color = '#22c55e';
+    }
+}
+</script>
+{% endblock %}

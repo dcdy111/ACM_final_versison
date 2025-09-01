@@ -1,0 +1,4223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACM算法研究实验室</title>
+    
+    <!-- 关键CSS预加载 -->
+    <link rel="preload" href="https://cdn.tailwindcss.com" as="script">
+    <link rel="preload" href="/static/highlight.css" as="style">
+    
+    <!-- 关键样式表 -->
+    <link rel="stylesheet" href="/static/highlight.css">
+    
+    <!-- Tailwind CSS - 关键渲染路径 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 非关键资源异步加载 -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Exo+2:wght@300;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/v4-shims.min.css" media="print" onload="this.media='all'">
+    <script defer src="/static/highlight.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#6C63FF',
+              secondary: '#00F0FF',
+              accent: '#FF2E63',
+              dark: '#121212',
+              'dark-light': '#1E1E1E',
+              'gray-custom': '#2D2D2D',
+            },
+            fontFamily: {
+              inter: ['Inter', 'sans-serif'],
+            },
+            animation: {
+              'float': 'float 6s ease-in-out infinite',
+              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'glow': 'glow 2s ease-in-out infinite alternate',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-20px)' },
+              },
+              glow: {
+                '0%': { boxShadow: '0 0 5px rgba(108, 99, 255, 0.5), 0 0 10px rgba(108, 99, 255, 0.3)' },
+                '100%': { boxShadow: '0 0 10px rgba(108, 99, 255, 0.8), 0 0 20px rgba(108, 99, 255, 0.6), 0 0 30px rgba(108, 99, 255, 0.4)' },
+              }
+            }
+          },
+        }
+      }
+    </script>
+    <style type="text/tailwindcss">
+      @layer utilities {
+        .content-auto { content-visibility: auto; }
+        .text-shadow { text-shadow: 0 0 10px rgba(108, 99, 255, 0.7); }
+        .text-gradient {
+          background-clip: text;
+          -webkit-background-clip: text;
+          color: transparent;
+        }
+        .bg-grid {
+          background-image: linear-gradient(rgba(108, 99, 255, 0.1) 1px, transparent 1px),
+                           linear-gradient(90deg, rgba(108, 99, 255, 0.1) 1px, transparent 1px);
+          background-size: 20px 20px;
+        }
+        .clip-path-slant { clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%); }
+        .glass {
+          backdrop-filter: blur(10px);
+          background: rgba(30, 30, 30, 0.7);
+        }
+      }
+    </style>
+    <style>
+        :root {
+            --primary: #3a86ff;
+            --secondary: #00ffcc;
+            --accent: #ff2d75;
+            --accent2: #b967ff;
+            --dark-bg: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
+            --text-light: #e0e0ff;
+            --text: var(--text-light);
+            --glass: rgba(255, 255, 255, 0.05);
+            --gray-custom: #2d2d2d;
+            --dark: #0a0a1a;
+            --darker: #050510;
+            --light: #e0e0ff;
+            --card-bg: rgba(20, 20, 20, 0.7);
+        }
+        
+        /* 消息提示系统 */
+        .message-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            max-width: 400px;
+        }
+
+        .message {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-left: 4px solid;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(450px);
+            transition: transform 0.3s ease;
+        }
+
+        .message.show {
+            transform: translateX(0);
+        }
+
+        .message.success { border-left-color: #22c55e; color: #166534; }
+        .message.error { border-left-color: #ef4444; color: #dc2626; }
+        .message.info { border-left-color: #3b82f6; color: #1d4ed8; }
+
+        .message-icon {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Exo 2', sans-serif;
+            color: var(--text-light);
+            background: var(--dark-bg);
+            min-height: 100vh;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 粒子背景 */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        /* 导航栏 */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            backdrop-filter: blur(10px);
+            background: var(--glass);
+            border-bottom: 1px solid rgba(58, 134, 255, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .logo.active {
+            text-shadow: 0 0 15px rgba(58, 134, 255, 0.6);
+            transform: scale(1.05);
+        }
+        
+        .logo::before {
+            content: "";
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233a86ff"><path d="M12 2L1 12h3v9h6v-6h4v6h6v-9h3L12 2zm0 2.8L18 10v9h-2v-6H8v6H6v-9l6-7.2z"/></svg>') no-repeat center;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            white-space: nowrap;
+        }
+        
+        .nav-link {
+            position: relative;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 500;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: var(--primary);
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        /* 下拉菜单 */
+        .dropdown {
+            position: relative;
+        }
+        
+        .dropdown-content {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            min-width: 220px;
+            background: rgba(10, 10, 26, 0.98);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(58, 134, 255, 0.25);
+            border-radius: 8px;
+            padding: 0.6rem 0;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(6px);
+            transition: all 0.22s ease;
+            z-index: 200;
+            white-space: nowrap;
+        }
+        
+        .dropdown:hover .dropdown-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-link {
+            display: block;
+            padding: 0.5rem 1.25rem;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.18s ease;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .dropdown-link:hover {
+            background: rgba(58, 134, 255, 0.12);
+            color: var(--primary);
+            padding-left: 1.5rem;
+        }
+        
+        .menu-toggle {
+            display: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+        
+        /* 全屏导航 */
+        .fullscreen-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(10, 10, 26, 0.95);
+            backdrop-filter: blur(15px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            transform: translateY(-100%);
+            transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0);
+        }
+        
+        .fullscreen-nav.active {
+            transform: translateY(0);
+        }
+        
+        .fullscreen-nav .close-btn {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--text-light);
+            transition: color 0.3s;
+        }
+        
+        .fullscreen-nav .close-btn:hover {
+            color: var(--accent);
+        }
+        
+        .fullscreen-nav-links {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .fullscreen-nav-link {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: var(--text-light);
+            text-decoration: none;
+            position: relative;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s;
+        }
+        
+        .fullscreen-nav-link:hover {
+            color: var(--primary);
+        }
+        
+        .fullscreen-nav-link::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: rgba(58, 134, 255, 0.1);
+            z-index: -1;
+            transition: width 0.3s;
+        }
+        
+        .fullscreen-nav-link:hover::before {
+            width: 100%;
+        }
+        
+        /* 英雄区域 */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(119, 0, 255, 0.1) 0%, rgba(10, 10, 26, 0.9) 70%);
+            z-index: -2;
+        }
+        
+        .hero h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            /* 移除了文字阴影和发光动画效果 */
+        }
+        
+        .hero h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 8px rgba(58, 134, 255, 0.35);
+            font-weight: 400;
+        }
+        
+        .hero p {
+            max-width: 800px;
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            color: var(--dark);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 25px var(--primary);
+        }
+        
+        .cta-button:hover::before {
+            opacity: 1;
+            animation: shine 1.5s infinite;
+        }
+        
+        @keyframes shine {
+            0% { left: -50%; }
+            100% { left: 150%; }
+        }
+        
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px rgba(0, 247, 255, 0.5), 0 0 20px rgba(0, 247, 255, 0.3);
+            }
+            to {
+                text-shadow: 0 0 20px rgba(0, 247, 255, 0.8), 0 0 30px rgba(0, 247, 255, 0.6), 0 0 40px rgba(255, 0, 170, 0.4);
+            }
+        }
+        
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            overflow: hidden;
+        }
+        
+        .particle {
+            position: absolute;
+            background-color: var(--primary);
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: float linear infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0) translateX(0); }
+            50% { transform: translateY(-100px) translateX(100px); }
+            100% { transform: translateY(0) translateX(0); }
+        }
+        
+        /* 按钮保留（供其他部分使用） */
+        .btn {
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(58, 134, 255, 0.3);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-light);
+            border: 1px solid var(--primary);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(58, 134, 255, 0.1);
+            transform: translateY(-3px);
+        }
+        
+        /* 数据流光带 */
+        .data-stream {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            animation: streamFlow 3s linear infinite;
+        }
+        
+        /* 内容部分 */
+        .section {
+            padding: 5rem 5%;
+            position: relative;
+        }
+        
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            text-align: center;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            width: 50%;
+            height: 3px;
+            bottom: -10px;
+            left: 25%;
+            background: linear-gradient(to right, transparent, var(--primary), transparent);
+        }
+        
+        /* 实验室概况（迁移自 15/15.html，作用域限定在 #about） */
+        #about.section { padding: 8rem 10%; }
+        #about .section-header { text-align: center; margin-bottom: 5rem; }
+        #about .section-header h2 {
+            font-size: 2.8rem;
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        #about .section-header p { max-width: 700px; margin: 0 auto; font-size: 1.2rem; color: rgba(224, 224, 255, 0.7); }
+        #about .cards-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2.5rem; margin-top: 3rem; }
+        #about .card { background: rgba(18, 18, 48, 0.6); border-radius: 15px; overflow: hidden; transition: all 0.4s ease; backdrop-filter: blur(10px); border: 1px solid rgba(96, 93, 255, 0.2); position: relative; height: 100%; display: flex; flex-direction: column; }
+        #about .card::before { content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px; background: linear-gradient(45deg, var(--accent), var(--accent2), var(--accent)); z-index: -1; border-radius: 17px; opacity: 0; transition: opacity 0.4s ease; }
+        #about .card:hover { transform: translateY(-15px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); }
+        #about .card:hover::before { opacity: 1; }
+        #about .card-icon { height: 200px; display: flex; justify-content: center; align-items: center; font-size: 4rem; background: linear-gradient(135deg, rgba(96, 93, 255, 0.1), rgba(0, 243, 255, 0.1)); color: var(--accent); }
+        #about .card-content { padding: 2rem; flex-grow: 1; display: flex; flex-direction: column; }
+        #about .card-content h3 { font-size: 1.8rem; margin-bottom: 1rem; background: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; background-clip: text; color: transparent; font-family: 'Orbitron', sans-serif; }
+        #about .card-content p { margin-bottom: 1.5rem; flex-grow: 1; }
+        #about .card-btn { display: inline-block; padding: 0.8rem 1.5rem; background: linear-gradient(45deg, var(--primary), var(--accent)); color: #0a0a1a; text-decoration: none; border-radius: 30px; text-align: center; transition: all 0.3s ease; align-self: flex-start; box-shadow: 0 0 12px rgba(58,134,255,0.35); }
+        #about .card-btn:hover { filter: brightness(1.1); transform: translateX(5px); box-shadow: 0 0 18px rgba(58,134,255,0.55); }
+        #about .card-icon i { 
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            -webkit-text-fill-color: transparent;
+        }
+        @media (max-width: 768px) {
+            #about.section { padding: 6rem 5%; }
+            #about .section-header h2 { font-size: 2.2rem; }
+        }
+        
+        /* 团队部分样式 */
+        #team.section {
+            background: #0a0a1a;
+            position: relative;
+        }
+        
+        /* 团队卡片居中优化 */
+        #team .grid {
+            justify-content: center !important;
+            justify-items: center !important;
+        }
+        
+        #team .grid > * {
+            justify-self: center !important;
+        }
+        
+        /* 确保指导老师容器居中 */
+        #teamLeadersContainer {
+            justify-content: center !important;
+            justify-items: center !important;
+        }
+        
+        #teamLeadersContainer > * {
+            justify-self: center !important;
+        }
+        
+        /* 确保团队成员容器居中 */
+        #teamMembersContainer {
+            justify-content: center !important;
+            justify-items: center !important;
+        }
+        
+        #teamMembersContainer > * {
+            justify-self: center !important;
+        }
+        
+        /* 额外的居中保障 */
+        .core-leaders {
+            display: grid !important;
+            justify-content: center !important;
+            justify-items: center !important;
+        }
+        
+        /* 当只有1个指导老师时的特殊处理 */
+        .core-leaders:has(> div:only-child) {
+            grid-template-columns: minmax(auto, 400px) !important;
+        }
+        
+        /* 当只有2个指导老师时的特殊处理 */
+        .core-leaders:has(> div:nth-child(2):last-child) {
+            grid-template-columns: repeat(2, minmax(auto, 400px)) !important;
+        }
+        
+        /* 团队成员网格的特殊处理 */
+        #teamMembersContainer {
+            display: grid !important;
+            justify-content: center !important;
+            justify-items: center !important;
+        }
+        
+        /* 当团队成员数量不足一行时的处理 */
+        #teamMembersContainer:has(> div:nth-child(-n+4):last-child) {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 250px)) !important;
+        }
+        
+        /* 使用Flexbox作为备用方案确保居中 */
+        @media (max-width: 768px) {
+            .core-leaders,
+            #teamMembersContainer {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                justify-content: center !important;
+                align-items: stretch !important;
+                gap: 1rem !important;
+            }
+            
+            .core-leaders > *,
+            #teamMembersContainer > * {
+                flex: 0 1 auto !important;
+                max-width: 300px !important;
+            }
+        }
+        
+        .team-bg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(58, 134, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(58, 134, 255, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.3;
+        }
+        
+        /* 文本截断样式 */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* 团队成员卡片优化样式 */
+        #teamMembersContainer .card-3d {
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            border: 1px solid transparent;
+        }
+        
+        #teamMembersContainer .card-3d:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: var(--primary);
+            box-shadow: 0 15px 35px rgba(58, 134, 255, 0.2);
+        }
+        
+        #teamMembersContainer .card-3d img {
+            transition: all 0.3s ease;
+        }
+        
+        #teamMembersContainer .card-3d:hover img {
+            transform: scale(1.1);
+        }
+        
+        .team-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .team-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+        
+        .bg-grid {
+            background-image: 
+                linear-gradient(rgba(58, 134, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(58, 134, 255, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .team-gradient {
+            background: linear-gradient(90deg, var(--accent), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .team-desc {
+            color: rgba(224, 224, 255, 0.7);
+            max-width: 700px;
+            margin: 0 auto;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        
+        .team-underline {
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent), var(--secondary));
+            margin: 1rem auto 0;
+            border-radius: 2px;
+        }
+        
+        .team-subtitle {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--text-light);
+        }
+        
+        /* 团队领导网格 */
+        .team-leaders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+        
+        /* 3D卡片效果 */
+        .team-card-3d {
+            background: rgba(30, 30, 30, 0.9);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            transform-style: preserve-3d;
+        }
+        
+        .team-card-3d::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary), var(--accent));
+            border-radius: inherit;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        
+        .team-card-3d:hover {
+            transform: translateY(-10px) rotateX(5deg);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .team-card-3d:hover::before {
+            opacity: 1;
+        }
+        
+        .team-card-content {
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+            background: rgba(30, 30, 30, 0.95);
+            border-radius: 15px;
+        }
+        
+        /* 头像样式 */
+        .team-avatar-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .team-avatar-wrapper {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .team-avatar-wrapper.primary-border {
+            border-color: transparent;
+        }
+        
+        .team-card-3d:hover .primary-border {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(58, 134, 255, 0.4);
+        }
+        
+        .team-avatar-wrapper.secondary-border {
+            border-color: transparent;
+        }
+        
+        .team-card-3d:hover .secondary-border {
+            border-color: var(--secondary);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+        }
+        
+        .team-avatar-wrapper.accent-border {
+            border-color: transparent;
+        }
+        
+        .team-card-3d:hover .accent-border {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(255, 46, 99, 0.4);
+        }
+        
+        .team-avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* 团队成员信息 */
+        .team-member-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            color: var(--text-light);
+        }
+        
+        .team-member-title {
+            text-align: center;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .primary-color { color: var(--primary); }
+        .secondary-color { color: var(--secondary); }
+        .accent-color { color: var(--accent); }
+        
+        .team-member-desc {
+            color: rgba(224, 224, 255, 0.7);
+            text-align: center;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* 社交链接 */
+        .team-social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .team-social-link {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--gray-custom);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .team-social-link.primary-hover:hover {
+            background: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .team-social-link.secondary-hover:hover {
+            background: var(--secondary);
+            color: var(--dark);
+            transform: translateY(-2px);
+        }
+        
+        .team-social-link.accent-hover:hover {
+            background: var(--accent);
+            transform: translateY(-2px);
+        }
+        
+        /* 研究团队网格 */
+        .team-members-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        
+        .team-member-card {
+            background: rgba(30, 30, 30, 0.8);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .team-member-card:hover {
+            background: var(--gray-custom);
+            transform: translateY(-5px);
+        }
+        
+        .team-member-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin: 0 auto 1rem;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .team-member-card:hover .team-member-avatar {
+            border-color: var(--primary);
+        }
+        
+        .team-member-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .team-member-small-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--text-light);
+        }
+        
+        .team-member-small-title {
+            font-size: 0.9rem;
+            color: var(--secondary);
+        }
+        
+        /* 查看更多按钮 */
+        .team-more-btn-container {
+            text-align: center;
+            margin-top: 3rem;
+        }
+        
+        .team-more-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 2rem;
+            background: var(--gray-custom);
+            color: var(--text-light);
+            text-decoration: none;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .team-more-btn:hover {
+            background: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .team-more-btn i {
+            transition: transform 0.3s ease;
+        }
+        
+        .team-more-btn:hover i {
+            transform: translateX(5px);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .team-container {
+                padding: 0 1rem;
+            }
+            
+            .team-leaders-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .team-members-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .team-avatar-wrapper {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .team-member-avatar {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .team-card-content {
+                padding: 1.5rem;
+            }
+            
+            .team-subtitle {
+                font-size: 1.6rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .team-members-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .team-leaders-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .team-card-content {
+                padding: 1rem;
+            }
+            
+            .team-avatar-wrapper {
+                width: 100px;
+                height: 100px;
+            }
+        }
+        
+        /* 3D卡片效果（模板同步） */
+        .card-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+        
+        .card-3d:hover {
+            transform: translateY(-6px) rotateX(3deg);
+        }
+        
+        .card-3d::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            background: linear-gradient(45deg, var(--accent), var(--secondary), var(--accent2));
+            border-radius: inherit;
+            z-index: -1;
+            opacity: 0.18;
+            transition: opacity 0.3s ease;
+            animation: rotate 14s linear infinite;
+        }
+        .card-3d:hover::before {
+            opacity: 0.32;
+        }
+        
+        @keyframes rotate {
+            0% { filter: brightness(0.85) saturate(0.7) hue-rotate(0deg); }
+            100% { filter: brightness(0.85) saturate(0.7) hue-rotate(360deg); }
+        }
+        
+        /* 恢复核心领导卡片原始效果，仅作用于该区块 */
+        .core-leaders .card-3d:hover {
+            transform: translateY(-10px) rotateX(5deg);
+        }
+        .core-leaders .card-3d::before {
+            opacity: 1;
+            transition: none;
+            animation: rotate-strong 6s linear infinite;
+        }
+        .core-leaders .card-3d:hover::before {
+            opacity: 1;
+        }
+        @keyframes rotate-strong {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+        
+        /* 论文展示 */
+        .papers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .paper-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+            position: relative;
+        }
+        
+        .paper-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(58, 134, 255, 0.2);
+            border-color: rgba(58, 134, 255, 0.3);
+        }
+        
+        .paper-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(58, 134, 255, 0.1) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .paper-card:hover::before {
+            opacity: 1;
+        }
+        
+        .paper-img {
+            height: 180px;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: var(--primary);
+        }
+        
+        .paper-content {
+            padding: 1.5rem;
+        }
+        
+        .paper-title {
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 500;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+        
+        .paper-authors {
+            font-size: 0.9rem;
+            color: rgba(224, 224, 255, 0.7);
+            margin-bottom: 1rem;
+        }
+        
+        .paper-desc {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+            color: rgba(224, 224, 255, 0.8);
+        }
+        
+        .paper-link {
+            display: inline-flex;
+            align-items: center;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .paper-link:hover {
+            color: var(--secondary);
+        }
+        
+        .paper-link svg {
+            margin-left: 5px;
+            transition: transform 0.3s;
+        }
+        
+        .paper-link:hover svg {
+            transform: translateX(5px);
+        }
+        
+        /* 算法展示 */
+        .algorithm-showcase {
+            display: flex;
+            gap: 2rem;
+            margin-top: 3rem;
+            align-items: center;
+        }
+        
+        .algorithm-editor {
+            flex: 1;
+            background: #1e1e2e;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .editor-header {
+            background: #2d2d42;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .editor-dots {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .editor-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .editor-dot.red {
+            background: #ff5f56;
+        }
+        
+        .editor-dot.yellow {
+            background: #ffbd2e;
+        }
+        
+        .editor-dot.green {
+            background: #27c93f;
+        }
+        
+        .editor-title {
+            margin-left: 1rem;
+            font-size: 0.9rem;
+            color: rgba(224, 224, 255, 0.7);
+        }
+        
+        .editor-content {
+            padding: 1rem;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #e0e0ff;
+            height: 300px;
+            overflow-y: auto;
+        }
+        
+        .algorithm-visualization {
+            flex: 1;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .visualization-placeholder {
+            width: 80%;
+            height: 80%;
+            border: 2px dashed rgba(58, 134, 255, 0.3);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-family: 'Orbitron', sans-serif;
+            text-align: center;
+            padding: 1rem;
+        }
+        
+        /* 加入我们 */
+        .join-section {
+            text-align: center;
+        }
+        
+        .join-cards {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+        }
+        
+        .join-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 2rem;
+            width: 300px;
+            transition: all 0.3s;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .join-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(58, 134, 255, 0.2);
+            border-color: rgba(58, 134, 255, 0.3);
+        }
+        
+        .join-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(58, 134, 255, 0.1) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .join-card:hover::before {
+            opacity: 1;
+        }
+        
+        .join-card-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+        
+        .join-card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .join-card-desc {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            color: rgba(224, 224, 255, 0.8);
+        }
+        
+        /* 页脚（与其他页面保持一致） */
+        .footer {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 3rem 0 0 0;
+            text-align: center;
+            margin-top: auto;
+            margin-bottom: 0;
+            position: relative;
+            width: 100vw;
+            margin-left: calc(-50vw + 50%);
+            padding-bottom: 0;
+        }
+        
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+
+        .footer-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            padding: 0 5%;
+        }
+
+        .footer-link { color: var(--text-light); text-decoration: none; transition: color 0.3s; }
+        .footer-link:hover { color: var(--primary); }
+
+        .footer-social {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            padding: 0 5%;
+        }
+
+        .social-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(0, 240, 255, 0.1);
+            color: var(--primary);
+            transition: all 0.3s ease;
+        }
+
+        .social-icon:hover {
+            background-color: var(--primary);
+            color: var(--dark);
+            transform: translateY(-3px);
+        }
+        
+        .social-icon i {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .social-icon:hover i {
+            background: none;
+            -webkit-background-clip: initial;
+            background-clip: initial;
+            color: var(--dark);
+        }
+
+        .copyright { 
+            font-size: 0.9rem; 
+            color: rgba(224, 224, 255, 0.6);
+            padding: 1rem 5% 0.8rem 5%;
+            margin: 0;
+        }
+        
+        /* 动画 */
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        
+        @keyframes streamFlow {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 992px) {
+            .hero h1 {
+                font-size: 3rem;
+            }
+            .hero h2 {
+                font-size: 1.5rem;
+            }
+            
+            .algorithm-showcase {
+                flex-direction: column;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .menu-toggle {
+                display: block;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero p {
+                font-size: 1rem;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .hero-btns {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .papers-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .carousel-3d {
+                width: 100%;
+                height: 300px;
+            }
+            
+            .carousel-3d-item {
+                width: 200px;
+                height: 200px;
+                transform-origin: center center -300px;
+            }
+        }
+        
+        /* 算法演示（从 18/18.html 移植的样式，作用于 #achievement-algorithms 区域） */
+        #achievement-algorithms .algo-demo {
+            background: rgba(10, 10, 30, 0.5);
+            padding: 2rem;
+            border-radius: 5px;
+            border: 1px solid rgba(0, 255, 255, 0.1);
+        }
+        #achievement-algorithms .algo-demo label {
+            display: block;
+            margin-bottom: 1rem;
+            color: #00f0ff;
+        }
+        #achievement-algorithms .algo-demo input[type="range"] {
+            width: 100%;
+            margin-bottom: 2rem;
+            accent-color: #00f0ff;
+        }
+        #achievement-algorithms #sort-result {
+            height: 200px;
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+        }
+        #achievement-algorithms .sort-bar {
+            background: linear-gradient(to top, #0ff, #008888);
+            width: 10px;
+            border-radius: 2px 2px 0 0;
+            transition: height 0.3s ease;
+        }
+        #achievement-algorithms .glitch-btn {
+            padding: 1rem 2.5rem;
+            background: linear-gradient(45deg, #0ff, #f0f);
+            color: #000;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+        #achievement-algorithms .glitch-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+        
+        /* 3D旋转轮柱样式（从 test.html 迁移） */
+        .carousel-3d {
+            perspective: 1000px;
+            height: 400px;
+            position: relative;
+            margin: 0 auto;
+            width: 80%;
+        }
+        
+        .carousel-3d-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1s;
+        }
+        
+        .carousel-3d-item {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            left: 50%;
+            top: 50%;
+            transform-origin: center center -400px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            transition: all 0.5s;
+        }
+        
+        .carousel-3d-item i {
+            font-size: 50px;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .carousel-3d-item h3 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: var(--text-light);
+        }
+        
+        .carousel-3d-item p {
+            opacity: 0.8;
+        }
+        
+        .carousel-3d-nav {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            gap: 20px;
+            position: relative;
+            z-index: 100;
+        }
+        
+        .carousel-3d-nav button {
+            background: rgba(0, 242, 255, 0.2);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: var(--primary);
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            z-index: 101;
+            pointer-events: auto;
+            outline: none;
+        }
+        
+        .carousel-3d-nav button:hover {
+            background: rgba(0, 242, 255, 0.5);
+            transform: scale(1.1);
+        }
+        
+        /* 成果展示标签样式 */
+        .achievement-tab {
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        
+        .achievement-tab.active {
+            background: var(--primary) !important;
+            color: white !important;
+            box-shadow: 0 0 15px rgba(108, 99, 255, 0.5);
+            transform: translateY(-2px);
+            border: 1px solid var(--primary);
+        }
+        
+        .achievement-tab:hover:not(.active) {
+            background: rgba(108, 99, 255, 0.3) !important;
+            transform: translateY(-1px);
+        }
+        
+        /* 动态部分（从 11/新建 文本文档.html 迁移） */
+        .news-section {
+            background: transparent;
+            padding: 5rem 2rem;
+        }
+        .news-timeline {
+            position: relative;
+            max-width: 800px;
+            margin: 3rem auto 0;
+            padding-left: 50px;
+        }
+        .news-timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20px;
+            height: 100%;
+            width: 2px;
+            background: var(--primary);
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 3rem;
+            padding: 1.5rem;
+            background: rgba(20, 20, 40, 0.6);
+            border-radius: 10px;
+            border-left: 3px solid var(--primary);
+            transition: all 0.3s ease;
+        }
+        .timeline-item:hover {
+            transform: translateX(10px);
+            box-shadow: 0 0 20px rgba(0, 247, 255, 0.2);
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            top: 30px;
+            left: -33px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+        }
+        .timeline-date {
+            color: var(--secondary);
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 0.5rem;
+        }
+        .timeline-title {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        .timeline-desc {
+            color: rgba(224, 224, 255, 0.8);
+            line-height: 1.6;
+        }
+        /* 加入我们（从模板迁移，作用域限定 #join） */
+        #join .card-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+        #join .card-3d:hover {
+            transform: translateY(-10px) rotateX(5deg);
+        }
+        #join .card-3d::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            background: linear-gradient(45deg, #6C63FF, #00F0FF, #FF2E63);
+            border-radius: inherit;
+            z-index: -1;
+            animation: rotate 6s linear infinite;
+        }
+        /* 覆写：加入我们与常见问题模块背景设为页面主背景 */
+        #join { background: transparent !important; }
+        #join > .absolute { display: none; }
+        #join .bg-dark,
+        #join .bg-dark-light { background: transparent !important; }
+        
+        /* 页面过渡遮罩层 */
+        .page-transition-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0, 255, 65, 0.1) 0%, rgba(0, 0, 0, 1) 100%);
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 1s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        
+        .page-transition-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .transition-text {
+            color: #00ff41;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 20px #00ff41;
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        
+        .matrix-loader {
+            width: 100px;
+            height: 100px;
+            border: 2px solid transparent;
+            border-top: 2px solid #00ff41;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            box-shadow: 0 0 20px #00ff41;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% {
+                text-shadow: 0 0 20px #00ff41;
+                transform: scale(1);
+            }
+            50% {
+                text-shadow: 0 0 30px #00ff41, 0 0 40px #00ff41;
+                transform: scale(1.05);
+            }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* ACM LAB标题hover效果增强 */
+        #acm-lab-title {
+            transition: all 0.3s ease;
+            position: relative;
+            /* 确保没有任何边框和轮廓 */
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        
+        #acm-lab-title:hover {
+            /* 移除了缩放和文字阴影效果 */
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* 导航栏高亮样式 */
+        .nav-link.active {
+            color: var(--primary) !important;
+            font-weight: 600;
+        }
+        
+        .nav-link.active::after {
+            width: 100% !important;
+        }
+        
+        .dropdown-link.active {
+            color: var(--primary) !important;
+            background: rgba(58, 134, 255, 0.15) !important;
+            padding-left: 1.5rem !important;
+            font-weight: 500;
+        }
+
+        /* ========================= 统一滚动条美化样式 ========================= */
+        /* 全局滚动条 - 竖直方向 */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        
+        /* 滚动条轨道 */
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+        }
+        
+        /* 滚动条滑块 */
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent2) 100%);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(58, 134, 255, 0.2);
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 50%, var(--primary) 100%);
+            box-shadow: 0 4px 15px rgba(58, 134, 255, 0.4);
+            transform: scale(1.05);
+        }
+        
+        /* 滚动条箭头按钮 */
+        ::-webkit-scrollbar-button {
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        /* 竖直滚动条上箭头 */
+        ::-webkit-scrollbar-button:vertical:start:decrement {
+            background: linear-gradient(45deg, var(--primary), var(--secondary)),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 14l5-5 5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 竖直滚动条下箭头 */
+        ::-webkit-scrollbar-button:vertical:end:increment {
+            background: linear-gradient(45deg, var(--primary), var(--secondary)),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 水平滚动条左箭头 */
+        ::-webkit-scrollbar-button:horizontal:start:decrement {
+            background: linear-gradient(45deg, var(--primary), var(--secondary)),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M14 7l-5 5 5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 水平滚动条右箭头 */
+        ::-webkit-scrollbar-button:horizontal:end:increment {
+            background: linear-gradient(45deg, var(--primary), var(--secondary)),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M10 7l5 5-5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 箭头按钮悬停效果 */
+        ::-webkit-scrollbar-button:hover {
+            background: linear-gradient(45deg, var(--accent), var(--accent2)) !important;
+            box-shadow: 0 0 10px rgba(58, 134, 255, 0.6);
+            transform: scale(1.1);
+        }
+        
+        /* 箭头按钮点击效果 */
+        ::-webkit-scrollbar-button:active {
+            background: linear-gradient(45deg, var(--secondary), var(--primary)) !important;
+            transform: scale(0.95);
+        }
+        
+        /* 滚动条角落 */
+        ::-webkit-scrollbar-corner {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+        }
+        
+        /* 代码块滚动条样式 */
+        .code-block::-webkit-scrollbar,
+        .highlight::-webkit-scrollbar,
+        pre::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .code-block::-webkit-scrollbar-track,
+        .highlight::-webkit-scrollbar-track,
+        pre::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            border: 1px solid rgba(58, 134, 255, 0.2);
+        }
+        
+        .code-block::-webkit-scrollbar-thumb,
+        .highlight::-webkit-scrollbar-thumb,
+        pre::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .code-block::-webkit-scrollbar-thumb:hover,
+        .highlight::-webkit-scrollbar-thumb:hover,
+        pre::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, var(--accent), var(--accent2));
+            box-shadow: 0 0 8px rgba(185, 103, 255, 0.5);
+            transform: scale(1.05);
+        }
+        
+        /* 代码块滚动条箭头 */
+        .code-block::-webkit-scrollbar-button,
+        .highlight::-webkit-scrollbar-button,
+        pre::-webkit-scrollbar-button {
+            width: 8px;
+            height: 8px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+        }
+        
+        /* 表格滚动条样式 */
+        table::-webkit-scrollbar,
+        .table-wrapper::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        table::-webkit-scrollbar-track,
+        .table-wrapper::-webkit-scrollbar-track {
+            background: rgba(58, 134, 255, 0.1);
+            border-radius: 3px;
+            border: 1px solid rgba(58, 134, 255, 0.2);
+        }
+        
+        table::-webkit-scrollbar-thumb,
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        table::-webkit-scrollbar-thumb:hover,
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(90deg, var(--secondary), var(--accent));
+            box-shadow: 0 0 6px rgba(0, 255, 204, 0.6);
+            transform: scale(1.1);
+        }
+        
+        /* 特殊容器滚动条 */
+        .content-container::-webkit-scrollbar,
+        .modal-content::-webkit-scrollbar,
+        .sidebar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .content-container::-webkit-scrollbar-track,
+        .modal-content::-webkit-scrollbar-track,
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        
+        .content-container::-webkit-scrollbar-thumb,
+        .modal-content::-webkit-scrollbar-thumb,
+        .sidebar::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .content-container::-webkit-scrollbar-thumb:hover,
+        .modal-content::-webkit-scrollbar-thumb:hover,
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            box-shadow: 0 0 8px rgba(58, 134, 255, 0.4);
+        }
+        
+        /* Firefox滚动条样式 */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) rgba(255, 255, 255, 0.08);
+        }
+        
+        .code-block,
+        .highlight,
+        pre {
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) rgba(0, 0, 0, 0.3);
+        }
+        
+        table,
+        .table-wrapper {
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) rgba(58, 134, 255, 0.1);
+        }
+        
+        /* 移动端滚动条优化 */
+        @media (max-width: 768px) {
+            ::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+            
+            .code-block::-webkit-scrollbar,
+            .highlight::-webkit-scrollbar,
+            pre::-webkit-scrollbar {
+                width: 4px;
+                height: 4px;
+            }
+            
+            table::-webkit-scrollbar,
+            .table-wrapper::-webkit-scrollbar {
+                width: 3px;
+                height: 3px;
+            }
+        }
+        /* ========================= 滚动条样式结束 ========================= */
+       </style>
+</head>
+<body>
+    <!-- 消息提示容器 -->
+    <div class="message-container" id="messageContainer"></div>
+    
+    <!-- 粒子背景 -->
+    <div id="particles-js"></div>
+    
+    <!-- 页面过渡遮罩层 -->
+    <div class="page-transition-overlay" id="pageTransition">
+        <div class="transition-text">正在进入 Matrix 世界...</div>
+        <div class="matrix-loader"></div>
+    </div>
+    
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <a href="/" class="logo">ACM LAB</a>
+        <div class="nav-links">
+            <div class="dropdown">
+                <a href="/introduction" class="nav-link">概况</a>
+            </div>
+            
+            <a href="/team" class="nav-link">团队</a>
+            
+            <div class="dropdown">
+                <a href="/algorithm" class="nav-link">成果</a>
+                <div class="dropdown-content">
+                        <a href="/algorithm" class="dropdown-link">算法</a>
+                        <a href="/paper" class="dropdown-link">论文</a>
+                        <a href="/innovation" class="dropdown-link">科创</a>
+                </div>
+            </div>
+            
+            <a href="/dynamic" class="nav-link">动态</a>
+            
+            <div class="dropdown">
+                <a href="/algorithm-recruitment" class="nav-link">加入我们</a>
+                <div class="dropdown-content">
+                    <a href="/algorithm-recruitment" class="dropdown-link">算法组招生</a>
+                        <a href="/project-recruitment" class="dropdown-link">项目组招生</a>
+                </div>
+            </div>
+            
+
+        </div>
+        <div class="menu-toggle">☰</div>
+        </nav>
+    
+    <!-- 主要内容包装器 -->
+    <main style="flex: 1;">
+    
+    
+    
+    <!-- 英雄区域 -->
+    <section class="hero">
+        <div class="particles" id="particles"></div>
+        <h1 id="acm-lab-title" style="cursor: pointer;">ACM LAB</h1>
+        <h2>创新 · 研究 · 突破</h2>
+        <p>我们致力于前沿算法研究与创新应用，培养下一代计算机科学领袖，推动人工智能与计算理论的发展。</p>
+        <a href="#join" class="cta-button">加入我们</a>
+    </section>
+    
+    <!-- 实验室概况（迁移自 15/15.html） -->
+    <section class="section" id="about">
+        <div class="section-header">
+            <h2>实验室概况</h2>
+            <p>ACM实验室成立于2010年，是一个专注于算法研究的顶级实验室，拥有国际一流的研究团队和先进的实验设备</p>
+        </div>
+        
+        <div class="cards-container">
+            <div class="card">
+                <div class="card-icon">
+                    <i class="fas fa-flask"></i>
+                </div>
+                <div class="card-content">
+                    <h3>实验室简介</h3>
+                    <p>ACM实验室致力于解决计算科学领域的核心挑战，特别关注高效算法设计、分布式系统优化和人工智能前沿技术研究。</p>
+                    <a href="/introduction" class="card-btn">了解更多</a>
+                </div>
+            </div>
+            
+    
+        </div>
+    </section>
+    
+    <!-- 团队 -->
+    <section id="team" class="py-24 relative">
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="text-center mb-16">
+                <h2 class="text-[clamp(1.5rem,5vw,3rem)] font-bold mb-4">
+                    <span class="bg-gradient-to-r from-accent to-secondary text-gradient">团队</span>
+                </h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">我们的团队由顶尖学者、资深研究员和优秀学生组成，致力于算法领域的前沿研究与创新应用</p>
+                <div class="w-20 h-1 bg-gradient-to-r from-accent to-secondary mx-auto mt-4"></div>
+            </div>
+            
+            <!-- 指导老师 -->
+            <h3 class="text-2xl font-bold mb-8 text-center">指导老师</h3>
+            <div class="grid md:grid-cols-3 gap-8 mb-16 core-leaders justify-items-center justify-center" id="teamLeadersContainer">
+                <!-- 动态加载指导老师数据 -->
+                <div class="text-center py-8 col-span-3">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    <p class="mt-2 text-gray-400">加载中...</p>
+                </div>
+            </div>
+            
+            <!-- 研究团队 -->
+            <h3 class="text-2xl font-bold mb-8 text-center">团队</h3>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 justify-items-center justify-center" id="teamMembersContainer">
+                <!-- 动态加载团队成员数据 -->
+                <div class="text-center py-8 col-span-4">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    <p class="mt-2 text-gray-400">加载中...</p>
+                </div>
+            </div>
+            
+                                <div class="text-center mt-12">
+                        <a href="/team" class="inline-flex items-center px-6 py-3 bg-gray-custom rounded-full hover:bg-primary transition-colors">
+                            查看全部成员
+                            <i class="fa fa-arrow-right ml-2"></i>
+                        </a>
+                    </div>
+        </div>
+    </section>
+    
+    <!-- 成果展示 -->
+    <section id="achievements" class="py-24 relative overflow-hidden">
+        
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="text-center mb-16">
+                <h2 class="text-[clamp(1.5rem,5vw,3rem)] font-bold mb-4">
+                    <span class="bg-gradient-to-r from-primary to-accent text-gradient">成果展示</span>
+                </h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">我们在算法研究领域取得了一系列重要成果，包括学术论文、专利技术、科创项目和企业合作</p>
+                <div class="w-20 h-1 bg-gradient-to-r from-primary to-accent mx-auto mt-4"></div>
+            </div>
+            
+            <!-- 成果分类标签 -->
+            <div class="flex flex-wrap justify-center gap-4 mb-12">
+                <button class="achievement-tab px-6 py-2 rounded-full bg-gray-custom text-white font-medium hover:bg-primary/80 transition-colors" onclick="switchToPapers()">论文</button>
+                <button class="achievement-tab active bg-primary px-6 py-2 rounded-full text-white font-medium hover:bg-primary/80 transition-colors" onclick="switchToAlgorithms()">算法</button>
+                <button class="achievement-tab px-6 py-2 rounded-full bg-gray-custom text-white font-medium hover:bg-primary/80 transition-colors" onclick="switchToInnovation()">科创</button>
+            </div>
+            
+            <!-- 论文成果 -->
+            <div class="achievement-content hidden" id="achievement-papers">
+                <h3 class="text-2xl font-bold mb-8 text-center">学术论文</h3>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="papersContainer">
+                    <!-- 动态加载论文数据 -->
+                    <div class="text-center py-8 col-span-3">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                        <p class="mt-2 text-gray-400">加载中...</p>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-10">
+                                            <a href="/paper" class="inline-flex items-center px-6 py-3 border border-primary text-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+                            查看更多论文
+                            <i class="fa fa-arrow-right ml-2"></i>
+                        </a>
+                </div>
+            </div>
+            
+            <!-- 算法成果 -->
+            <div class="achievement-content" id="achievement-algorithms">
+                <h3 class="text-2xl font-bold mb-0 text-center">算法成果</h3>
+                <!-- 算法模块：3D旋转轮柱展示（从 test.html 迁移） -->
+                <div class="section" style="margin-top: -50px;">
+                    <div class="container">
+                        <div class="carousel-3d">
+                            <div class="carousel-3d-container" id="carousel3d">
+                                <div class="carousel-3d-item">
+                                    <i class="fas fa-atom"></i>
+                                    <h3>科技感设计</h3>
+                                    <p>融合未来科技元素，创造独特的视觉语言</p>
+                                </div>
+                                <div class="carousel-3d-item">
+                                    <i class="fas fa-code"></i>
+                                    <h3>代码实现</h3>
+                                    <p>前沿的Web技术，实现流畅的3D效果</p>
+                                </div>
+                                <div class="carousel-3d-item">
+                                    <i class="fas fa-eye"></i>
+                                    <h3>视觉冲击</h3>
+                                    <p>强烈的视觉表现力，吸引用户注意力</p>
+                                </div>
+                                <div class="carousel-3d-item">
+                                    <i class="fas fa-mobile-alt"></i>
+                                    <h3>响应式设计</h3>
+                                    <p>完美适配各种设备屏幕尺寸</p>
+                                </div>
+                                <div class="carousel-3d-item">
+                                    <i class="fas fa-rocket"></i>
+                                    <h3>性能优化</h3>
+                                    <p>高效的渲染性能，确保流畅体验</p>
+                                </div>
+                            </div>
+                            <div class="carousel-3d-nav">
+                                <button id="prev3d"><i class="fas fa-chevron-left"></i></button>
+                                <button id="next3d"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <!-- 科创成果 -->
+            <div class="achievement-content hidden" id="achievement-innovation">
+                <h3 class="text-2xl font-bold mb-8 text-center">科创项目</h3>
+                <!-- 科创项目内容 -->
+                <div id="innovationProjectsContainer">
+                    <!-- 动态加载科创成果数据 -->
+                    <div class="text-center py-8">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                        <p class="mt-2 text-gray-400">加载中...</p>
+                    </div>
+                </div>
+            </div>
+            
+    
+
+    <!-- 动态部分（从 11/新建 文本文档.html 迁移） -->
+    <section class="news-section" id="news">
+        <div class="section">
+            <h2 class="section-title">
+                <span class="bg-gradient-to-r from-primary to-secondary text-gradient">实验室动态</span>
+            </h2>
+            <div class="news-timeline" id="activitiesContainer">
+                <!-- 动态加载活动数据 -->
+                <div class="text-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    <p class="mt-2 text-gray-400">加载中...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 加入我们（从模板迁移） -->
+    <section id="join" class="py-24 bg-gradient-to-b from-dark-light to-dark relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-96 bg-primary/5 blur-3xl"></div>
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="text-center mb-16">
+                <h2 class="text-[clamp(1.5rem,5vw,3rem)] font-bold mb-4">
+                    <span class="bg-gradient-to-r from-primary to-secondary text-gradient">加入我们</span>
+                </h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">我们正在寻找对算法研究充满热情的优秀人才加入团队，共同探索科技前沿</p>
+                <div class="w-20 h-1 bg-gradient-to-r from-primary to-secondary mx-auto mt-4"></div>
+            </div>
+            
+            <!-- 招生分类 -->
+            <div class="grid md:grid-cols-2 gap-10 mb-16">
+                <!-- 算法组招生 -->
+                <div class="bg-dark rounded-2xl overflow-hidden group relative card-3d">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-colors"></div>
+                    <div class="p-8 relative z-10">
+                        <div class="w-16 h-16 rounded-xl bg-primary/20 flex items-center justify-center mb-6">
+                            <i class="fa fa-code text-primary text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">算法组招生</h3>
+                        <p class="text-gray-300 mb-6">
+                            算法组专注于基础算法理论研究，包括但不限于复杂度分析、近似算法、在线算法、并行算法等方向，欢迎对理论研究有浓厚兴趣的同学加入。
+                        </p>
+                        <h4 class="text-lg font-semibold mb-3 text-secondary">我们希望你：</h4>
+                        <ul class="space-y-2 mb-8">
+                            <li class="flex items-start">
+                                <i class="fa fa-check text-primary mt-1 mr-3"></i>
+                                <span>具备扎实的数学基础和算法理论知识</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check text-primary mt-1 mr-3"></i>
+                                <span>熟练掌握至少一种编程语言（C++/Python）</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check text-primary mt-1 mr-3"></i>
+                                <span>有相关算法竞赛经历或研究项目经验者优先</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check text-primary mt-1 mr-3"></i>
+                                <span>具备良好的英文阅读能力和学术写作能力</span>
+                            </li>
+                        </ul>
+                        <a href="/algorithm-recruitment" class="inline-block px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/80 transition-colors animate-glow">
+                            申请加入
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- 项目组招生 -->
+                <div class="bg-dark rounded-2xl overflow-hidden group relative card-3d">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-secondary/10 rounded-full blur-3xl group-hover:bg-secondary/20 transition-colors"></div>
+                    <div class="p-8 relative z-10">
+                        <div class="w-16 h-16 rounded-xl bg-secondary/20 flex items-center justify-center mb-6">
+                            <i class="fa fa-cogs text-secondary text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">项目组招生</h3>
+                        <p class="text-gray-300 mb-6">
+                            项目组专注于算法的实际应用与系统开发，参与企业合作项目和科研转化项目，将算法理论落地到实际系统中，欢迎对工程实现有兴趣的同学加入。
+                        </p>
+                        <h4 class="text-lg font-semibold mb-3 text-secondary">我们希望你：</h4>
+                        <ul class="space-y-2 mb-8">
+                            <li class="flex items-start">
+                                <i class="fa fa-check text-secondary mt-1 mr-3"></i>
+                                <span>具备较强的编程能力和系统设计能力</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check text-secondary mt-1 mr-3"></i>
+                                <span>熟悉至少一种深度学习框架（PyTorch/TensorFlow）</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check text-secondary mt-1 mr-3"></i>
+                                <span>有实际项目开发经验或开源项目贡献者优先</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check text-secondary mt-1 mr-3"></i>
+                                <span>具备良好的团队协作能力和问题解决能力</span>
+                            </li>
+                        </ul>
+                        <a href="/project-recruitment" class="inline-block px-8 py-3 bg-secondary text-dark font-medium rounded-full hover:bg-secondary/80 transition-colors animate-glow">
+                            申请加入
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 常见问题 -->
+            <div class="max-w-3xl mx-auto">
+                <h3 class="text-2xl font-bold mb-8 text-center">常见问题</h3>
+                <div class="space-y-4">
+                    <div class="bg-dark-light rounded-xl overflow-hidden">
+                        <button class="faq-toggle w-full text-left p-6 focus:outline-none flex justify-between items-center">
+                            <span class="font-semibold">实验室招收哪些年级的学生？有专业限制吗？</span>
+                            <i class="fa fa-plus text-primary transition-transform"></i>
+                        </button>
+                        <div class="faq-content hidden px-6 pb-6">
+                            <p class="text-gray-400">
+                                我们招收本科生（主要是大二及以上）、硕士研究生和博士研究生，专业以计算机科学、软件工程、数学、自动化等相关专业为主，但不限于这些专业，只要对算法研究有浓厚兴趣并具备相应基础的同学都可以申请。
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-dark-light rounded-xl overflow-hidden">
+                        <button class="faq-toggle w-full text-left p-6 focus:outline-none flex justify-between items-center">
+                            <span class="font-semibold">加入实验室需要具备哪些基础？如何提升自己的竞争力？</span>
+                            <i class="fa fa-plus text-primary transition-transform"></i>
+                        </button>
+                        <div class="faq-content hidden px-6 pb-6">
+                            <p class="text-gray-400">
+                                基本要求包括扎实的数学基础（线性代数、概率论、微积分）、良好的编程能力和算法基础。建议有意向的同学多参与算法竞赛、阅读相关领域的论文、进行小型项目实践来提升自己的竞争力。我们也会提供入门指导和培训。
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-dark-light rounded-xl overflow-hidden">
+                        <button class="faq-toggle w-full text-left p-6 focus:outline-none flex justify-between items-center">
+                            <span class="font-semibold">实验室的工作时间和强度是怎样的？</span>
+                            <i class="fa fa-plus text-primary transition-transform"></i>
+                        </button>
+                        <div class="faq-content hidden px-6 pb-6">
+                            <p class="text-gray-400">
+                                实验室实行弹性工作制度，没有严格的坐班要求，但我们希望成员能够保证足够的科研时间投入。根据项目进展和个人目标不同，每周工作时间一般在20-40小时。我们鼓励高效工作，注重工作与学习的平衡。
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-dark-light rounded-xl overflow-hidden">
+                        <button class="faq-toggle w-full text-left p-6 focus:outline-none flex justify-between items-center">
+                            <span class="font-semibold">加入实验室后能获得哪些资源和支持？</span>
+                            <i class="fa fa-plus text-primary transition-transform"></i>
+                        </button>
+                        <div class="faq-content hidden px-6 pb-6">
+                            <p class="text-gray-400">
+                                实验室为成员提供良好的科研环境，包括高性能计算资源、文献数据库访问权限、学术交流机会等。成员可以参与国家级科研项目和企业合作项目，在导师指导下发表学术论文、申请专利。优秀成员还将获得推荐深造或就业的机会。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    </main>
+    
+    <!-- 页脚 -->
+    <footer id="footer" class="footer">
+        <a href="/" class="footer-logo">ACM实验室</a>
+        
+        <div class="footer-links">
+            <a href="/introduction" class="footer-link">概况</a>
+            <a href="/team" class="footer-link">团队</a>
+            <a href="/algorithm" class="footer-link">算法</a>
+            <a href="/paper" class="footer-link">论文</a>
+            <a href="/innovation" class="footer-link">科创</a>
+            <a href="/dynamic" class="footer-link">动态</a>
+            <a href="/algorithm-recruitment" class="footer-link">算法组招生</a>
+            <a href="/project-recruitment" class="footer-link">项目组招生</a>
+        </div>
+        
+        <div class="footer-social">
+            <a href="#" class="social-icon" title="微信"><i class="fab fa-weixin"></i></a>
+            <a href="https://s1.imagehub.cc/images/2025/08/28/d80fe4abf0cd9a20fde76c7a3d5849a8.png" class="social-icon" title="微博"><i class="fab fa-weibo"></i></a>
+            <a href="https://s1.imagehub.cc/images/2025/08/28/4859e46f5945f5d8210456ecc89f7494.jpeg" class="social-icon" title="小红书"><i class="fas fa-book-open"></i></a>
+            <a href="#" class="social-icon" title="GitHub"><i class="fab fa-github"></i></a>
+            <a href="https://mp.weixin.qq.com/s/your-wechat-official-account" class="social-icon" title="微信公众号"><i class="fas fa-newspaper"></i></a>
+            <a href="https://space.bilibili.com/1599858052?spm_id_from=333.788.upinfo.head.click" class="social-icon" title="哔哩哔哩"><i class="fab fa-bilibili"></i></a>
+            <a href="#" class="social-icon" title="邮箱"><i class="fas fa-envelope"></i></a>
+        </div>
+        
+        <p class="copyright">© 2023 ACM算法与科研创新实验室. 保留所有权利.</p>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <!-- 访问统计系统已移除 -->
+    <script>
+        // 全屏导航切换（元素存在时才绑定，兼容已删除全屏菜单的情况）
+        const menuToggle = document.querySelector('.menu-toggle');
+        const closeBtn = document.querySelector('.close-btn');
+        const fullscreenNav = document.querySelector('.fullscreen-nav');
+        
+        if (menuToggle && fullscreenNav) {
+            menuToggle.addEventListener('click', () => {
+                fullscreenNav.classList.add('active');
+            });
+        }
+        
+        if (closeBtn && fullscreenNav) {
+            closeBtn.addEventListener('click', () => {
+                fullscreenNav.classList.remove('active');
+            });
+        }
+        
+        // 粒子背景初始化
+        particlesJS('particles-js', {
+            "particles": {
+                "number": {
+                    "value": 80,
+                    "density": {
+                        "enable": true,
+                        "value_area": 800
+                    }
+                },
+                "color": {
+                    "value": "#3a86ff"
+                },
+                "shape": {
+                    "type": "circle",
+                    "stroke": {
+                        "width": 0,
+                        "color": "#000000"
+                    },
+                    "polygon": {
+                        "nb_sides": 5
+                    }
+                },
+                "opacity": {
+                    "value": 0.5,
+                    "random": false,
+                    "anim": {
+                        "enable": false,
+                        "speed": 1,
+                        "opacity_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "size": {
+                    "value": 3,
+                    "random": true,
+                    "anim": {
+                        "enable": false,
+                        "speed": 40,
+                        "size_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "line_linked": {
+                    "enable": true,
+                    "distance": 150,
+                    "color": "#3a86ff",
+                    "opacity": 0.4,
+                    "width": 1
+                },
+                "move": {
+                    "enable": true,
+                    "speed": 2,
+                    "direction": "none",
+                    "random": false,
+                    "straight": false,
+                    "out_mode": "out",
+                    "bounce": false,
+                    "attract": {
+                        "enable": false,
+                        "rotateX": 600,
+                        "rotateY": 1200
+                    }
+                }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {
+                    "onhover": {
+                        "enable": true,
+                        "mode": "grab"
+                    },
+                    "onclick": {
+                        "enable": true,
+                        "mode": "push"
+                    },
+                    "resize": true
+                },
+                "modes": {
+                    "grab": {
+                        "distance": 140,
+                        "line_linked": {
+                            "opacity": 1
+                        }
+                    },
+                    "bubble": {
+                        "distance": 400,
+                        "size": 40,
+                        "duration": 2,
+                        "opacity": 8,
+                        "speed": 3
+                    },
+                    "repulse": {
+                        "distance": 200,
+                        "duration": 0.4
+                    },
+                    "push": {
+                        "particles_nb": 4
+                    },
+                    "remove": {
+                        "particles_nb": 2
+                    }
+                }
+            },
+            "retina_detect": true
+        });
+        
+        // 滚动动画
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.section');
+            const windowHeight = window.innerHeight;
+            
+            sections.forEach(section => {
+                const sectionTop = section.getBoundingClientRect().top;
+                if (sectionTop < windowHeight - 100) {
+                    section.style.opacity = '1';
+                    section.style.transform = 'translateY(0)';
+                }
+            });
+        });
+        
+        // 初始化部分显示
+        document.addEventListener('DOMContentLoaded', () => {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(50px)';
+                section.style.transition = 'all 0.6s ease-out';
+            });
+            
+            // 触发第一个部分的显示
+            if (sections.length > 0) {
+                sections[0].style.opacity = '1';
+                sections[0].style.transform = 'translateY(0)';
+            }
+
+            // 英雄区域粒子效果
+            const particlesContainer = document.getElementById('particles');
+            if (particlesContainer) {
+                const particleCount = 50;
+                const colors = ['#00f0ff', '#ff00aa', '#7700ff', '#ffffff'];
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.classList.add('particle');
+                    const size = Math.random() * 5 + 1;
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    particle.style.left = `${Math.random() * 100}%`;
+                    particle.style.top = `${Math.random() * 100}%`;
+                    const duration = Math.random() * 20 + 10;
+                    particle.style.animationDuration = `${duration}s`;
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    particle.style.backgroundColor = color;
+                    particlesContainer.appendChild(particle);
+                                 }
+             }
+         });
+         
+                 // 成果展示：标签切换与图表初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            const achievementTabs = document.querySelectorAll('.achievement-tab');
+            const sections = {
+                '论文': document.getElementById('achievement-papers'),
+                '算法': document.getElementById('achievement-algorithms'),
+                '科创': document.getElementById('achievement-innovation'),
+            };
+            
+            if (achievementTabs.length) {
+                // 初始化：确保算法标签为激活状态，其他为非激活状态
+                achievementTabs.forEach((tab, index) => {
+                    const tabText = tab.textContent.trim();
+                    if (tabText === '算法') {
+                        tab.classList.add('active', 'bg-primary');
+                        tab.classList.remove('bg-gray-custom');
+                    } else {
+                        tab.classList.remove('active', 'bg-primary');
+                        tab.classList.add('bg-gray-custom');
+                    }
+                });
+                
+                achievementTabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        achievementTabs.forEach(t => {
+                            t.classList.remove('active', 'bg-primary');
+                            t.classList.add('bg-gray-custom');
+                        });
+                        this.classList.add('active', 'bg-primary');
+                        this.classList.remove('bg-gray-custom');
+                        Object.values(sections).forEach(el => el && el.classList.add('hidden'));
+                        const target = sections[this.textContent.trim()];
+                        if (target) {
+                            target.classList.remove('hidden');
+                            // 当切换到论文标签时，确保数据已加载
+                            if (this.textContent.trim() === '论文') {
+                                loadPapers();
+                            }
+                            // 当切换到科创标签时，确保数据已加载
+                            if (this.textContent.trim() === '科创') {
+                                loadInnovationProjects();
+                            }
+                        }
+                    });
+                });
+            }
+             const chartCanvas = document.getElementById('algorithmChart');
+             if (chartCanvas && window.Chart) {
+                 const ctx = chartCanvas.getContext('2d');
+                 new Chart(ctx, {
+                     type: 'line',
+                     data: {
+                         labels: ['100', '500', '1000', '5000', '10000', '50000'],
+                         datasets: [
+                             { label: '传统算法', data: [12, 45, 98, 480, 950, 4700], borderColor: '#FF2E63', backgroundColor: 'rgba(255, 46, 99, 0.1)', tension: 0.4, fill: true },
+                             { label: '我们的算法', data: [8, 25, 52, 230, 450, 2100], borderColor: '#6C63FF', backgroundColor: 'rgba(108, 99, 255, 0.1)', tension: 0.4, fill: true }
+                         ]
+                     },
+                     options: {
+                         responsive: true,
+                         plugins: { title: { display: true, text: '算法性能对比 (计算时间 ms)', color: '#fff' }, legend: { labels: { color: '#fff' } } },
+                         scales: {
+                             x: { title: { display: true, text: '数据规模', color: '#ccc' }, ticks: { color: '#ccc' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                             y: { title: { display: true, text: '计算时间 (ms)', color: '#ccc' }, ticks: { color: '#ccc' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
+                         }
+                     }
+                 });
+             }
+         });
+     </script>
+    
+    <!-- 算法演示：排序可视化（从 18/18.html 移植，作用于 #algorithms 部分） -->
+    <script>
+        // 算法演示：排序可视化（从 18/18.html 移植，作用于 #algorithms 部分）
+        (function() {
+            const arrayLengthSlider = document.getElementById('array-length');
+            const sortResult = document.getElementById('sort-result');
+            const bubbleSortBtn = document.getElementById('bubble-sort');
+            const quickSortBtn = document.getElementById('quick-sort');
+            const resetArrayBtn = document.getElementById('reset-array');
+            if (!arrayLengthSlider || !sortResult || !bubbleSortBtn || !quickSortBtn || !resetArrayBtn) return;
+            let sortData = [];
+            let isSorting = false;
+            function generateRandomArray(length) {
+                return Array.from({ length }, () => Math.floor(Math.random() * 150) + 30);
+            }
+            function drawSortResult() {
+                sortResult.innerHTML = '';
+                sortData.forEach(val => {
+                    const bar = document.createElement('div');
+                    bar.className = 'sort-bar';
+                    bar.style.height = `${val}px`;
+                    sortResult.appendChild(bar);
+                });
+            }
+            function resetArray() {
+                if (isSorting) return;
+                const length = parseInt(arrayLengthSlider.value);
+                sortData = generateRandomArray(length);
+                drawSortResult();
+            }
+            async function bubbleSort() {
+                if (isSorting) return;
+                isSorting = true;
+                disableSortButtons(true);
+                const bars = sortResult.querySelectorAll('.sort-bar');
+                for (let i = 0; i < sortData.length; i++) {
+                    for (let j = 0; j < sortData.length - i - 1; j++) {
+                        bars[j].style.background = 'linear-gradient(to top, #f0f, #880088)';
+                        bars[j + 1].style.background = 'linear-gradient(to top, #f0f, #880088)';
+                        if (sortData[j] > sortData[j + 1]) {
+                            [sortData[j], sortData[j + 1]] = [sortData[j + 1], sortData[j]];
+                            bars[j].style.height = `${sortData[j]}px`;
+                            bars[j + 1].style.height = `${sortData[j + 1]}px`;
+                            await new Promise(resolve => setTimeout(resolve, 50));
+                        }
+                        bars[j].style.background = 'linear-gradient(to top, #0ff, #008888)';
+                        bars[j + 1].style.background = 'linear-gradient(to top, #0ff, #008888)';
+                        bars[sortData.length - i - 1].style.background = 'linear-gradient(to top, #0f0, #008800)';
+                    }
+                    bars[sortData.length - i - 1].style.background = 'linear-gradient(to top, #0f0, #008800)';
+                }
+                isSorting = false;
+                disableSortButtons(false);
+            }
+            async function quickSort() {
+                if (isSorting) return;
+                isSorting = true;
+                disableSortButtons(true);
+                const bars = sortResult.querySelectorAll('.sort-bar');
+                async function partition(low, high) {
+                    const pivot = sortData[high];
+                    let i = low - 1;
+                    bars[high].style.background = 'linear-gradient(to top, #ff0, #888800)';
+                    for (let j = low; j <= high - 1; j++) {
+                        bars[j].style.background = 'linear-gradient(to top, #f0f, #880088)';
+                        if (sortData[j] < pivot) {
+                            i++;
+                            [sortData[i], sortData[j]] = [sortData[j], sortData[i]];
+                            bars[i].style.height = `${sortData[i]}px`;
+                            bars[j].style.height = `${sortData[j]}px`;
+                            await new Promise(resolve => setTimeout(resolve, 30));
+                        }
+                        if (j !== i) {
+                            bars[j].style.background = 'linear-gradient(to top, #0ff, #008888)';
+                        }
+                    }
+                    [sortData[i + 1], sortData[high]] = [sortData[high], sortData[i + 1]];
+                    bars[i + 1].style.height = `${sortData[i + 1]}px`;
+                    bars[high].style.height = `${sortData[high]}px`;
+                    bars[high].style.background = 'linear-gradient(to top, #0ff, #008888)';
+                    await new Promise(resolve => setTimeout(resolve, 30));
+                    return i + 1;
+                }
+                async function quickSortRecursive(low, high) {
+                    if (low < high) {
+                        const pi = await partition(low, high);
+                        bars[pi].style.background = 'linear-gradient(to top, #0f0, #008800)';
+                        await quickSortRecursive(low, pi - 1);
+                        await quickSortRecursive(pi + 1, high);
+                    } else if (low === high) {
+                        bars[low].style.background = 'linear-gradient(to top, #0f0, #008800)';
+                    }
+                }
+                await quickSortRecursive(0, sortData.length - 1);
+                isSorting = false;
+                disableSortButtons(false);
+            }
+            function disableSortButtons(disabled) {
+                bubbleSortBtn.disabled = disabled;
+                quickSortBtn.disabled = disabled;
+                arrayLengthSlider.disabled = disabled;
+                const opacity = disabled ? '0.5' : '1';
+                bubbleSortBtn.style.opacity = opacity;
+                quickSortBtn.style.opacity = opacity;
+                arrayLengthSlider.style.opacity = opacity;
+            }
+            arrayLengthSlider.addEventListener('input', resetArray);
+            bubbleSortBtn.addEventListener('click', bubbleSort);
+            quickSortBtn.addEventListener('click', quickSort);
+            resetArrayBtn.addEventListener('click', resetArray);
+            // 初始化
+            resetArray();
+        })();
+        </script>
+
+    <!-- 动态部分滚动动画（仅作用于 .timeline-item） -->
+    <script>
+        (function() {
+            function animateNewsOnScroll() {
+                const elements = document.querySelectorAll('.timeline-item');
+                elements.forEach(element => {
+                    const elementPosition = element.getBoundingClientRect().top;
+                    const screenPosition = window.innerHeight / 1.2;
+                    if (elementPosition < screenPosition) {
+                        element.style.opacity = '1';
+                        element.style.transform = 'translateY(0)';
+                    }
+                });
+            }
+            window.addEventListener('load', () => {
+                const elements = document.querySelectorAll('.timeline-item');
+                elements.forEach(element => {
+                    element.style.opacity = '0';
+                    element.style.transform = 'translateY(20px)';
+                    element.style.transition = 'all 0.5s ease';
+                });
+                animateNewsOnScroll();
+            });
+            window.addEventListener('scroll', animateNewsOnScroll);
+        })();
+    </script>
+    <!-- 加入我们：FAQ 折叠交互（从模板迁移） -->
+    <script>
+        (function() {
+            document.addEventListener('DOMContentLoaded', function() {
+                const faqToggles = document.querySelectorAll('.faq-toggle');
+                faqToggles.forEach(toggle => {
+                    toggle.addEventListener('click', function() {
+                        const content = this.nextElementSibling;
+                        const icon = this.querySelector('i');
+                        content.classList.toggle('hidden');
+                        if (content.classList.contains('hidden')) {
+                            icon.classList.remove('fa-minus', 'rotate-45');
+                            icon.classList.add('fa-plus');
+                        } else {
+                            icon.classList.remove('fa-plus');
+                            icon.classList.add('fa-minus', 'rotate-45');
+                        }
+                    });
+                });
+            });
+        })();
+    </script>
+    
+    <!-- ACM LAB标题点击跳转效果 -->
+    <script>
+        (function() {
+            const acmLabTitle = document.getElementById('acm-lab-title');
+            const pageTransition = document.getElementById('pageTransition');
+            
+            if (acmLabTitle && pageTransition) {
+                acmLabTitle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // 触发过渡动画
+                    pageTransition.classList.add('active');
+                    
+                    // 添加音效（如果需要）
+                    // 可以在这里添加点击音效
+                    
+                                    // 延迟跳转，让过渡动画完成
+                setTimeout(() => {
+                    window.location.href = '/matrix';
+                }, 1500); // 1.5秒后跳转
+                });
+                
+                // 增强hover效果
+                acmLabTitle.addEventListener('mouseenter', function() {
+                    this.style.filter = 'brightness(1.2)';
+                });
+                
+                acmLabTitle.addEventListener('mouseleave', function() {
+                    this.style.filter = 'brightness(1)';
+                });
+            }
+        })();
+    </script>
+
+    <!-- 导航栏和页脚高亮显示当前页面 -->
+    <script>
+        (function() {
+            // 页面加载完成后执行
+            document.addEventListener('DOMContentLoaded', function() {
+                // 获取当前页面路径
+                const currentPage = window.location.pathname || '/';
+                
+                // 页面映射关系
+                const pageMapping = {
+                    '/': {
+                        navSelector: '.logo' // 首页高亮logo
+                    },
+                    '/introduction': {
+                        navText: '实验室概况',
+                        dropdownText: '实验室简介'
+                    },
+                    '/charter': {
+                        navText: '实验室概况', 
+                        dropdownText: '实验室章程'
+                    },
+                    '/team': {
+                        navText: '团队'
+                    },
+                    '/paper': {
+                        navText: '成果性展示',
+                        dropdownText: '论文'
+                    },
+                    '/algorithm': {
+                        navText: '成果性展示',
+                        dropdownText: '算法'
+                    },
+                    '/innovation': {
+                        navText: '成果性展示',
+                        dropdownText: '科创'
+                    },
+                    '/dynamic': {
+                        navText: '动态'
+                    },
+                    '/algorithm-recruitment': {
+                        navText: '加入我们',
+                        dropdownText: '算法组招生'
+                    },
+                    '/project-recruitment': {
+                        navText: '加入我们',
+                        dropdownText: '项目组招生'
+                    }
+                };
+                
+                const currentPageInfo = pageMapping[currentPage];
+                if (!currentPageInfo) return;
+                
+                // 处理导航栏高亮
+                if (currentPageInfo.navSelector) {
+                    // 特殊选择器（如logo）
+                    const element = document.querySelector(currentPageInfo.navSelector);
+                    if (element) {
+                        element.classList.add('active');
+                    }
+                } else if (currentPageInfo.navText) {
+                    // 主导航链接高亮
+                    const navLinks = document.querySelectorAll('.nav-link');
+                    navLinks.forEach(link => {
+                        if (link.textContent.trim() === currentPageInfo.navText) {
+                            link.classList.add('active');
+                        }
+                    });
+                    
+                    // 下拉菜单项高亮
+                    if (currentPageInfo.dropdownText) {
+                        const dropdownLinks = document.querySelectorAll('.dropdown-link');
+                        dropdownLinks.forEach(link => {
+                            if (link.textContent.trim() === currentPageInfo.dropdownText) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                }
+                
+
+            });
+        })();
+    </script>
+    
+    <!-- 3D轮柱功能（从 test.html 迁移） -->
+    <script>
+        (function() {
+            // 3D轮柱功能
+            const carousel3d = document.getElementById('carousel3d');
+            const items3d = document.querySelectorAll('.carousel-3d-item');
+            const prev3d = document.getElementById('prev3d');
+            const next3d = document.getElementById('next3d');
+            
+            console.log('3D Carousel elements:', { carousel3d, items3d: items3d.length, prev3d, next3d });
+            
+            if (!carousel3d || !items3d.length || !prev3d || !next3d) {
+                console.error('Missing 3D carousel elements');
+                return;
+            }
+            
+            let currentAngle = 0;
+            const itemCount3d = items3d.length;
+            const angleStep = 360 / itemCount3d;
+            let autoRotateInterval;
+            let isUserInteracting = false;
+            
+            function update3dCarousel() {
+                items3d.forEach((item, index) => {
+                    const angle = currentAngle + index * angleStep;
+                    item.style.transform = `rotateY(${angle}deg) translateZ(400px)`;
+                    item.style.opacity = angle % 360 === 0 ? '1' : '0.6';
+                });
+            }
+            
+            function startAutoRotate() {
+                if (autoRotateInterval) clearInterval(autoRotateInterval);
+                autoRotateInterval = setInterval(() => {
+                    if (!isUserInteracting) {
+                        currentAngle -= angleStep;
+                        update3dCarousel();
+                    }
+                }, 3000); // 每3秒自动旋转一次
+            }
+            
+            function stopAutoRotate() {
+                if (autoRotateInterval) {
+                    clearInterval(autoRotateInterval);
+                    autoRotateInterval = null;
+                }
+            }
+            
+            next3d.addEventListener('click', (e) => {
+                console.log('Next button clicked!');
+                e.preventDefault();
+                e.stopPropagation();
+                isUserInteracting = true;
+                currentAngle -= angleStep;
+                update3dCarousel();
+                stopAutoRotate();
+                setTimeout(() => {
+                    isUserInteracting = false;
+                    startAutoRotate();
+                }, 5000); // 用户操作后5秒重新开始自动旋转
+            });
+            
+            prev3d.addEventListener('click', (e) => {
+                console.log('Prev button clicked!');
+                e.preventDefault();
+                e.stopPropagation();
+                isUserInteracting = true;
+                currentAngle += angleStep;
+                update3dCarousel();
+                stopAutoRotate();
+                setTimeout(() => {
+                    isUserInteracting = false;
+                    startAutoRotate();
+                }, 5000); // 用户操作后5秒重新开始自动旋转
+            });
+            
+            // 鼠标悬停时暂停自动旋转
+            carousel3d.addEventListener('mouseenter', () => {
+                isUserInteracting = true;
+            });
+            
+            carousel3d.addEventListener('mouseleave', () => {
+                isUserInteracting = false;
+            });
+            
+            // 初始化3D轮柱
+            update3dCarousel();
+            startAutoRotate();
+        })();
+    </script>
+    
+    <!-- 动态数据加载功能 -->
+    <script>
+        // 消息提示系统
+        function showMessage(text, type = 'info') {
+            const container = document.getElementById('messageContainer');
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            
+            const iconMap = {
+                success: '✓',
+                error: '✕',
+                info: 'ⓘ'
+            };
+            
+            message.innerHTML = `
+                <span class="message-icon">${iconMap[type] || 'ⓘ'}</span>
+                <span>${text}</span>
+            `;
+            
+            container.appendChild(message);
+            
+            // 触发显示动画
+            setTimeout(() => message.classList.add('show'), 100);
+            
+            // 3秒后自动移除
+            setTimeout(() => {
+                message.classList.remove('show');
+                setTimeout(() => {
+                    if (message.parentNode) {
+                        message.parentNode.removeChild(message);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // 加载指导老师数据
+        window.loadTeamLeaders = async function() {
+            try {
+                const response = await fetch('/api/frontend/advisors');
+                const leaders = await response.json();
+                
+                const container = document.getElementById('teamLeadersContainer');
+                if (leaders.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 col-span-3">
+                            <p class="text-gray-400">暂无指导老师数据</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = leaders.map(leader => `
+                    <div class="card-3d relative overflow-hidden bg-dark-light rounded-xl p-5 text-center hover:bg-gray-custom transition-colors group w-full max-w-sm mx-auto">
+                        <div class="flex justify-center mb-6">
+                            <div class="w-40 h-40 rounded-full overflow-hidden border-4 border-transparent group-hover:border-${leader.border_color || 'primary'} transition-colors">
+                                <img src="${leader.image_url || 'https://picsum.photos/300/300?random=' + Math.floor(Math.random() * 100)}" alt="${leader.name}，${leader.position}" class="w-full h-full object-cover">
+                            </div>
+                        </div>
+                        <h4 class="text-xl font-bold text-center mb-1">${leader.name}</h4>
+                        <p class="text-secondary text-center mb-4">${leader.position}</p>
+                        <p class="text-gray-400 text-center text-sm">
+                            ${leader.description || '暂无研究方向'}
+                        </p>
+                        <div class="flex justify-center mt-6 space-x-4">
+                            ${leader.email ? `<a href="mailto:${leader.email}" class="w-8 h-8 rounded-full bg-gray-custom flex items-center justify-center hover:bg-primary transition-colors" title="发送邮件">
+                                <i class="fa fa-envelope-o"></i>
+                            </a>` : ''}
+                            ${leader.google_scholar ? `<a href="${leader.google_scholar}" target="_blank" class="w-8 h-8 rounded-full bg-gray-custom flex items-center justify-center hover:bg-primary transition-colors" title="Google Scholar">
+                                <i class="fa fa-google"></i>
+                            </a>` : ''}
+                            ${leader.github ? `<a href="${leader.github}" target="_blank" class="w-8 h-8 rounded-full bg-gray-custom flex items-center justify-center hover:bg-primary transition-colors" title="GitHub">
+                                <i class="fa fa-github"></i>
+                            </a>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载指导老师数据失败:', error);
+                const container = document.getElementById('teamLeadersContainer');
+                container.innerHTML = `
+                    <div class="text-center py-8 col-span-3">
+                        <p class="text-red-400">加载指导老师数据失败</p>
+                    </div>
+                `;
+            }
+        };
+
+        // 加载团队成员数据（前8个）- 优化版本
+        window.loadTeamMembers = async function() {
+            console.log('🔄 开始加载首页团队成员数据...');
+            try {
+                // 显示加载状态
+                const container = document.getElementById('teamMembersContainer');
+                container.innerHTML = `
+                    <div class="text-center py-8 col-span-4">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                        <p class="mt-2 text-gray-400">正在加载团队成员数据...</p>
+                    </div>
+                `;
+                
+                // 添加缓存控制，避免浏览器缓存
+                const response = await fetch('/api/team', {
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const gradeData = await response.json();
+                
+                // 将年级分组数据转换为扁平化的成员列表，按order_index排序
+                let allMembers = [];
+                if (Array.isArray(gradeData)) {
+                    gradeData.forEach(grade => {
+                        if (grade.members && Array.isArray(grade.members)) {
+                            grade.members.forEach(member => {
+                                // 确保每个成员都有年级信息
+                                allMembers.push({
+                                    ...member,
+                                    grade: grade.grade || '2024级'
+                                });
+                            });
+                        }
+                    });
+                }
+                
+                console.log(`📊 解析到 ${allMembers.length} 位团队成员，来自 ${gradeData.length} 个年级`);
+                
+                // 按order_index排序，确保与管理页面的顺序一致
+                allMembers.sort((a, b) => {
+                    const orderA = a.order_index || 0;
+                    const orderB = b.order_index || 0;
+                    return orderA - orderB;
+                });
+                
+                // 只取前8个成员
+                const topMembers = allMembers.slice(0, 8);
+                
+                if (topMembers.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 col-span-4">
+                            <p class="text-gray-400">暂无团队成员数据</p>
+                            <p class="text-sm text-gray-500 mt-2">请在后端管理系统中添加团队成员</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 如果成员数量少于8个，显示提示
+                if (allMembers.length < 8) {
+                    console.log(`ℹ️ 团队成员数量较少 (${allMembers.length}人)，建议添加更多成员`);
+                }
+                
+                // 渲染团队成员卡片
+                container.innerHTML = topMembers.map(member => `
+                    <div class="card-3d relative overflow-hidden bg-dark-light rounded-xl p-5 text-center hover:bg-gray-custom transition-colors group w-full max-w-xs mx-auto">
+                        <div class="w-28 h-28 rounded-full overflow-hidden mx-auto mb-4 border-2 border-transparent group-hover:border-primary transition-colors">
+                            <img src="${member.img || member.image_url || 'https://picsum.photos/200/200?random=' + Math.floor(Math.random() * 100)}" 
+                                 alt="${member.name || '未知成员'}" 
+                                 class="w-full h-full object-cover" 
+                                 onerror="this.src='https://picsum.photos/200/200?random=' + Math.floor(Math.random() * 100)"
+                                 loading="lazy">
+                        </div>
+                        <h5 class="font-semibold text-white">${member.name || '未知成员'}</h5>
+                        <p class="text-sm text-secondary">${member.position || member.role || '成员'}</p>
+                        ${member.grade ? `<p class="text-xs text-gray-400 mt-1">${member.grade}</p>` : ''}
+                        ${member.desc ? `<p class="text-xs text-gray-400 mt-2 line-clamp-2" title="${member.desc}">${member.desc.length > 50 ? member.desc.substring(0, 50) + '...' : member.desc}</p>` : ''}
+                    </div>
+                `).join('');
+                
+                // 保存最新数据用于比较
+                window.lastTeamData = gradeData;
+                
+                console.log(`✅ 团队成员数据加载成功，显示前${topMembers.length}位成员`);
+                
+                // 显示成功消息（可选）
+                if (topMembers.length > 0) {
+                    console.log('🎉 团队成员数据已成功加载到首页');
+                }
+                
+            } catch (error) {
+                console.error('加载团队成员数据失败:', error);
+                const container = document.getElementById('teamMembersContainer');
+                container.innerHTML = `
+                    <div class="text-center py-8 col-span-4">
+                        <p class="text-red-400">加载团队成员数据失败</p>
+                        <p class="text-sm text-gray-500 mt-2">错误信息: ${error.message}</p>
+                        <button onclick="loadTeamMembers()" class="mt-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors">
+                            🔄 重试加载
+                        </button>
+                    </div>
+                `;
+            }
+        };
+
+        // 加载论文数据 - 优化版本
+        window.loadPapers = async function() {
+            console.log('📚 开始加载首页论文数据...');
+            try {
+                // 显示加载状态
+                const container = document.getElementById('papersContainer');
+                if (!container) {
+                    console.error('❌ 找不到papersContainer元素');
+                    return;
+                }
+                
+                container.innerHTML = `
+                    <div class="text-center py-8 col-span-3">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                        <p class="mt-2 text-gray-400">正在加载论文数据...</p>
+                    </div>
+                `;
+                
+                console.log('🔍 正在调用API: /api/frontend/papers');
+                
+                // 添加缓存控制，避免浏览器缓存
+                const response = await fetch('/api/frontend/papers', {
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                console.log('📡 API响应状态:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const papers = await response.json();
+                console.log(`📊 获取到 ${papers.length} 篇论文数据`);
+                console.log('📋 论文数据详情:', papers);
+                
+                if (!papers || papers.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 col-span-3">
+                            <p class="text-gray-400">暂无论文数据</p>
+                            <p class="text-sm text-gray-500 mt-2">请在后端管理系统中添加论文</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 渲染论文卡片
+                const papersHtml = papers.map(paper => `
+                    <div class="bg-dark rounded-xl overflow-hidden group hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 transform hover:-translate-y-2">
+                        <div class="h-48 bg-gray-custom flex items-center justify-center p-6 relative overflow-hidden">
+                            <div class="text-center relative z-10">
+                                <i class="fa fa-file-text-o text-6xl text-primary/70 group-hover:text-primary transition-colors"></i>
+                                <p class="mt-4 text-gray-400">${paper.journal || '暂无期刊信息'}</p>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="inline-block px-3 py-1 bg-primary/20 text-primary text-xs rounded-full">${paper.year || '未知年份'}</span>
+                                ${paper.pdf_url ? '<span class="inline-block px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">📄 PDF</span>' : ''}
+                                ${paper.code_url ? '<span class="inline-block px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">💻 代码</span>' : ''}
+                            </div>
+                            ${paper.category_names && paper.category_names.length > 0 ? `
+                                <div class="flex flex-wrap gap-2 mb-3">
+                                    ${paper.category_names.slice(0, 3).map(category => `<span class="inline-block px-2 py-1 bg-secondary/20 text-secondary text-xs rounded-full">${category}</span>`).join('')}
+                                    ${paper.category_names.length > 3 ? `<span class="inline-block px-2 py-1 bg-gray-500/20 text-gray-400 text-xs rounded-full">+${paper.category_names.length - 3}</span>` : ''}
+                                </div>
+                            ` : ''}
+                            <h4 class="text-xl font-semibold mb-3 group-hover:text-primary transition-colors line-clamp-2" title="${paper.title || '未命名论文'}">${paper.title || '未命名论文'}</h4>
+                            <div class="flex justify-between items-center">
+                                <p class="text-sm text-gray-500 truncate flex-1 mr-2" title="${(paper.authors || []).join(', ') || '未知作者'}">${(paper.authors || []).join(', ') || '未知作者'}</p>
+                                <a href="/paper" class="text-secondary hover:text-white transition-colors flex-shrink-0">查看详情 →</a>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                container.innerHTML = papersHtml;
+                
+                // 保存最新数据用于比较
+                window.lastPapersData = papers;
+                
+                console.log(`✅ 首页论文数据加载成功，显示 ${papers.length} 篇论文`);
+                
+                // 显示成功消息（可选）
+                if (papers.length > 0) {
+                    console.log('🎉 论文数据已成功加载到首页');
+                    showMessage(`成功加载 ${papers.length} 篇论文`, 'success');
+                }
+                
+            } catch (error) {
+                console.error('❌ 加载论文数据失败:', error);
+                const container = document.getElementById('papersContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 col-span-3">
+                            <p class="text-red-400">加载论文数据失败</p>
+                            <p class="text-sm text-gray-500 mt-2">错误信息: ${error.message}</p>
+                            <button onclick="loadPapers()" class="mt-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors">
+                                🔄 重试加载
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        };
+
+        // 加载科创成果数据
+        window.loadInnovationProjects = async function() {
+            try {
+                const response = await fetch('/api/frontend/innovation-projects');
+                const projects = await response.json();
+                
+                const container = document.getElementById('innovationProjectsContainer');
+                if (projects.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8">
+                            <p class="text-gray-400">暂无科创成果数据</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 显示第一个项目作为主要项目
+                const mainProject = projects[0];
+                const otherProjects = projects.slice(1);
+                
+                let html = `
+                    <div class="grid md:grid-cols-2 gap-8 mb-12">
+                        <div class="rounded-xl overflow-hidden">
+                            <img src="${mainProject.image_url || 'https://picsum.photos/600/400?random=30'}" alt="${mainProject.title}" class="w-full h-auto">
+                        </div>
+                        <div>
+                            <span class="inline-block px-3 py-1 bg-accent/20 text-accent text-xs rounded-full mb-3">${mainProject.category}</span>
+                            <h4 class="text-2xl font-semibold mb-4">${mainProject.title}</h4>
+                            <p class="text-gray-300 mb-6">
+                                ${mainProject.description}
+                            </p>
+                            ${mainProject.tags ? `
+                                <div class="flex flex-wrap gap-2 mb-6">
+                                    ${mainProject.tags.split(',').map(tag => `<span class="px-3 py-1 bg-gray-custom rounded-full text-sm">${tag.trim()}</span>`).join('')}
+                                </div>
+                            ` : ''}
+                            ${mainProject.detail_url ? `
+                                <a href="${mainProject.detail_url}" class="inline-flex items-center px-6 py-3 bg-accent text-white rounded-full hover:bg-accent/80 transition-colors">
+                                    了解项目详情
+                                    <i class="fa fa-arrow-right ml-2"></i>
+                                </a>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                // 显示其他项目
+                if (otherProjects.length > 0) {
+                    html += `
+                        <div class="grid md:grid-cols-3 gap-6">
+                            ${otherProjects.map(project => `
+                                <div class="bg-dark rounded-xl overflow-hidden group">
+                                    <div class="h-40 overflow-hidden">
+                                        <img src="${project.image_url || 'https://picsum.photos/400/300?random=' + Math.floor(Math.random() * 100)}" alt="${project.title}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                                    </div>
+                                    <div class="p-5">
+                                        <h5 class="text-lg font-semibold mb-2">${project.title}</h5>
+                                        <p class="text-gray-400 text-sm mb-3">${project.description}</p>
+                                        ${project.detail_url ? `<a href="${project.detail_url}" class="text-sm text-secondary hover:text-white transition-colors">查看详情 →</a>` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('加载科创成果数据失败:', error);
+                const container = document.getElementById('innovationProjectsContainer');
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="text-red-400">加载科创成果数据失败</p>
+                    </div>
+                `;
+            }
+        };
+
+        // 加载活动数据
+        window.loadActivities = async function() {
+            try {
+                const response = await fetch('/api/frontend/activities');
+                const activities = await response.json();
+                
+                const container = document.getElementById('activitiesContainer');
+                if (activities.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8">
+                            <p class="text-gray-400">暂无实验室动态数据</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const activitiesHtml = activities.map(activity => `
+                    <div class="timeline-item">
+                        <div class="timeline-date">${activity.formatted_date || '未知日期'}</div>
+                        <h3 class="timeline-title">${activity.title || '未命名活动'}</h3>
+                        <p class="timeline-desc">${activity.excerpt || '暂无描述'}</p>
+                    </div>
+                `).join('');
+                
+                container.innerHTML = activitiesHtml;
+            } catch (error) {
+                console.error('加载活动数据失败:', error);
+                const container = document.getElementById('activitiesContainer');
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="text-red-400">加载活动数据失败</p>
+                    </div>
+                `;
+            }
+        };
+
+        // 页面加载完成后执行 - 优化版本
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🏠 首页开始初始化...');
+            
+            // 立即加载团队成员数据（优先级最高）
+            loadTeamMembers().then(() => {
+                console.log('✅ 团队成员数据加载完成');
+            }).catch(error => {
+                console.error('❌ 团队成员数据加载失败:', error);
+            });
+            
+            // 并行加载其他数据
+            Promise.allSettled([
+                loadTeamLeaders(),
+                loadActivities(),
+                loadPapers(),
+                loadInnovationProjects()
+            ]).then(results => {
+                console.log('📊 所有数据加载完成:', results.map(r => r.status));
+            });
+            
+            // 设置论文数据实时更新监听
+            setupPapersRealtimeUpdates();
+            
+            // 延迟设置页面类型，确保Socket.IO已经初始化
+            setTimeout(function() {
+                if (typeof setCurrentPage === 'function') {
+                    setCurrentPage('home');
+                    console.log('📍 页面类型已设置为: home');
+                }
+            }, 1000); // 减少延迟
+            
+            // 设置实时更新系统
+            setTimeout(function() {
+                setupRealtimeUpdates();
+                console.log('🔄 实时更新系统已启动');
+            }, 1500); // 减少延迟
+            
+            // 通知管理后台页面已准备就绪
+            try {
+                if (window.opener && !window.opener.closed) {
+                    window.opener.postMessage({
+                        type: 'FRONTEND_READY',
+                        timestamp: Date.now()
+                    }, '*');
+                    console.log('📢 已通知管理后台页面');
+                }
+            } catch (e) {
+                console.log('无法通知管理后台页面');
+            }
+            
+            // 添加页面可见性监听，优化性能
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    console.log('📱 页面变为可见，检查数据更新');
+                    // 页面变为可见时，检查数据是否需要更新
+                    setTimeout(() => {
+                        if (typeof loadTeamMembers === 'function') {
+                            loadTeamMembers();
+                        }
+                    }, 1000);
+                }
+            });
+        });
+        
+        // 监听来自管理后台的更新消息
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'INNOVATION_PROJECTS_UPDATED') {
+                console.log('收到管理后台更新通知，刷新科创成果数据');
+                loadInnovationProjects();
+            }
+            if (event.data && event.data.type === 'PAPERS_UPDATED') {
+                console.log('收到管理后台更新通知，刷新论文数据');
+                loadPapers();
+            }
+            if (event.data && event.data.type === 'ADVISORS_UPDATED') {
+                console.log('收到管理后台更新通知，刷新指导老师数据');
+                loadTeamLeaders();
+            }
+            if (event.data && event.data.type === 'TEAM_MEMBERS_UPDATED') {
+                console.log('收到管理后台更新通知，刷新团队成员数据');
+                loadTeamMembers();
+            }
+            if (event.data && event.data.type === 'ACTIVITIES_UPDATED') {
+                console.log('收到管理后台更新通知，刷新活动数据');
+                loadActivities();
+            }
+        });
+        
+        // 论文数据实时更新系统
+        function setupPapersRealtimeUpdates() {
+            let lastUpdateTime = 0;
+            const updateCooldown = 2000; // 2秒冷却时间
+            
+            // 监听来自管理页面的postMessage通知
+            window.addEventListener('message', function(event) {
+                if (event.data && event.data.type === 'PAPERS_UPDATED') {
+                    const now = Date.now();
+                    if (now - lastUpdateTime < updateCooldown) {
+                        console.log('⏱️ 论文更新过于频繁，跳过此次更新');
+                        return;
+                    }
+                    lastUpdateTime = now;
+                    
+                    console.log('✅ 收到论文数据更新通知，操作类型:', event.data.operation);
+                    
+                    // 检查是否是排序操作
+                    if (event.data.operation === 'papers_reordered') {
+                        console.log('🔄 检测到排序操作，延迟更新数据...');
+                        setTimeout(() => {
+                            loadPapers();
+                        }, 1500);
+                    } else {
+                        console.log('🔄 开始重新加载论文数据...');
+                        loadPapers();
+                    }
+                    
+                    showMessage(`论文数据已更新 (${event.data.operation})`, 'info');
+                }
+            });
+            
+            // 监听localStorage变化（多标签页同步）
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'papers_data_updated') {
+                    const now = Date.now();
+                    if (now - lastUpdateTime < updateCooldown) {
+                        console.log('⏱️ 存储事件更新过于频繁，跳过此次更新');
+                        return;
+                    }
+                    lastUpdateTime = now;
+                    
+                    try {
+                        const updateData = JSON.parse(e.newValue);
+                        console.log('📱 检测到其他标签页论文数据更新:', updateData);
+                        
+                        if (updateData.operation === 'papers_reordered') {
+                            setTimeout(() => {
+                                loadPapers();
+                            }, 1500);
+                        } else {
+                            loadPapers();
+                        }
+                        
+                        showMessage(`论文数据已同步更新 (${updateData.operation})`, 'info');
+                    } catch (error) {
+                        console.error('解析存储事件数据失败:', error);
+                    }
+                }
+            });
+            
+            // Socket.IO实时更新（如果可用）
+            if (typeof socket !== 'undefined' && socket) {
+                socket.on('papers_updated', function(data) {
+                    const now = Date.now();
+                    if (now - lastUpdateTime < updateCooldown) {
+                        return;
+                    }
+                    lastUpdateTime = now;
+                    
+                    console.log('🔗 Socket.IO收到论文更新通知:', data);
+                    loadPapers();
+                    showMessage('论文数据已实时更新', 'success');
+                });
+            }
+            
+            // 定期检查数据更新（备用方案）
+            setInterval(async () => {
+                // 只在页面可见时进行检查
+                if (document.hidden) {
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/api/frontend/papers', {
+                        headers: {
+                            'Cache-Control': 'no-cache',
+                            'Pragma': 'no-cache'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const newData = await response.json();
+                        
+                        if (window.lastPapersData && JSON.stringify(window.lastPapersData) !== JSON.stringify(newData)) {
+                            console.log('🔄 检测到论文数据变化，自动更新...');
+                            window.lastPapersData = newData;
+                            loadPapers();
+                            showMessage('论文数据已自动更新', 'info');
+                        } else if (!window.lastPapersData) {
+                            window.lastPapersData = newData;
+                        }
+                    }
+                } catch (err) {
+                    console.error('定期检查论文数据更新失败:', err);
+                }
+            }, 30000); // 每30秒检查一次
+        }
+        
+        // 实时更新系统 - 优化版本
+        function setupRealtimeUpdates() {
+            let lastUpdateTime = 0;
+            const updateCooldown = 300; // 减少冷却时间，提高响应速度
+            
+            // 防抖函数
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+            
+            // 即时更新函数 - 优化版本
+            function immediateUpdate(type, operation) {
+                console.log(`🚀 首页执行即时更新: ${type}, 操作: ${operation}`);
+                
+                const startTime = Date.now();
+                
+                if (type === 'team_leaders') {
+                    loadTeamLeaders().then(() => {
+                        const duration = Date.now() - startTime;
+                        console.log(`指导老师数据更新完成，耗时: ${duration}ms`);
+                        showMessage(`指导老师数据已更新 (${operation})`, 'info');
+                    });
+                } else if (type === 'team_members') {
+                    loadTeamMembers().then(() => {
+                        const duration = Date.now() - startTime;
+                        console.log(`团队成员数据更新完成，耗时: ${duration}ms`);
+                        showMessage(`团队成员数据已更新 (${operation})`, 'info');
+                    });
+                } else if (type === 'papers') {
+                    loadPapers().then(() => {
+                        const duration = Date.now() - startTime;
+                        console.log(`论文数据更新完成，耗时: ${duration}ms`);
+                        showMessage(`论文数据已更新 (${operation})`, 'info');
+                    });
+                } else if (type === 'innovation') {
+                    loadInnovationProjects().then(() => {
+                        const duration = Date.now() - startTime;
+                        console.log(`科创成果数据更新完成，耗时: ${duration}ms`);
+                        showMessage(`科创成果数据已更新 (${operation})`, 'info');
+                    });
+                } else if (type === 'activities') {
+                    loadActivities().then(() => {
+                        const duration = Date.now() - startTime;
+                        console.log(`活动数据更新完成，耗时: ${duration}ms`);
+                        showMessage(`活动数据已更新 (${operation})`, 'info');
+                    });
+                }
+            }
+            
+            // Socket.IO实时刷新 - 优化版本
+            if (typeof socket !== 'undefined' && socket) {
+                socket.on('page_refresh', function(data) {
+                    const now = Date.now();
+                    if (now - lastUpdateTime < updateCooldown) {
+                        console.log('⏱️ Socket.IO更新过于频繁，跳过此次更新');
+                        return;
+                    }
+                    lastUpdateTime = now;
+                    
+                    console.log('首页收到数据更新通知:', data);
+                    
+                    if (data.page === 'home' || data.page === 'all' || data.page === 'team') {
+                        console.log('刷新首页数据...');
+                        
+                        // 根据操作类型决定更新策略
+                        if (data.isReorder || data.type === 'reordered' || data.operation === 'reordered') {
+                            setTimeout(() => {
+                                immediateUpdate('team_members', 'reordered');
+                                immediateUpdate('papers', 'reordered');
+                                immediateUpdate('innovation', 'reordered');
+                            }, 500); // 减少延迟
+                        } else {
+                            // 其他操作立即更新
+                            immediateUpdate('team_members', data.operation || 'updated');
+                            immediateUpdate('papers', data.operation || 'updated');
+                            immediateUpdate('innovation', data.operation || 'updated');
+                        }
+                    }
+                });
+                
+                // 监听连接状态
+                socket.on('connect', function() {
+                    console.log('首页Socket.IO连接成功，实时更新已启用');
+                    showMessage('实时数据同步已连接', 'success');
+                });
+                
+                socket.on('disconnect', function() {
+                    console.log('首页Socket.IO连接断开');
+                });
+                
+                // 监听特定类型的更新通知
+                socket.on('team_members_updated', function(data) {
+                    console.log('收到团队成员更新通知:', data);
+                    immediateUpdate('team_members', data.operation || 'updated');
+                });
+            }
+            
+            // 监听存储变化事件（多标签页同步）- 优化版本
+            window.addEventListener('storage', (e) => {
+                const now = Date.now();
+                if (now - lastUpdateTime < updateCooldown) {
+                    console.log('⏱️ 存储事件更新过于频繁，跳过此次更新');
+                    return;
+                }
+                lastUpdateTime = now;
+                
+                if (e.key === 'team_data_updated') {
+                    console.log('检测到其他标签页团队成员数据更新，刷新首页团队数据');
+                    immediateUpdate('team_members', 'cross-tab-update');
+                }
+                
+                if (e.key === 'papers_data_updated') {
+                    console.log('检测到其他标签页论文数据更新，刷新首页论文数据');
+                    immediateUpdate('papers', 'cross-tab-update');
+                }
+                
+                if (e.key === 'innovation_data_updated') {
+                    console.log('检测到其他标签页科创数据更新，刷新首页科创数据');
+                    immediateUpdate('innovation', 'cross-tab-update');
+                }
+            });
+            
+            // 监听来自管理页面的消息
+            window.addEventListener('message', function(event) {
+                if (event.data && event.data.type === 'TEAM_MEMBERS_UPDATED') {
+                    console.log('收到管理页面团队成员更新通知:', event.data);
+                    immediateUpdate('team_members', event.data.operation || 'updated');
+                }
+            });
+            
+            // 定期检查数据更新（备用方案）- 优化版本
+            let lastCheckTime = 0;
+            const checkInterval = 20000; // 减少到20秒检查一次
+            
+            setInterval(async () => {
+                const now = Date.now();
+                if (now - lastCheckTime < checkInterval) {
+                    return;
+                }
+                lastCheckTime = now;
+                
+                // 只在页面可见时进行检查
+                if (document.hidden) {
+                    console.log('⏱️ 首页不可见，跳过定期检查');
+                    return;
+                }
+                
+                try {
+                    // 并行检查数据更新
+                    const [teamRes, papersRes, innovationRes] = await Promise.all([
+                        fetch('/api/team', {
+                            headers: {
+                                'Cache-Control': 'no-cache',
+                                'Pragma': 'no-cache'
+                            }
+                        }),
+                        fetch('/api/frontend/papers'),
+                        fetch('/api/frontend/innovation-projects')
+                    ]);
+                    
+                    // 检查团队成员数据
+                    if (teamRes.ok) {
+                        const newTeamData = await teamRes.json();
+                        if (window.lastTeamData && JSON.stringify(window.lastTeamData) !== JSON.stringify(newTeamData)) {
+                            console.log('首页检测到团队成员数据变化，自动更新...');
+                            window.lastTeamData = newTeamData;
+                            loadTeamMembers();
+                        } else if (!window.lastTeamData) {
+                            window.lastTeamData = newTeamData;
+                        }
+                    }
+                    
+                    // 检查论文数据
+                    if (papersRes.ok) {
+                        const newPapersData = await papersRes.json();
+                        if (window.lastPapersData && JSON.stringify(window.lastPapersData) !== JSON.stringify(newPapersData)) {
+                            console.log('首页检测到论文数据变化，自动更新...');
+                            window.lastPapersData = newPapersData;
+                            loadPapers();
+                        } else if (!window.lastPapersData) {
+                            window.lastPapersData = newPapersData;
+                        }
+                    }
+                    
+                    // 检查科创数据
+                    if (innovationRes.ok) {
+                        const newInnovationData = await innovationRes.json();
+                        if (window.lastInnovationData && JSON.stringify(window.lastInnovationData) !== JSON.stringify(newInnovationData)) {
+                            console.log('首页检测到科创数据变化，自动更新...');
+                            window.lastInnovationData = newInnovationData;
+                            loadInnovationProjects();
+                        } else if (!window.lastInnovationData) {
+                            window.lastInnovationData = newInnovationData;
+                        }
+                    }
+                } catch (err) {
+                    console.error('首页定期检查数据更新失败:', err);
+                }
+            }, checkInterval);
+        }
+        
+        // 使用统一的访问统计追踪系统
+        // 访问统计系统已移除
+        
+        // 初始化Socket.IO实时同步
+        let socket = null;
+        
+        function initSocketIO() {
+            try {
+                socket = io({
+                    transports: ['websocket', 'polling'],
+                    timeout: 15000,
+                    reconnection: true,
+                    reconnectionAttempts: 10,
+                    reconnectionDelay: 1000
+                });
+
+                socket.on('connect', function() {
+                    console.log('🔗 Socket.IO 连接成功，ID:', socket.id);
+                    
+                    // 加入首页
+                    socket.emit('join_page', { page: 'home' });
+                    
+                    // 显示连接状态
+                    showMessage('实时同步已连接', 'success', 2000);
+                });
+
+                socket.on('disconnect', function(reason) {
+                    console.log('🔌 Socket.IO 连接断开:', reason);
+                    showMessage('实时同步连接断开', 'warning', 3000);
+                });
+
+                socket.on('connect_error', function(error) {
+                    console.error('❌ Socket.IO 连接错误:', error.message);
+                    showMessage('实时同步连接失败', 'error', 3000);
+                });
+
+                // 监听团队成员更新通知
+                socket.on('team_members_updated', function(data) {
+                    console.log('🔄 收到团队成员更新通知:', data);
+                    showMessage('团队成员数据已更新', 'success', 3000);
+                    
+                    // 自动刷新团队成员数据
+                    setTimeout(() => {
+                        loadTeamMembers();
+                    }, 500);
+                });
+
+                // 监听页面刷新通知
+                socket.on('page_refresh', function(data) {
+                    console.log('🔄 收到页面刷新通知:', data);
+                    
+                    if (data.action === 'updated' || data.action === 'deleted' || data.action === 'reordered') {
+                        showMessage('数据已更新，正在刷新...', 'info', 2000);
+                        
+                        // 根据操作类型刷新相应数据
+                        setTimeout(() => {
+                            if (data.action === 'updated' || data.action === 'deleted') {
+                                loadTeamMembers();
+                            }
+                        }, 500);
+                    }
+                });
+
+            } catch (error) {
+                console.error('❌ 初始化Socket.IO失败:', error);
+                showMessage('实时同步初始化失败', 'error', 3000);
+            }
+        }
+
+        // 页面加载完成后初始化Socket.IO
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(initSocketIO, 1000);
+        });
+
+        // 页面卸载时断开连接
+        window.addEventListener('beforeunload', function() {
+            if (socket) {
+                socket.disconnect();
+            }
+        });
+        
+        // 加载性能监控器（开发环境）
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            const perfScript = document.createElement('script');
+            perfScript.src = '/static/js/performance-monitor.js';
+            document.head.appendChild(perfScript);
+        }
+        
+        // 添加调试功能
+        window.debugTeamMembers = function() {
+            console.log('🔍 调试首页团队成员数据:');
+            console.log('lastTeamData:', window.lastTeamData);
+            console.log('teamMembersContainer:', document.getElementById('teamMembersContainer'));
+            
+            // 测试API调用
+            fetch('/api/team')
+                .then(res => res.json())
+                .then(data => {
+                    console.log('🔍 当前API响应:', data);
+                    showMessage('API测试完成，请查看控制台', 'info');
+                })
+                .catch(err => {
+                    console.error('❌ API测试失败:', err);
+                    showMessage('API测试失败', 'error');
+                });
+        };
+        
+        // 添加手动刷新功能
+        window.refreshTeamMembers = function() {
+            console.log('🔄 手动刷新首页团队成员数据...');
+            loadTeamMembers();
+        };
+        
+        // 添加论文数据调试功能
+        window.debugPapers = function() {
+            console.log('🔍 调试首页论文数据:');
+            console.log('lastPapersData:', window.lastPapersData);
+            console.log('papersContainer:', document.getElementById('papersContainer'));
+            
+            // 测试API调用
+            fetch('/api/frontend/papers')
+                .then(res => res.json())
+                .then(data => {
+                    console.log('🔍 论文API响应:', data);
+                    showMessage('论文API测试完成，请查看控制台', 'info');
+                })
+                .catch(err => {
+                    console.error('❌ 论文API测试失败:', err);
+                    showMessage('论文API测试失败', 'error');
+                });
+        };
+        
+        // 添加论文数据手动刷新功能
+        window.refreshPapers = function() {
+            console.log('🔄 手动刷新首页论文数据...');
+            loadPapers();
+        };
+        
+        // 添加调试工具
+        window.debugPapersContainer = function() {
+            console.log('🔍 调试论文容器:');
+            const container = document.getElementById('papersContainer');
+            console.log('papersContainer元素:', container);
+            console.log('papersContainer内容:', container ? container.innerHTML : '元素不存在');
+            
+            // 检查所有相关元素
+            const papersSection = document.getElementById('achievement-papers');
+            const algorithmsSection = document.getElementById('achievement-algorithms');
+            const innovationSection = document.getElementById('achievement-innovation');
+            
+            console.log('论文区域:', papersSection);
+            console.log('算法区域:', algorithmsSection);
+            console.log('科创区域:', innovationSection);
+            
+            // 检查当前显示状态
+            console.log('论文区域显示状态:', papersSection ? papersSection.classList.contains('hidden') : '元素不存在');
+            console.log('算法区域显示状态:', algorithmsSection ? algorithmsSection.classList.contains('hidden') : '元素不存在');
+            console.log('科创区域显示状态:', innovationSection ? innovationSection.classList.contains('hidden') : '元素不存在');
+        };
+        
+        // 手动测试API调用
+        window.testPapersAPI = async function() {
+            console.log('🧪 手动测试论文API...');
+            try {
+                const response = await fetch('/api/frontend/papers');
+                console.log('API响应状态:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('API返回数据:', data);
+                    showMessage(`API测试成功，返回 ${data.length} 篇论文`, 'success');
+                } else {
+                    console.error('API请求失败:', response.statusText);
+                    showMessage('API测试失败', 'error');
+                }
+            } catch (error) {
+                console.error('API测试异常:', error);
+                showMessage('API测试异常', 'error');
+            }
+        };
+        
+        // 标签切换函数
+        window.switchToPapers = function() {
+            console.log('📚 切换到论文标签');
+            
+            // 更新标签状态
+            document.querySelectorAll('.achievement-tab').forEach(tab => {
+                tab.classList.remove('active', 'bg-primary');
+                tab.classList.add('bg-gray-custom');
+            });
+            event.target.classList.add('active', 'bg-primary');
+            event.target.classList.remove('bg-gray-custom');
+            
+            // 隐藏所有内容
+            document.getElementById('achievement-papers').classList.add('hidden');
+            document.getElementById('achievement-algorithms').classList.add('hidden');
+            document.getElementById('achievement-innovation').classList.add('hidden');
+            
+            // 显示论文内容
+            document.getElementById('achievement-papers').classList.remove('hidden');
+            
+            // 加载论文数据
+            loadPapers();
+            
+            showMessage('已切换到论文展示', 'info');
+        };
+        
+        window.switchToAlgorithms = function() {
+            console.log('⚡ 切换到算法标签');
+            
+            // 更新标签状态
+            document.querySelectorAll('.achievement-tab').forEach(tab => {
+                tab.classList.remove('active', 'bg-primary');
+                tab.classList.add('bg-gray-custom');
+            });
+            event.target.classList.add('active', 'bg-primary');
+            event.target.classList.remove('bg-gray-custom');
+            
+            // 隐藏所有内容
+            document.getElementById('achievement-papers').classList.add('hidden');
+            document.getElementById('achievement-algorithms').classList.add('hidden');
+            document.getElementById('achievement-innovation').classList.add('hidden');
+            
+            // 显示算法内容
+            document.getElementById('achievement-algorithms').classList.remove('hidden');
+            
+            showMessage('已切换到算法展示', 'info');
+        };
+        
+        window.switchToInnovation = function() {
+            console.log('🚀 切换到科创标签');
+            
+            // 更新标签状态
+            document.querySelectorAll('.achievement-tab').forEach(tab => {
+                tab.classList.remove('active', 'bg-primary');
+                tab.classList.add('bg-gray-custom');
+            });
+            event.target.classList.add('active', 'bg-primary');
+            event.target.classList.remove('bg-gray-custom');
+            
+            // 隐藏所有内容
+            document.getElementById('achievement-papers').classList.add('hidden');
+            document.getElementById('achievement-algorithms').classList.add('hidden');
+            document.getElementById('achievement-innovation').classList.add('hidden');
+            
+            // 显示科创内容
+            document.getElementById('achievement-innovation').classList.remove('hidden');
+            
+            // 加载科创数据
+            loadInnovationProjects();
+            
+            showMessage('已切换到科创展示', 'info');
+        };
+    </script>
+       </body>
+   </html>

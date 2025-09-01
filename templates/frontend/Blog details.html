@@ -1,0 +1,1919 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实验室章程 - ACM算法研究实验室</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Exo+2:wght@300;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/v4-shims.min.css">
+<link rel="stylesheet" href="/static/highlight.css">
+<script defer src="/static/highlight.js"></script>
+
+    <style>
+        :root {
+            --primary: #3a86ff;
+            --secondary: #00ffcc;
+            --accent: #ff2d75;
+            --accent2: #b967ff;
+            --dark-bg: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
+            --text-light: #e0e0ff;
+            --text: var(--text-light);
+            --glass: rgba(255, 255, 255, 0.05);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Exo 2', sans-serif;
+            color: var(--text-light);
+            background: var(--dark-bg);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* 粒子背景（展示相关，保留） */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        /* 导航栏（展示相关，保留） */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            backdrop-filter: blur(10px);
+            background: var(--glass);
+            border-bottom: 1px solid rgba(58, 134, 255, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo::before {
+            content: "";
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233a86ff"><path d="M12 2L1 12h3v9h6v-6h4v6h6v-9h3L12 2zm0 2.8L18 10v9h-2v-6H8v6H6v-9l6-7.2z"/></svg>') no-repeat center;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            white-space: nowrap;
+        }
+        
+        .nav-link {
+            position: relative;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 500;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover { color: var(--primary); }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after { width: 100%; }
+        
+        /* 下拉菜单（展示相关，保留） */
+        .dropdown { position: relative; }
+        
+        .dropdown-content {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            min-width: 220px;
+            background: rgba(10, 10, 26, 0.98);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(58, 134, 255, 0.25);
+            border-radius: 8px;
+            padding: 0.6rem 0;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(6px);
+            transition: all 0.22s ease;
+            z-index: 200;
+            white-space: nowrap;
+        }
+        
+        .dropdown:hover .dropdown-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-link {
+            display: block;
+            padding: 0.5rem 1.25rem;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.18s ease;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .dropdown-link:hover {
+            background: rgba(58, 134, 255, 0.12);
+            color: var(--primary);
+            padding-left: 1.5rem;
+        }
+        
+        /* 页脚（展示相关，保留） */
+        footer {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 3rem 5%;
+            text-align: center;
+            margin-top: 5rem;
+            position: relative;
+        }
+        
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+        
+        .footer-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-link { color: var(--text-light); text-decoration: none; transition: color 0.3s; }
+        .footer-link:hover { color: var(--primary); }
+        
+        .footer-social {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .social-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(0, 240, 255, 0.1);
+            color: var(--primary);
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            background-color: var(--primary);
+            color: var(--dark);
+            transform: translateY(-3px);
+        }
+        
+        .social-icon i {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .social-icon:hover i {
+            background: none;
+            -webkit-background-clip: initial;
+            background-clip: initial;
+            color: var(--dark);
+        }
+        
+        .copyright { font-size: 0.9rem; color: rgba(224, 224, 255, 0.6); }
+        
+        /* 必要动画（logo 脉冲） */
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+        /* 迁移的主要内容样式 */
+        .main-content {
+            padding-top: 100px;
+            min-height: 100vh;
+        }
+
+        /* 实验室简介部分 */
+        .section {
+            padding: 5rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(58, 134, 255, 0.8), 0 0 20px rgba(58, 134, 255, 0.6);
+            position: relative;
+            display: inline-block;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+        }
+
+        
+
+        .cta-button {
+            padding: 1rem 2.5rem;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: var(--dark-bg);
+            border: none;
+            border-radius: 50px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(58, 134, 255, 0.5);
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            color: #0a0a1a;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(58, 134, 255, 0.3);
+        }
+
+        /* 动画效果 */
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px rgba(58, 134, 255, 0.5), 0 0 20px rgba(58, 134, 255, 0.3);
+            }
+            to {
+                text-shadow: 0 0 20px rgba(58, 134, 255, 0.8), 0 0 30px rgba(58, 134, 255, 0.6), 0 0 40px rgba(0, 255, 204, 0.4);
+            }
+        }
+
+        /* 来自18.html的分屏布局样式 */
+        .overview-split {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            min-height: calc(100vh - 10rem);
+            align-items: center;
+        }
+        
+        .overview-left, .overview-right { 
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        /* 扰动文字样式 */
+        .distort-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            transition: transform 0.1s ease;
+            padding: 2rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 2px solid var(--primary);
+            backdrop-filter: blur(5px);
+            border-radius: 5px;
+        }
+
+        /* 更新lab-image样式以支持背景图片 */
+        .lab-image {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(58, 134, 255, 0.2);
+            transition: all 0.5s ease;
+            width: 100%; 
+            height: 60vh;
+            background-size: cover;
+            background-position: center;
+            filter: contrast(1.2) brightness(0.8) grayscale(0.2);
+        }
+
+        .lab-image:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 40px rgba(58, 134, 255, 0.3);
+            filter: contrast(1.3) brightness(0.9) grayscale(0);
+        }
+
+        .lab-image::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(45deg, rgba(58, 134, 255, 0.1), transparent);
+            pointer-events: none;
+        }
+
+        .lab-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .lab-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(58, 134, 255, 0.1), rgba(0, 255, 204, 0.1));
+            mix-blend-mode: overlay;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 992px) {
+            .overview-split {
+                flex-direction: column;
+            }
+            
+            .lab-image {
+                order: -1;
+                height: 40vh;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding-top: 80px;
+            }
+
+            .section {
+                padding: 3rem 1rem;
+            }
+
+            .section-title {
+                font-size: 1.8rem;
+                margin-bottom: 2rem;
+            }
+
+            .distort-text {
+                font-size: 1rem;
+                padding: 1.5rem;
+            }
+
+            .cta-button {
+                padding: 0.8rem 2rem;
+                font-size: 0.9rem;
+            }
+        }
+
+                 @media (max-width: 576px) {
+             .section {
+                 padding: 2rem 1rem;
+             }
+
+             .section-title {
+                 font-size: 1.5rem;
+             }
+
+             .distort-text {
+                 font-size: 0.95rem;
+                 line-height: 1.6;
+                 padding: 1rem;
+             }
+
+             .overview-left, .overview-right {
+                 min-width: 100%;
+             }
+
+             .lab-image {
+                 height: 30vh;
+             }
+
+             .menu-toggle {
+                 display: block !important;
+             }
+
+             .nav-links {
+                 display: none;
+                 position: fixed;
+                 top: 0;
+                 left: 0;
+                 width: 100%;
+                 height: 100vh;
+                 background: rgba(10, 10, 26, 0.98);
+                 backdrop-filter: blur(15px);
+                 flex-direction: column;
+                 justify-content: center;
+                 align-items: center;
+                 z-index: 999;
+             }
+
+             .nav-links.active {
+                 display: flex !important;
+             }
+
+             .nav-links .nav-link {
+                 font-size: 1.5rem;
+                 margin: 1rem 0;
+             }
+
+             .dropdown-content {
+                 position: static;
+                 background: none;
+                 border: none;
+                 box-shadow: none;
+                 opacity: 1;
+                 visibility: visible;
+                 transform: none;
+                 padding: 0;
+                 margin-top: 0.5rem;
+             }
+
+             .dropdown-link {
+                 font-size: 1.2rem;
+                 padding: 0.5rem 0;
+             }
+         }
+        
+        /* 导航栏样式 */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(58, 134, 255, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #3a86ff, #00ffcc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo::before {
+            content: "";
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233a86ff"><path d="M12 2L1 12h3v9h6v-6h4v6h6v-9h3L12 2zm0 2.8L18 10v9h-2v-6H8v6H6v-9l6-7.2z"/></svg>') no-repeat center;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            white-space: nowrap;
+        }
+        
+        .nav-link {
+            position: relative;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 500;
+            color: #e0e0ff;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: #3a86ff;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: #3a86ff;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .dropdown {
+            position: relative;
+        }
+        
+        .dropdown-content {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            min-width: 220px;
+            background: rgba(10, 10, 26, 0.98);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(58, 134, 255, 0.25);
+            border-radius: 8px;
+            padding: 0.6rem 0;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(6px);
+            transition: all 0.22s ease;
+            z-index: 200;
+            white-space: nowrap;
+        }
+        
+        .dropdown:hover .dropdown-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-link {
+            display: block;
+            padding: 0.5rem 1.25rem;
+            color: #e0e0ff;
+            text-decoration: none;
+            transition: all 0.18s ease;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .dropdown-link:hover {
+            background: rgba(58, 134, 255, 0.12);
+            color: #3a86ff;
+            padding-left: 1.5rem;
+        }
+        
+        .menu-toggle {
+            display: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+        
+        .fullscreen-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(10, 10, 26, 0.95);
+            backdrop-filter: blur(15px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            transform: translateY(-100%);
+            transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0);
+        }
+        
+        .fullscreen-nav.active {
+            transform: translateY(0);
+        }
+        
+        .fullscreen-nav .close-btn {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #e0e0ff;
+            transition: color 0.3s;
+        }
+        
+        .fullscreen-nav .close-btn:hover {
+            color: #ff2d75;
+        }
+        
+        .fullscreen-nav-links {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .fullscreen-nav-link {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: #e0e0ff;
+            text-decoration: none;
+            position: relative;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s;
+        }
+        
+        .fullscreen-nav-link:hover {
+            color: #3a86ff;
+        }
+        
+        .fullscreen-nav-link::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: rgba(58, 134, 255, 0.1);
+            z-index: -1;
+            transition: width 0.3s;
+        }
+        
+        .fullscreen-nav-link:hover::before {
+            width: 100%;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        /* 博客内容相关样式 - 从 test.html 迁移 */
+        .banner {
+            position: relative;
+            height: 70vh;
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+        }
+
+        .full-bg-img {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flex-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-header {
+            text-align: center;
+            color: white;
+            z-index: 10;
+            position: relative;
+        }
+
+        .fade-in-up {
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 0.6s ease;
+        }
+
+        .h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .post-meta {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-right: 1rem;
+        }
+
+        .post-meta i {
+            margin-right: 0.5rem;
+        }
+
+        .mt-3 {
+            margin-top: 1rem;
+        }
+
+        .mt-1 {
+            margin-top: 0.5rem;
+        }
+
+        .mr-2 {
+            margin-right: 0.5rem;
+        }
+
+        .container-fluid {
+            width: 100%;
+            padding-right: 15px;
+            padding-left: 15px;
+            margin-right: auto;
+            margin-left: auto;
+        }
+
+        .nopadding-x {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-right: -15px;
+            margin-left: -15px;
+        }
+
+        .nomargin-x {
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        .col-lg-2, .col-lg-8 {
+            position: relative;
+            width: 100%;
+            padding-right: 15px;
+            padding-left: 15px;
+        }
+
+        .col-lg-2 {
+            flex: 0 0 16.666667%;
+            max-width: 16.666667%;
+        }
+
+        .col-lg-8 {
+            flex: 0 0 66.666667%;
+            max-width: 66.666667%;
+        }
+
+        .d-none {
+            display: none !important;
+        }
+
+        .d-lg-block {
+            display: block !important;
+        }
+
+        .nopadding-x-md {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        #board-ctn {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            margin-top: -5rem;
+            position: relative;
+            z-index: 10;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+        }
+
+        .py-5 {
+            padding-top: 3rem;
+            padding-bottom: 3rem;
+        }
+
+        .post-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .mx-auto {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .markdown-body {
+            color: var(--text-light);
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 {
+            color: var(--primary);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .markdown-body h2 {
+            font-size: 1.8rem;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 0.5rem;
+        }
+
+        .markdown-body p {
+            margin-bottom: 1rem;
+        }
+
+        .markdown-body ul, .markdown-body ol {
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+        }
+
+        .markdown-body li {
+            margin-bottom: 0.5rem;
+        }
+
+        .markdown-body a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .markdown-body a:hover {
+            color: var(--primary);
+        }
+
+        .markdown-body strong {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .note {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+
+        .note-info {
+            background: rgba(58, 134, 255, 0.1);
+            border-color: var(--primary);
+            color: var(--text-light);
+        }
+
+        .note-warning {
+            background: rgba(255, 193, 7, 0.1);
+            border-color: #ffc107;
+            color: var(--text-light);
+        }
+
+        .post-metas {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .post-meta.mr-3 {
+            margin-right: 0;
+        }
+
+        .hover-with-bg {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-light);
+        }
+
+        .hover-with-bg:hover {
+            background: rgba(58, 134, 255, 0.2);
+            color: var(--primary);
+        }
+
+        .post-prevnext {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(58, 134, 255, 0.2);
+        }
+
+        .post-prev, .post-next {
+            flex: 1;
+        }
+
+        .post-next {
+            text-align: right;
+        }
+
+        .post-prev a, .post-next a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .post-prev a:hover, .post-next a:hover {
+            color: var(--primary);
+        }
+
+        .post-prev a {
+            justify-content: flex-start;
+        }
+
+        .post-next a {
+            justify-content: flex-end;
+        }
+
+        .hidden-mobile, .visible-mobile {
+            display: inline;
+        }
+
+        .comments {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(58, 134, 255, 0.2);
+        }
+
+        .toc-container {
+            position: sticky;
+            top: 100px;
+            height: fit-content;
+        }
+
+        #toc {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+        }
+
+        .toc-header {
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .toc-body {
+            color: var(--text-light);
+        }
+
+        .mb-3 {
+            margin-bottom: 1rem;
+        }
+
+                 .iconfont {
+             font-style: normal;
+             margin-right: 0.5rem;
+         }
+
+         /* 数学公式样式 */
+         .markdown-body .MathJax {
+             color: var(--text-light) !important;
+         }
+
+         .markdown-body mjx-container {
+             color: var(--text-light) !important;
+         }
+
+         .markdown-body mjx-container[display="true"] {
+             margin: 1rem 0;
+             text-align: center;
+         }
+
+         .markdown-body .has-jax {
+             -webkit-user-select: none;
+             -moz-user-select: none;
+             -ms-user-select: none;
+             user-select: none;
+         }
+
+         /* 统计信息样式 */
+         .statistics {
+             color: rgba(224, 224, 255, 0.6);
+             font-size: 0.9rem;
+             text-align: center;
+         }
+
+         .statistics span {
+             transition: color 0.3s ease;
+         }
+
+         .statistics span:hover {
+             color: var(--primary);
+         }
+
+         /* 增强文章内容样式 */
+         .markdown-body blockquote {
+             border-left: 4px solid var(--primary);
+             background: rgba(58, 134, 255, 0.05);
+             margin: 1rem 0;
+             padding: 1rem;
+             border-radius: 0 8px 8px 0;
+         }
+
+         .markdown-body table {
+             width: 100%;
+             border-collapse: collapse;
+             margin: 1rem 0;
+             background: rgba(255, 255, 255, 0.02);
+             border-radius: 8px;
+             overflow: hidden;
+         }
+
+         .markdown-body th,
+         .markdown-body td {
+             border: 1px solid rgba(58, 134, 255, 0.2);
+             padding: 0.75rem;
+             text-align: left;
+         }
+
+         .markdown-body th {
+             background: rgba(58, 134, 255, 0.1);
+             color: var(--primary);
+             font-weight: bold;
+         }
+
+         .markdown-body code {
+             background: rgba(58, 134, 255, 0.1);
+             color: var(--secondary);
+             padding: 0.2rem 0.4rem;
+             border-radius: 4px;
+             font-family: 'Courier New', monospace;
+         }
+
+         .markdown-body pre {
+             background: rgba(0, 0, 0, 0.3);
+             border: 1px solid rgba(58, 134, 255, 0.2);
+             border-radius: 8px;
+             padding: 1rem;
+             overflow-x: auto;
+             margin: 1rem 0;
+         }
+
+         .markdown-body pre code {
+             background: none;
+             color: var(--text-light);
+             padding: 0;
+         }
+
+        /* 响应式设计 */
+        @media (max-width: 992px) {
+            .d-lg-block {
+                display: none !important;
+            }
+            
+            .col-lg-8 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+            
+            .banner {
+                height: 50vh;
+            }
+            
+            .h2 {
+                font-size: 2rem;
+            }
+            
+            .toc-container {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .banner {
+                height: 40vh;
+            }
+            
+            .h2 {
+                font-size: 1.5rem;
+            }
+            
+            .post-content {
+                padding: 1rem;
+            }
+            
+            .post-meta {
+                font-size: 0.8rem;
+            }
+            
+            .hidden-mobile {
+                display: none;
+            }
+            
+            .visible-mobile {
+                display: inline;
+            }
+        }
+
+        /* ========================= 统一滚动条美化样式 ========================= */
+        /* 全局滚动条 - 竖直方向 */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        
+        /* 滚动条轨道 */
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+        }
+        
+        /* 滚动条滑块 */
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #3a86ff 0%, #00ffcc 50%, #b967ff 100%);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(58, 134, 255, 0.2);
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #00ffcc 0%, #ff2d75 50%, #3a86ff 100%);
+            box-shadow: 0 4px 15px rgba(58, 134, 255, 0.4);
+            transform: scale(1.05);
+        }
+        
+        /* 滚动条箭头按钮 */
+        ::-webkit-scrollbar-button {
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(45deg, #3a86ff, #00ffcc);
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        /* 竖直滚动条上箭头 */
+        ::-webkit-scrollbar-button:vertical:start:decrement {
+            background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 14l5-5 5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 竖直滚动条下箭头 */
+        ::-webkit-scrollbar-button:vertical:end:increment {
+            background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 水平滚动条左箭头 */
+        ::-webkit-scrollbar-button:horizontal:start:decrement {
+            background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M14 7l-5 5 5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 水平滚动条右箭头 */
+        ::-webkit-scrollbar-button:horizontal:end:increment {
+            background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M10 7l5 5-5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 箭头按钮悬停效果 */
+        ::-webkit-scrollbar-button:hover {
+            background: linear-gradient(45deg, #ff2d75, #b967ff) !important;
+            box-shadow: 0 0 10px rgba(58, 134, 255, 0.6);
+            transform: scale(1.1);
+        }
+        
+        /* 箭头按钮点击效果 */
+        ::-webkit-scrollbar-button:active {
+            background: linear-gradient(45deg, #00ffcc, #3a86ff) !important;
+            transform: scale(0.95);
+        }
+        
+        /* 滚动条角落 */
+        ::-webkit-scrollbar-corner {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+        }
+        
+        /* Firefox滚动条样式 */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #3a86ff rgba(255, 255, 255, 0.08);
+        }
+        
+        /* 移动端滚动条优化 */
+        @media (max-width: 768px) {
+            ::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+        }
+        /* ========================= 滚动条样式结束 ========================= */
+    </style>
+</head>
+<body>
+    <!-- 粒子背景 -->
+    <div id="particles-js"></div>
+    
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <a href="/" class="logo">ACM LAB</a>
+        <div class="nav-links">
+            <div class="dropdown">
+                <a href="/introduction" class="nav-link">概况</a>
+            </div>
+            
+            <a href="/team" class="nav-link">团队</a>
+            
+            <div class="dropdown">
+                <a href="/algorithm" class="nav-link">成果</a>
+                <div class="dropdown-content">
+                        <a href="/algorithm" class="dropdown-link">算法</a>
+                        <a href="/paper" class="dropdown-link">论文</a>
+                        <a href="/innovation" class="dropdown-link">科创</a>
+                </div>
+            </div>
+            
+            <a href="/dynamic" class="nav-link">动态</a>
+            
+            <div class="dropdown">
+                <a href="/algorithm-recruitment" class="nav-link">加入我们</a>
+                <div class="dropdown-content">
+                    <a href="/algorithm-recruitment" class="dropdown-link">算法组招生</a>
+                        <a href="/project-recruitment" class="dropdown-link">项目组招生</a>
+                </div>
+            </div>
+            
+
+        </div>
+        <div class="menu-toggle">☰</div>
+        </nav>
+
+    <!-- 博客内容 - 从 test.html 迁移 -->
+    <header style="height: 70vh;">
+        <div class="banner" id="banner" parallax=true
+             style="background: url('static/images/default.png') no-repeat center center;
+               background-size: cover;">
+          <div class="full-bg-img">
+            <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+              <div class="page-header text-center fade-in-up">
+                <span class="h2" id="subtitle" title="实验室章程详细内容">
+                  实验室章程
+                </span>
+
+                <div class="mt-3">
+                    <span class="post-meta mr-2">
+                      <i class="fas fa-user" aria-hidden="true"></i>
+                      ACM算法研究实验室
+                    </span>
+                  
+                    <span class="post-meta">
+                      <i class="fas fa-calendar" aria-hidden="true"></i>
+                      <time datetime="2023-12-01 16:03" pubdate>
+                        2023年12月1日 下午
+                      </time>
+                    </span>
+                </div>
+
+                <div class="mt-1">
+                    <span class="post-meta mr-2">
+                      <i class="fas fa-chart-bar"></i>
+                      2.5k 字
+                    </span>
+
+                                         <span class="post-meta mr-2">
+                       <i class="fas fa-clock"></i>
+                       15 分钟
+                     </span>
+
+                     <!-- 页面访问统计 -->
+                     <span class="post-meta" id="busuanzi_container_page_pv" style="display: none">
+                       <i class="fas fa-eye" aria-hidden="true"></i>
+                       <span id="busuanzi_value_page_pv"></span> 次
+                     </span>
+                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container-fluid nopadding-x">
+          <div class="row nomargin-x">
+            <div class="d-none d-lg-block col-lg-2"></div>
+            <div class="col-lg-8 nopadding-x-md">
+              <div class="container nopadding-x-md" id="board-ctn">
+                <div class="py-5" id="board">
+                  <article class="post-content mx-auto">
+                    <!-- SEO header -->
+                    <h1 style="display: none">实验室章程</h1>
+                    
+                    <p class="note note-info">
+                      本文最后更新于：2023年12月1日
+                    </p>
+                    
+                    <div class="markdown-body">
+                      <p>ACM算法研究实验室章程是规范实验室运行的基本准则，明确了实验室的组织架构、管理制度、成员职责以及各项规章制度。本章程旨在建立科学、规范、高效的实验室管理体系。</p>
+                      
+                      <h2 id="第一章-总则">第一章 总则</h2>
+                      <p><strong>第一条</strong> 为了规范ACM算法研究实验室的管理，明确实验室的职能和任务，保障实验室的正常运行，特制定本章程。</p>
+                      <p><strong>第二条</strong> 实验室是以算法研究、程序设计竞赛为主要方向的学术研究机构，致力于培养优秀的算法工程师和计算机科学人才。</p>
+                      <p><strong>第三条</strong> 实验室坚持"严谨治学、开放创新、团结协作、追求卓越"的办室理念，努力营造良好的学术氛围。</p>
+
+                      <h2 id="第二章-组织架构">第二章 组织架构</h2>
+                      <p><strong>第四条</strong> 实验室设置以下组织架构：</p>
+                      <ul>
+                        <li>实验室主任：负责实验室的整体规划和管理</li>
+                        <li>技术负责人：负责技术方向规划和指导</li>
+                        <li>算法组：专注于算法研究和竞赛训练</li>
+                        <li>项目组：负责实际项目开发和应用</li>
+                        <li>科研组：从事学术研究和论文发表</li>
+                      </ul>
+
+                      <h2 id="第三章-成员管理">第三章 成员管理</h2>
+                      <p><strong>第五条</strong> 实验室成员分为以下类别：</p>
+                      <ul>
+                        <li><strong>正式成员</strong>：通过考核并签署协议的成员</li>
+                        <li><strong>预备成员</strong>：处于观察期的新成员</li>
+                        <li><strong>荣誉成员</strong>：已毕业但对实验室有重要贡献的成员</li>
+                      </ul>
+
+                      <p><strong>第六条</strong> 成员权利与义务：</p>
+                      <ul>
+                        <li>享有使用实验室资源的权利</li>
+                        <li>参与实验室决策的权利</li>
+                        <li>遵守实验室规章制度的义务</li>
+                        <li>维护实验室声誉的义务</li>
+                      </ul>
+
+                      <h2 id="第四章-学术活动">第四章 学术活动</h2>
+                      <p><strong>第七条</strong> 实验室定期组织各类学术活动：</p>
+                      <ul>
+                        <li>每周算法讲座和技术分享</li>
+                        <li>月度项目展示和评审</li>
+                        <li>季度学术研讨会</li>
+                        <li>年度成果展示大会</li>
+                      </ul>
+
+                      <h2 id="第五章-资源管理">第五章 资源管理</h2>
+                      <p><strong>第八条</strong> 实验室资源包括但不限于：</p>
+                      <ul>
+                        <li>计算设备和服务器资源</li>
+                        <li>学术资料和数据库</li>
+                        <li>实验场地和办公设施</li>
+                        <li>经费和项目资金</li>
+                      </ul>
+
+                      <p><strong>第九条</strong> 资源使用原则：</p>
+                      <ul>
+                        <li>合理使用，节约资源</li>
+                        <li>优先保障重要项目</li>
+                        <li>公平分配，透明管理</li>
+                        <li>定期维护，确保安全</li>
+                      </ul>
+
+                                             <h2 id="第六章-考核评价">第六章 考核评价</h2>
+                       <p><strong>第十条</strong> 实验室建立完善的考核评价体系：</p>
+                       <ul>
+                         <li>日常表现考核（40%）</li>
+                         <li>项目贡献考核（30%）</li>
+                         <li>学术成果考核（20%）</li>
+                         <li>团队协作考核（10%）</li>
+                       </ul>
+                       
+                       <p><strong>考核评价公式：</strong></p>
+                       <p>总体评分计算公式为：$Score = \sum_{i=1}^{4} w_i \times s_i$</p>
+                       <p>其中 $w_i$ 为各项权重，$s_i$ 为各项得分，满足约束条件：</p>
+                       $$\sum_{i=1}^{4} w_i = 1, \quad w_i \geq 0, \quad 0 \leq s_i \leq 100$$
+
+                      <h2 id="第七章-奖惩制度">第七章 奖惩制度</h2>
+                      <p><strong>第十一条</strong> 对于表现优秀的成员，实验室将给予相应奖励：</p>
+                      <ul>
+                        <li>优秀成员证书和奖金</li>
+                        <li>优先推荐实习和就业机会</li>
+                        <li>参与高级别会议和培训的机会</li>
+                      </ul>
+
+                      <p><strong>第十二条</strong> 对于违反规定的成员，将根据情况给予相应处罚：</p>
+                      <ul>
+                        <li>口头警告</li>
+                        <li>书面警告</li>
+                        <li>暂停相关权利</li>
+                        <li>取消成员资格</li>
+                      </ul>
+
+                      <h2 id="第八章-附则">第八章 附则</h2>
+                      <p><strong>第十三条</strong> 本章程自发布之日起施行。</p>
+                      <p><strong>第十四条</strong> 本章程的解释权归ACM算法研究实验室所有。</p>
+                      <p><strong>第十五条</strong> 本章程如需修改，须经实验室全体成员讨论通过。</p>
+                    </div>
+                    
+                    <hr>
+                    <div>
+                      <div class="post-metas mb-3">
+                        <div class="post-meta mr-3">
+                          <i class="fas fa-folder"></i>
+                          <a class="hover-with-bg" href="#categories">规章制度</a>
+                        </div>
+                        
+                        <div class="post-meta">
+                          <i class="fas fa-tags"></i>
+                          <a class="hover-with-bg" href="#tags">章程</a>
+                          <a class="hover-with-bg" href="#tags">管理</a>
+                          <a class="hover-with-bg" href="#tags">制度</a>
+                        </div>
+                      </div>
+                      
+                      <p class="note note-warning">
+                        本章程内容受版权保护，转载请注明出处并获得授权！
+                      </p>
+                      
+                      <div class="post-prevnext">
+                        <article class="post-prev col-6">
+                          <a href="/charter">
+                            <i class="fas fa-arrow-left"></i>
+                            <span class="hidden-mobile">章程概览</span>
+                            <span class="visible-mobile">上一篇</span>
+                          </a>
+                        </article>
+                        <article class="post-next col-6">
+                          <a href="/introduction">
+                            <span class="hidden-mobile">实验室简介</span>
+                            <span class="visible-mobile">下一篇</span>
+                            <i class="fas fa-arrow-right"></i>
+                          </a>
+                        </article>
+                      </div>
+                    </div>
+
+                  
+                  </article>
+                </div>
+              </div>
+            </div>
+            
+            <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+                <div id="toc">
+                  <p class="toc-header"><i class="fas fa-list"></i>&nbsp;目录</p>
+                  <div class="toc-body" id="toc-body">
+                    <ul style="list-style: none; padding: 0;">
+                      <li><a href="#第一章-总则" style="color: var(--text-light); text-decoration: none; display: block; padding: 0.25rem 0;">第一章 总则</a></li>
+                      <li><a href="#第二章-组织架构" style="color: var(--text-light); text-decoration: none; display: block; padding: 0.25rem 0;">第二章 组织架构</a></li>
+                      <li><a href="#第三章-成员管理" style="color: var(--text-light); text-decoration: none; display: block; padding: 0.25rem 0;">第三章 成员管理</a></li>
+                      <li><a href="#第四章-学术活动" style="color: var(--text-light); text-decoration: none; display: block; padding: 0.25rem 0;">第四章 学术活动</a></li>
+                      <li><a href="#第五章-资源管理" style="color: var(--text-light); text-decoration: none; display: block; padding: 0.25rem 0;">第五章 资源管理</a></li>
+                      <li><a href="#第六章-考核评价" style="color: var(--text-light); text-decoration: none; display: block; padding: 0.25rem 0;">第六章 考核评价</a></li>
+                      <li><a href="#第七章-奖惩制度" style="color: var(--text-light); text-decoration: none; display: block; padding: 0.25rem 0;">第七章 奖惩制度</a></li>
+                      <li><a href="#第八章-附则" style="color: var(--text-light); text-decoration: none; display: block; padding: 0.25rem 0;">第八章 附则</a></li>
+                    </ul>
+                  </div>
+                </div>
+            </div>
+          </div>
+        </div>
+    </main>
+    
+   <!-- 页脚 -->
+   <footer id="footer" class="footer">
+    <a href="/" class="footer-logo">ACM实验室</a>
+    
+    <div class="footer-links">
+        <a href="/introduction" class="footer-link">概况</a>
+        <a href="/team" class="footer-link">团队</a>
+        <a href="/algorithm" class="footer-link">算法</a>
+        <a href="/paper" class="footer-link">论文</a>
+        <a href="/innovation" class="footer-link">科创</a>
+        <a href="/dynamic" class="footer-link">动态</a>
+        <a href="/algorithm-recruitment" class="footer-link">算法组招生</a>
+        <a href="/project-recruitment" class="footer-link">项目组招生</a>
+    </div>
+    
+    <div class="footer-social">
+        <a href="#" class="social-icon" title="微信"><i class="fab fa-weixin"></i></a>
+                    <a href="https://s1.imagehub.cc/images/2025/08/28/d80fe4abf0cd9a20fde76c7a3d5849a8.png" class="social-icon" title="微博"><i class="fab fa-weibo"></i></a>
+            <a href="https://s1.imagehub.cc/images/2025/08/28/4859e46f5945f5d8210456ecc89f7494.jpeg" class="social-icon" title="小红书"><i class="fas fa-book-open"></i></a>
+        <a href="#" class="social-icon" title="GitHub"><i class="fab fa-github"></i></a>
+        <a href="https://mp.weixin.qq.com/s/your-wechat-official-account" class="social-icon" title="微信公众号"><i class="fas fa-newspaper"></i></a>
+        <a href="https://space.bilibili.com/1599858052?spm_id_from=333.788.upinfo.head.click" class="social-icon" title="哔哩哔哩"><i class="fab fa-bilibili"></i></a>
+        <a href="#" class="social-icon" title="邮箱"><i class="fas fa-envelope"></i></a>
+    </div>
+    
+    <div class="statistics" style="margin-bottom: 1rem;">
+        <!-- 不蒜子统计 -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+        </span>
+        
+        <span id="busuanzi_container_site_uv" style="display: none; margin-left: 2rem;">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+        </span>
+    </div>
+    
+    <p class="copyright">© 2023 ACM算法与科研创新实验室. 保留所有权利.</p>
+</footer>
+    
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    
+    <!-- 数学公式渲染 MathJax -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                renderActions: {
+                    findScript: [10, doc => {
+                        document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+                            const display = !!node.type.match(/; *mode=display/);
+                            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+                            const text = document.createTextNode('');
+                            node.parentNode.replaceChild(text, node);
+                            math.start = { node: text, delim: '', n: 0 };
+                            math.end = { node: text, delim: '', n: 0 };
+                            doc.math.push(math);
+                        });
+                    }, '', false],
+                    insertedScript: [200, () => {
+                        document.querySelectorAll('mjx-container').forEach(node => {
+                            let target = node.parentNode;
+                            if (target.nodeName.toLowerCase() === 'li') {
+                                target.parentNode.classList.add('has-jax');
+                            }
+                        });
+                    }, '', false]
+                }
+            }
+        };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    
+    <!-- 不蒜子统计 -->
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <script>
+        // 粒子背景初始化（仅保留展示相关）
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 80, density: { enable: true, value_area: 800 } },
+                color: { value: '#3a86ff' },
+                shape: { type: 'circle', stroke: { width: 0, color: '#000000' }, polygon: { nb_sides: 5 } },
+                opacity: { value: 0.5 },
+                size: { value: 3, random: true },
+                line_linked: { enable: true, distance: 150, color: '#3a86ff', opacity: 0.4, width: 1 },
+                move: { enable: true, speed: 2, direction: 'none', random: false, straight: false, out_mode: 'out', bounce: false }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: { onhover: { enable: true, mode: 'grab' }, onclick: { enable: true, mode: 'push' }, resize: true },
+                modes: {
+                    grab: { distance: 140, line_linked: { opacity: 1 } },
+                    bubble: { distance: 400, size: 40, duration: 2, opacity: 8, speed: 3 },
+                    repulse: { distance: 200, duration: 0.4 },
+                    push: { particles_nb: 4 },
+                    remove: { particles_nb: 2 }
+                }
+            },
+            retina_detect: true
+        });
+
+        // 文字扰动效果（来自18.html）
+        const charterText = document.getElementById('charter-text');
+        if (charterText) {
+            charterText.addEventListener('mousemove', (e) => {
+                const x = e.offsetX;
+                const y = e.offsetY;
+                const skewX = (x / charterText.offsetWidth - 0.5) * 5;
+                const skewY = (y / charterText.offsetHeight - 0.5) * 5;
+                charterText.style.transform = `skew(${skewX}deg, ${skewY}deg)`;
+            });
+            charterText.addEventListener('mouseleave', () => {
+                charterText.style.transform = 'skew(0, 0)';
+            });
+        }
+
+        // 为所有的distort-text元素添加文字扰动效果
+        const distortTexts = document.querySelectorAll('.distort-text');
+        distortTexts.forEach(element => {
+            if (element.id !== 'charter-text') { // 避免重复添加
+                element.addEventListener('mousemove', (e) => {
+                    const x = e.offsetX;
+                    const y = e.offsetY;
+                    const skewX = (x / element.offsetWidth - 0.5) * 3;
+                    const skewY = (y / element.offsetHeight - 0.5) * 3;
+                    element.style.transform = `skew(${skewX}deg, ${skewY}deg)`;
+                });
+                element.addEventListener('mouseleave', () => {
+                    element.style.transform = 'skew(0, 0)';
+                });
+            }
+        });
+
+        // 添加来自test.html的JavaScript功能
+        
+        // 动态标题打字效果
+        function typeText(element, text, speed = 100) {
+            let i = 0;
+            element.textContent = '';
+            function typeChar() {
+                if (i < text.length) {
+                    element.textContent += text.charAt(i);
+                    i++;
+                    setTimeout(typeChar, speed);
+                }
+            }
+            typeChar();
+        }
+
+        // 初始化标题动画
+        document.addEventListener('DOMContentLoaded', function() {
+            const subtitle = document.getElementById('subtitle');
+            if (subtitle) {
+                const title = subtitle.getAttribute('title') || '实验室章程';
+                typeText(subtitle, title, 70);
+            }
+        });
+
+        // 平滑滚动效果
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // 滚动时导航栏效果
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 100) {
+                navbar.style.background = 'rgba(10, 10, 26, 0.95)';
+            } else {
+                navbar.style.background = 'rgba(255, 255, 255, 0.05)';
+            }
+        });
+
+        // 目录高亮效果
+        function updateTocHighlight() {
+            const headings = document.querySelectorAll('.markdown-body h2[id]');
+            const tocLinks = document.querySelectorAll('.toc-body a');
+            
+            let currentHeading = null;
+            headings.forEach(heading => {
+                const rect = heading.getBoundingClientRect();
+                if (rect.top <= 150) {
+                    currentHeading = heading;
+                }
+            });
+            
+            tocLinks.forEach(link => {
+                link.style.color = 'var(--text-light)';
+                link.style.fontWeight = 'normal';
+            });
+            
+            if (currentHeading) {
+                const activeLink = document.querySelector(`.toc-body a[href="#${currentHeading.id}"]`);
+                if (activeLink) {
+                    activeLink.style.color = 'var(--primary)';
+                    activeLink.style.fontWeight = 'bold';
+                }
+            }
+        }
+
+        window.addEventListener('scroll', updateTocHighlight);
+
+        // 代码高亮初始化（如果页面中有代码块）
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof hljs !== 'undefined') {
+                hljs.highlightAll();
+            }
+        });
+
+        // 添加复制代码功能
+        document.querySelectorAll('pre code').forEach(block => {
+            const button = document.createElement('button');
+            button.className = 'copy-btn';
+            button.textContent = '复制';
+            button.style.cssText = `
+                position: absolute;
+                top: 0.5rem;
+                right: 0.5rem;
+                background: var(--primary);
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 0.25rem 0.5rem;
+                font-size: 0.8rem;
+                cursor: pointer;
+                opacity: 0;
+                transition: opacity 0.3s;
+            `;
+            
+            const pre = block.parentElement;
+            pre.style.position = 'relative';
+            pre.appendChild(button);
+            
+            pre.addEventListener('mouseenter', () => button.style.opacity = '1');
+            pre.addEventListener('mouseleave', () => button.style.opacity = '0');
+            
+            button.addEventListener('click', () => {
+                navigator.clipboard.writeText(block.textContent).then(() => {
+                    button.textContent = '已复制';
+                    setTimeout(() => button.textContent = '复制', 2000);
+                });
+            });
+        });
+
+        // 图片懒加载和放大效果
+        document.querySelectorAll('img').forEach(img => {
+            img.style.cursor = 'pointer';
+            img.addEventListener('click', function() {
+                const overlay = document.createElement('div');
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.8);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 9999;
+                    cursor: pointer;
+                `;
+                
+                const enlargedImg = document.createElement('img');
+                enlargedImg.src = this.src;
+                enlargedImg.style.cssText = `
+                    max-width: 90%;
+                    max-height: 90%;
+                    border-radius: 10px;
+                    box-shadow: 0 0 30px rgba(58, 134, 255, 0.5);
+                `;
+                
+                overlay.appendChild(enlargedImg);
+                document.body.appendChild(overlay);
+                
+                overlay.addEventListener('click', () => {
+                    document.body.removeChild(overlay);
+                });
+            });
+        });
+
+        // 添加阅读进度条
+        function createProgressBar() {
+            const progressBar = document.createElement('div');
+            progressBar.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 0%;
+                height: 3px;
+                background: linear-gradient(90deg, var(--primary), var(--secondary));
+                z-index: 9999;
+                transition: width 0.3s ease;
+            `;
+            document.body.appendChild(progressBar);
+            
+            window.addEventListener('scroll', () => {
+                const scrolled = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+                progressBar.style.width = scrolled + '%';
+            });
+        }
+        
+        createProgressBar();
+
+        // 添加返回顶部按钮功能
+        const scrollTopBtn = document.createElement('button');
+        scrollTopBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
+        scrollTopBtn.style.cssText = `
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 0 15px rgba(58, 134, 255, 0.3);
+        `;
+        
+        scrollTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                scrollTopBtn.style.opacity = '1';
+                scrollTopBtn.style.transform = 'translateY(0)';
+            } else {
+                scrollTopBtn.style.opacity = '0';
+                scrollTopBtn.style.transform = 'translateY(10px)';
+            }
+        });
+        
+        document.body.appendChild(scrollTopBtn);
+
+        // 移动端菜单功能
+        const menuToggle = document.querySelector('.menu-toggle');
+        const navLinks = document.querySelector('.nav-links');
+        
+        if (menuToggle && navLinks) {
+            menuToggle.addEventListener('click', () => {
+                navLinks.classList.toggle('active');
+            });
+        }
+
+        // 字数统计更新
+        function updateWordCount() {
+            const content = document.querySelector('.markdown-body');
+            if (content) {
+                const text = content.textContent || content.innerText;
+                const wordCount = text.length;
+                const readingTime = Math.ceil(wordCount / 300); // 按300字/分钟计算
+                
+                const wordCountElement = document.querySelector('.post-meta .fas.fa-chart-bar').parentElement;
+                const timeElement = document.querySelector('.post-meta .fas.fa-clock').parentElement;
+                
+                if (wordCountElement) {
+                    wordCountElement.innerHTML = `<i class="fas fa-chart-bar"></i> ${(wordCount/1000).toFixed(1)}k 字`;
+                }
+                if (timeElement) {
+                    timeElement.innerHTML = `<i class="fas fa-clock"></i> ${readingTime} 分钟`;
+                }
+            }
+        }
+        
+        // 页面加载完成后更新字数统计
+        document.addEventListener('DOMContentLoaded', updateWordCount);
+
+        // 添加链接外部指示器
+        document.querySelectorAll('a[href^="http"]').forEach(link => {
+            if (!link.hostname.includes(window.location.hostname)) {
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.innerHTML += ' <i class="fas fa-external-link-alt" style="font-size: 0.8em; margin-left: 0.25rem;"></i>';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACM算法研究实验室</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Exo+2:wght@300;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/v4-shims.min.css">
+<link rel="stylesheet" href="/static/highlight.css">
+<script defer src="/static/highlight.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+<script src="/static/socket-client.js"></script>
+    
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    
+    <!-- Tailwind配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'cyber-blue': '#0B1C48',
+                        'cyber-dark': '#050A1A',
+                        'cyber-gray': '#2C3E50',
+                        'cyber-cyan': '#00F0FF',
+                        'cyber-silver': '#E6E6FA',
+                        'cyber-pink': '#FF00FF',
+                        'cyber-purple': '#9D00FF'
+                    },
+                    fontFamily: {
+                        'cyber': ['Orbitron', 'sans-serif', 'system-ui']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --primary: #3a86ff;
+            --secondary: #00ffcc;
+            --accent: #ff2d75;
+            --accent2: #b967ff;
+            --dark-bg: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
+            --text-light: #e0e0ff;
+            --text: var(--text-light);
+            --glass: rgba(255, 255, 255, 0.05);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Exo 2', sans-serif;
+            color: var(--text-light);
+            background: var(--dark-bg);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* 新增Tailwind自定义工具类 */
+        .text-glow {
+            text-shadow: 0 0 10px #00F0FF, 0 0 20px #00F0FF;
+        }
+        .neon-border {
+            position: relative;
+            border: 1px solid #00F0FF;
+        }
+        .neon-border::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            box-shadow: 0 0 15px #00F0FF, 0 0 30px rgba(0, 240, 255, 0.3);
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        .glass-effect {
+            background: rgba(11, 28, 72, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+        }
+        
+        /* 额外支持样式 */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .container {
+            max-width: 1200px;
+        }
+        
+        /* 响应式网格 */
+        @media (min-width: 1024px) {
+            .lg\\:grid-cols-2 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .md\\:grid-cols-3 {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        /* 粒子背景（展示相关，保留） */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        /* 导航栏（展示相关，保留） */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            backdrop-filter: blur(10px);
+            background: var(--glass);
+            border-bottom: 1px solid rgba(58, 134, 255, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo::before {
+            content: "";
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233a86ff"><path d="M12 2L1 12h3v9h6v-6h4v6h6v-9h3L12 2zm0 2.8L18 10v9h-2v-6H8v6H6v-9l6-7.2z"/></svg>') no-repeat center;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            white-space: nowrap;
+        }
+        
+        .nav-link {
+            position: relative;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 500;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover { color: var(--primary); }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after { width: 100%; }
+        
+        /* 下拉菜单（展示相关，保留） */
+        .dropdown { position: relative; }
+        
+        .dropdown-content {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            min-width: 220px;
+            background: rgba(10, 10, 26, 0.98);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(58, 134, 255, 0.25);
+            border-radius: 8px;
+            padding: 0.6rem 0;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(6px);
+            transition: all 0.22s ease;
+            z-index: 200;
+            white-space: nowrap;
+        }
+        
+        .dropdown:hover .dropdown-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-link {
+            display: block;
+            padding: 0.5rem 1.25rem;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.18s ease;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .dropdown-link:hover {
+            background: rgba(58, 134, 255, 0.12);
+            color: var(--primary);
+            padding-left: 1.5rem;
+        }
+        
+        .menu-toggle {
+            display: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+        
+        /* 全屏导航 */
+        .fullscreen-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(10, 10, 26, 0.95);
+            backdrop-filter: blur(15px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            transform: translateY(-100%);
+            transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0);
+        }
+        
+        .fullscreen-nav.active {
+            transform: translateY(0);
+        }
+        
+        .fullscreen-nav .close-btn {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--text-light);
+            transition: color 0.3s;
+        }
+        
+        .fullscreen-nav .close-btn:hover {
+            color: var(--accent);
+        }
+        
+        .fullscreen-nav-links {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .fullscreen-nav-link {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: var(--text-light);
+            text-decoration: none;
+            position: relative;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s;
+        }
+        
+        .fullscreen-nav-link:hover {
+            color: var(--primary);
+        }
+        
+        .fullscreen-nav-link::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: rgba(58, 134, 255, 0.1);
+            z-index: -1;
+            transition: width 0.3s;
+        }
+        
+        .fullscreen-nav-link:hover::before {
+            width: 100%;
+        }
+        
+        /* 页脚（展示相关，保留） */
+        footer {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 3rem 5%;
+            text-align: center;
+            margin-top: 5rem;
+            position: relative;
+        }
+        
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+        
+        .footer-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-link { color: var(--text-light); text-decoration: none; transition: color 0.3s; }
+        .footer-link:hover { color: var(--primary); }
+        
+        .footer-social {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .social-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(0, 240, 255, 0.1);
+            color: var(--primary);
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            background-color: var(--primary);
+            color: var(--dark);
+            transform: translateY(-3px);
+        }
+        
+        .social-icon i {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .social-icon:hover i {
+            background: none;
+            -webkit-background-clip: initial;
+            background-clip: initial;
+            color: var(--dark);
+        }
+        
+        .copyright { font-size: 0.9rem; color: rgba(224, 224, 255, 0.6); }
+        
+        /* 必要动画（logo 脉冲） */
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+        
+        /* 论文页面样式 */
+        .hero {
+            min-height: 60vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 8rem 5% 4rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            line-height: 1.2;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            max-width: 800px;
+            opacity: 0.9;
+        }
+        
+        /* 筛选按钮样式 */
+        .filter-buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 1rem 2rem;
+            background: rgba(18, 18, 48, 0.6);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            border: 1px solid rgba(58, 134, 255, 0.2);
+            color: var(--text-light);
+            font-size: 1rem;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            min-width: 120px;
+        }
+        
+        .filter-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(58, 134, 255, 0.3) 20%,
+                rgba(0, 255, 204, 0.6) 40%,
+                rgba(255, 45, 117, 0.8) 60%,
+                rgba(0, 255, 204, 0.6) 80%,
+                rgba(58, 134, 255, 0.3) 100%,
+                transparent 120%
+            );
+            background-size: 200% 100%;
+            animation: shimmer 2s ease-in-out infinite;
+            z-index: 1;
+        }
+        
+        .filter-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 10px 25px rgba(58, 134, 255, 0.3);
+            border-color: rgba(58, 134, 255, 0.5);
+        }
+        
+        .filter-btn.active {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: #0a0a1a;
+            font-weight: 600;
+            box-shadow: 0 8px 20px rgba(58, 134, 255, 0.4);
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+        
+        .filter-btn.active::before {
+            animation: shimmer 1.5s ease-in-out infinite;
+        }
+        
+        .filter-btn span {
+            position: relative;
+            z-index: 2;
+        }
+        
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+                opacity: 0.8;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                background-position: 200% 0;
+                opacity: 0.8;
+            }
+        }
+        
+        .papers-container {
+            padding: 3rem 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .paper-card {
+            background: #121226;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 4px solid transparent;
+            position: relative;
+        }
+        
+        .paper-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to bottom, #ff0080, #b967ff);
+            transition: all 0.4s ease;
+        }
+        
+        .paper-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(74, 0, 224, 0.3);
+        }
+        
+        .paper-card:hover::before {
+            width: 100%;
+            opacity: 0.1;
+        }
+        
+
+        
+        .paper-header {
+            padding: 1.5rem;
+            background: rgba(20, 20, 40, 0.6);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+        
+        .paper-title {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+        
+        /* 新增样式：h3标题 */
+        .paper-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: #00F0FF;
+            font-family: 'Orbitron', sans-serif;
+            position: relative;
+        }
+        
+        .paper-card h3::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 50px;
+            height: 2px;
+            background: #b967ff;
+        }
+        
+        .paper-authors {
+            font-style: italic;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+        
+        .paper-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .paper-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: rgba(74, 0, 224, 0.2);
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+        }
+        
+        .paper-meta i {
+            font-size: 0.8rem;
+        }
+        
+        /* 新增样式：作者信息 */
+        .paper-card .authors {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            color: rgba(224, 224, 255, 0.7);
+        }
+        
+        .paper-card .authors .author {
+            display: flex;
+            align-items: center;
+            margin-right: 1.5rem;
+        }
+        
+        .paper-card .authors .author img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            border: 2px solid #00F0FF;
+        }
+        
+        /* 新增样式：元信息 */
+        .paper-card .meta {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: rgba(224, 224, 255, 0.7);
+        }
+        
+        .paper-card .meta-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .paper-card .meta-item i {
+            margin-right: 0.5rem;
+            color: #00F0FF;
+        }
+        
+        .paper-content {
+            padding: 1.5rem;
+            position: relative;
+        }
+        
+        .paper-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        /* 新增样式：链接容器 */
+        .paper-card .links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .paper-link {
+            padding: 0.5rem 1.2rem;
+            background: rgba(142, 45, 226, 0.1);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(142, 45, 226, 0.3);
+        }
+        
+        /* 新增样式：单个链接 */
+        .paper-card .link {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: rgba(0, 243, 255, 0.1);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 30px;
+            color: #00F0FF;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .paper-card .link:hover {
+            background: #00F0FF;
+            color: var(--dark-bg);
+            transform: translateY(-3px);
+        }
+        
+        .paper-link:hover {
+            background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(142, 45, 226, 0.3);
+        }
+        
+        .paper-badge {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .badge-all {
+            background: rgba(0, 240, 255, 0.2);
+            color: #00F0FF;
+        }
+        
+        /* 新增渐变文字效果 */
+        .gradient-text {
+            background: linear-gradient(90deg, #00F0FF, #b967ff, #ff0080);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease-in-out infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* 消息提示系统 */
+        .message-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            max-width: 400px;
+        }
+
+        .message {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-left: 4px solid;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(450px);
+            transition: transform 0.3s ease;
+        }
+
+        .message.show {
+            transform: translateX(0);
+        }
+
+        .message.success { border-left-color: #22c55e; color: #166534; }
+        .message.error { border-left-color: #ef4444; color: #dc2626; }
+        .message.info { border-left-color: #3b82f6; color: #1d4ed8; }
+
+        .message-icon {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        /* 分页样式 */
+        .pagination-container {
+            margin-top: 3rem;
+            padding: 2rem 0;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .pagination-info {
+            margin-bottom: 1.5rem;
+            color: rgba(224, 224, 255, 0.7);
+            font-size: 0.95rem;
+        }
+        
+        .pagination-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .pagination-btn {
+            padding: 0.75rem 1.5rem;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 8px;
+            color: #00F0FF;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .pagination-btn:hover:not(:disabled) {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: rgba(0, 240, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 240, 255, 0.2);
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: rgba(224, 224, 255, 0.5);
+        }
+        
+        .page-numbers {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .page-number {
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: rgba(224, 224, 255, 0.8);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 40px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .page-number:hover {
+            background: rgba(0, 240, 255, 0.1);
+            border-color: rgba(0, 240, 255, 0.3);
+            color: #00F0FF;
+        }
+        
+        .page-number.active {
+            background: linear-gradient(135deg, #00F0FF, #b967ff);
+            border-color: #00F0FF;
+            color: var(--dark-bg);
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+        }
+        
+        .page-ellipsis {
+            padding: 0.75rem 0.5rem;
+            color: rgba(224, 224, 255, 0.5);
+            font-weight: bold;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .filter-buttons {
+                gap: 1rem;
+                margin-bottom: 2rem;
+            }
+            
+            .filter-btn {
+                padding: 0.8rem 1.5rem;
+                font-size: 0.9rem;
+                min-width: 100px;
+            }
+            
+            .filter-btn:hover {
+                transform: translateY(-2px) scale(1.03);
+            }
+            
+            .filter-btn.active {
+                transform: scale(1.05);
+            }
+            
+            .paper-header {
+                padding: 1rem;
+            }
+            
+            .paper-title {
+                font-size: 1.3rem;
+            }
+            
+            .paper-badge {
+                top: 1rem;
+                right: 1rem;
+            }
+            
+            .pagination-controls {
+                gap: 0.5rem;
+            }
+            
+            .pagination-btn {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.9rem;
+            }
+            
+            .page-number {
+                padding: 0.6rem 0.8rem;
+                min-width: 35px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* ========================= 统一滚动条美化样式 ========================= */
+        /* 全局滚动条 - 竖直方向 */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        
+        /* 滚动条轨道 */
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+        }
+        
+        /* 滚动条滑块 */
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent2) 100%);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(58, 134, 255, 0.2);
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 50%, var(--primary) 100%);
+            box-shadow: 0 4px 15px rgba(58, 134, 255, 0.4);
+            transform: scale(1.05);
+        }
+        
+        /* 滚动条箭头按钮 */
+        ::-webkit-scrollbar-button {
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        /* 竖直滚动条上箭头 */
+        ::-webkit-scrollbar-button:vertical:start:decrement {
+            background: linear-gradient(45deg, var(--primary), var(--secondary)),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 14l5-5 5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 竖直滚动条下箭头 */
+        ::-webkit-scrollbar-button:vertical:end:increment {
+            background: linear-gradient(45deg, var(--primary), var(--secondary)),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 水平滚动条左箭头 */
+        ::-webkit-scrollbar-button:horizontal:start:decrement {
+            background: linear-gradient(45deg, var(--primary), var(--secondary)),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M14 7l-5 5 5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 水平滚动条右箭头 */
+        ::-webkit-scrollbar-button:horizontal:end:increment {
+            background: linear-gradient(45deg, var(--primary), var(--secondary)),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M10 7l5 5-5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 箭头按钮悬停效果 */
+        ::-webkit-scrollbar-button:hover {
+            background: linear-gradient(45deg, var(--accent), var(--accent2)) !important;
+            box-shadow: 0 0 10px rgba(58, 134, 255, 0.6);
+            transform: scale(1.1);
+        }
+        
+        /* 箭头按钮点击效果 */
+        ::-webkit-scrollbar-button:active {
+            background: linear-gradient(45deg, var(--secondary), var(--primary)) !important;
+            transform: scale(0.95);
+        }
+        
+        /* 滚动条角落 */
+        ::-webkit-scrollbar-corner {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+        }
+        
+        /* 代码块滚动条样式 */
+        .code-block::-webkit-scrollbar,
+        .highlight::-webkit-scrollbar,
+        pre::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .code-block::-webkit-scrollbar-track,
+        .highlight::-webkit-scrollbar-track,
+        pre::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            border: 1px solid rgba(58, 134, 255, 0.2);
+        }
+        
+        .code-block::-webkit-scrollbar-thumb,
+        .highlight::-webkit-scrollbar-thumb,
+        pre::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .code-block::-webkit-scrollbar-thumb:hover,
+        .highlight::-webkit-scrollbar-thumb:hover,
+        pre::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, var(--accent), var(--accent2));
+            box-shadow: 0 0 8px rgba(185, 103, 255, 0.5);
+            transform: scale(1.05);
+        }
+        
+        /* 表格滚动条样式 */
+        table::-webkit-scrollbar,
+        .table-wrapper::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        table::-webkit-scrollbar-track,
+        .table-wrapper::-webkit-scrollbar-track {
+            background: rgba(58, 134, 255, 0.1);
+            border-radius: 3px;
+            border: 1px solid rgba(58, 134, 255, 0.2);
+        }
+        
+        table::-webkit-scrollbar-thumb,
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        table::-webkit-scrollbar-thumb:hover,
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(90deg, var(--secondary), var(--accent));
+            box-shadow: 0 0 6px rgba(0, 255, 204, 0.6);
+            transform: scale(1.1);
+        }
+        
+        /* Firefox滚动条样式 */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) rgba(255, 255, 255, 0.08);
+        }
+        
+        /* 移动端滚动条优化 */
+        @media (max-width: 768px) {
+            ::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+            
+            .code-block::-webkit-scrollbar,
+            .highlight::-webkit-scrollbar,
+            pre::-webkit-scrollbar {
+                width: 4px;
+                height: 4px;
+            }
+            
+            table::-webkit-scrollbar,
+            .table-wrapper::-webkit-scrollbar {
+                width: 3px;
+                height: 3px;
+            }
+        }
+        /* ========================= 滚动条样式结束 ========================= */
+
+        .paper-card .link:hover {
+            background: var(--primary);
+            color: #0a0a1a;
+            transform: translateY(-3px);
+        }
+        
+        /* 类别标签样式 */
+        .paper-card .categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .category-tag {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            background: rgba(58, 134, 255, 0.1);
+            border: 1px solid rgba(58, 134, 255, 0.3);
+            border-radius: 15px;
+            color: var(--primary);
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .category-tag:hover {
+            background: rgba(58, 134, 255, 0.2);
+            border-color: rgba(58, 134, 255, 0.5);
+            transform: translateY(-1px);
+        }
+        
+        /* CCF类别样式 */
+        .category-tag.ccf-category {
+            background: rgba(255, 0, 0, 0.1);
+            border-color: rgba(255, 0, 0, 0.3);
+            color: #ff6b6b;
+        }
+        
+        .category-tag.ccf-category:hover {
+            background: rgba(255, 0, 0, 0.2);
+            border-color: rgba(255, 0, 0, 0.5);
+        }
+        
+        /* 中科院类别样式 */
+        .category-tag.cas-category {
+            background: rgba(255, 165, 0, 0.1);
+            border-color: rgba(255, 165, 0, 0.3);
+            color: #ffa500;
+        }
+        
+        .category-tag.cas-category:hover {
+            background: rgba(255, 165, 0, 0.2);
+            border-color: rgba(255, 165, 0, 0.5);
+        }
+        
+        /* JCR类别样式 */
+        .category-tag.jcr-category {
+            background: rgba(255, 255, 0, 0.1);
+            border-color: rgba(255, 255, 0, 0.3);
+            color: #ffff00;
+        }
+        
+        .category-tag.jcr-category:hover {
+            background: rgba(255, 255, 0, 0.2);
+            border-color: rgba(255, 255, 0, 0.5);
+        }
+        
+        /* 其他类别样式 */
+        .category-tag.other-category {
+            background: rgba(0, 240, 255, 0.1);
+            border-color: rgba(0, 240, 255, 0.3);
+            color: #00F0FF;
+        }
+        
+        .category-tag.other-category:hover {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: rgba(0, 240, 255, 0.5);
+        }
+        
+        .no-categories {
+            color: rgba(224, 224, 255, 0.5);
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+        
+        /* 无作者信息样式 */
+        .no-authors {
+            color: rgba(224, 224, 255, 0.5);
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+        
+        /* 加载动画样式 */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(58, 134, 255, 0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 粒子背景 -->
+    <div id="particles-js"></div>
+    
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <a href="/" class="logo">ACM LAB</a>
+        <div class="nav-links">
+            <div class="dropdown">
+                <a href="/introduction" class="nav-link">概况</a>
+            </div>
+            
+            <a href="/team" class="nav-link">团队</a>
+            
+            <div class="dropdown">
+                <a href="/algorithm" class="nav-link">成果</a>
+                <div class="dropdown-content">
+                        <a href="/algorithm" class="dropdown-link">算法</a>
+                        <a href="/paper" class="dropdown-link">论文</a>
+                        <a href="/innovation" class="dropdown-link">科创</a>
+                </div>
+            </div>
+            
+            <a href="/dynamic" class="nav-link">动态</a>
+            
+            <div class="dropdown">
+                <a href="/algorithm-recruitment" class="nav-link">加入我们</a>
+                <div class="dropdown-content">
+                    <a href="/algorithm-recruitment" class="dropdown-link">算法组招生</a>
+                        <a href="/project-recruitment" class="dropdown-link">项目组招生</a>
+                </div>
+            </div>
+            
+
+        </div>
+        <div class="menu-toggle">☰</div>
+        </nav>
+   
+
+    <!-- 消息提示容器 -->
+    <div class="message-container" id="messageContainer"></div>
+    
+    <section id="papers-section" class="hero">
+        <h1>学术论文发表</h1>
+        <p>展示我们实验室的学术研究成果，包括论文标题、作者、期刊/会议、年份、类别等信息，部分论文提供PDF全文和代码仓库链接。</p>
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all"><span>全部论文</span></button>
+        </div>
+    </section>
+    
+    <div class="papers-container">
+        <div id="papers-list">
+            <!-- 论文列表将通过JavaScript动态加载 -->
+            <div class="paper-card">
+                <div class="paper-content" style="text-align: center; padding: 3rem;">
+                    <p style="color: rgba(224, 224, 255, 0.7);">正在加载论文数据...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 分页控件 -->
+        <div id="pagination" class="pagination-container" style="display: none;">
+            <div class="pagination-info">
+                <span id="pagination-info">显示第 1-6 篇，共 0 篇论文</span>
+            </div>
+            <div class="pagination-controls">
+                <button id="prev-page" class="pagination-btn" disabled>
+                    <i class="fas fa-chevron-left"></i> 上一页
+                </button>
+                <div id="page-numbers" class="page-numbers">
+                    <!-- 页码将通过JavaScript动态生成 -->
+                </div>
+                <button id="next-page" class="pagination-btn">
+                    下一页 <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+ <!-- 页脚 -->
+ <footer id="footer" class="footer">
+    <a href="/" class="footer-logo">ACM实验室</a>
+    
+        <div class="footer-links">
+        <a href="/introduction" class="footer-link">概况</a>
+        <a href="/team" class="footer-link">团队</a>
+        <a href="/algorithm" class="footer-link">算法</a>
+        <a href="/paper" class="footer-link">论文</a>
+        <a href="/innovation" class="footer-link">科创</a>
+        <a href="/dynamic" class="footer-link">动态</a>
+        <a href="/algorithm-recruitment" class="footer-link">算法组招生</a>
+        <a href="/project-recruitment" class="footer-link">项目组招生</a>
+    </div>
+    
+    <div class="footer-social">
+        <a href="#" class="social-icon" title="微信"><i class="fab fa-weixin"></i></a>
+                    <a href="https://s1.imagehub.cc/images/2025/08/28/d80fe4abf0cd9a20fde76c7a3d5849a8.png" class="social-icon" title="微博"><i class="fab fa-weibo"></i></a>
+            <a href="https://s1.imagehub.cc/images/2025/08/28/4859e46f5945f5d8210456ecc89f7494.jpeg" class="social-icon" title="小红书"><i class="fas fa-book-open"></i></a>
+        <a href="#" class="social-icon" title="GitHub"><i class="fab fa-github"></i></a>
+        <a href="https://mp.weixin.qq.com/s/your-wechat-official-account" class="social-icon" title="微信公众号"><i class="fas fa-newspaper"></i></a>
+        <a href="https://space.bilibili.com/1599858052?spm_id_from=333.788.upinfo.head.click" class="social-icon" title="哔哩哔哩"><i class="fab fa-bilibili"></i></a>
+        <a href="#" class="social-icon" title="邮箱"><i class="fas fa-envelope"></i></a>
+    </div>
+    
+    <p class="copyright">© 2023 ACM算法与科研创新实验室. 保留所有权利.</p>
+</footer>
+    
+    <!-- 详情页模态框 (默认隐藏) -->
+    <div id="detail-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-cyber-dark/90 backdrop-blur-sm"></div>
+        <div class="absolute inset-0 overflow-y-auto p-4 flex items-center justify-center">
+            <div class="detail-content glass-effect rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto transform transition-all scale-95 opacity-0" id="modal-content">
+                <!-- 详情内容将通过JavaScript动态填充 -->
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <!-- 错误处理工具 -->
+    <script src="{{ url_for('static', filename='js/error-handler.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/extension-error-filter.js') }}"></script>
+    
+    <script>
+        // 粒子背景初始化（仅保留展示相关）
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 80, density: { enable: true, value_area: 800 } },
+                color: { value: '#3a86ff' },
+                shape: { type: 'circle', stroke: { width: 0, color: '#000000' }, polygon: { nb_sides: 5 } },
+                opacity: { value: 0.5 },
+                size: { value: 3, random: true },
+                line_linked: { enable: true, distance: 150, color: '#3a86ff', opacity: 0.4, width: 1 },
+                move: { enable: true, speed: 2, direction: 'none', random: false, straight: false, out_mode: 'out', bounce: false }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: { onhover: { enable: true, mode: 'grab' }, onclick: { enable: true, mode: 'push' }, resize: true },
+                modes: {
+                    grab: { distance: 140, line_linked: { opacity: 1 } },
+                    bubble: { distance: 400, size: 40, duration: 2, opacity: 8, speed: 3 },
+                    repulse: { distance: 200, duration: 0.4 },
+                    push: { particles_nb: 4 },
+                    remove: { particles_nb: 2 }
+                }
+            },
+            retina_detect: true
+        });
+        
+        // 论文数据
+        let paperCards = [];
+        let allPapers = [];
+        
+        // 分页相关变量
+        let currentPage = 1;
+        const papersPerPage = 6;
+        let totalPages = 1;
+        
+        // 消息提示系统
+        function showMessage(text, type = 'info') {
+            const container = document.getElementById('messageContainer');
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            
+            const iconMap = {
+                success: '✓',
+                error: '✕',
+                info: 'ⓘ'
+            };
+            
+            message.innerHTML = `
+                <span class="message-icon">${iconMap[type] || 'ⓘ'}</span>
+                <span>${text}</span>
+            `;
+            
+            container.appendChild(message);
+            
+            // 触发显示动画
+            setTimeout(() => message.classList.add('show'), 100);
+            
+            // 3秒后自动移除
+            setTimeout(() => {
+                message.classList.remove('show');
+                setTimeout(() => {
+                    if (message.parentNode) {
+                        message.parentNode.removeChild(message);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // 获取论文数据
+        async function loadPapers() {
+            try {
+                console.log('🚀 开始加载论文数据...');
+                
+                // 显示加载状态
+                const papersList = document.getElementById('papers-list');
+                papersList.innerHTML = `
+                    <div class="paper-card">
+                        <div class="paper-content" style="text-align: center; padding: 3rem;">
+                            <div class="loading-spinner"></div>
+                            <p style="color: rgba(224, 224, 255, 0.7); margin-top: 1rem;">正在加载论文数据...</p>
+                        </div>
+                    </div>
+                `;
+                
+                // 获取论文数据 - 修改为获取所有论文
+                const response = await fetch('/api/papers');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const papers = await response.json();
+                console.log('📚 获取到论文数据:', papers);
+                
+                if (!papers || papers.length === 0) {
+                    papersList.innerHTML = `
+                        <div class="paper-card">
+                            <div class="paper-content" style="text-align: center; padding: 3rem;">
+                                <p style="color: rgba(224, 224, 255, 0.7);">暂无论文数据</p>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 保存所有论文数据用于分页
+                allPapers = papers;
+                
+                // 使用分页渲染函数显示论文
+                renderPapers(papers);
+                
+                console.log('✅ 论文数据加载完成');
+                
+            } catch (error) {
+                console.error('❌ 加载论文数据失败:', error);
+                showError('加载论文数据失败，请刷新页面重试');
+            }
+        }
+        
+        // 暴露loadPapers函数到全局作用域
+        window.loadPapers = loadPapers;
+        
+        // 渲染论文卡片
+        function renderPapers(papers) {
+            const papersList = document.getElementById('papers-list');
+            const paginationContainer = document.getElementById('pagination');
+            
+            if (papers.length === 0) {
+                papersList.innerHTML = `
+                    <div class="paper-card">
+                        <div class="paper-content" style="text-align: center; padding: 3rem;">
+                            <p style="color: rgba(224, 224, 255, 0.7);">暂无论文数据</p>
+                        </div>
+                    </div>
+                `;
+                paginationContainer.style.display = 'none';
+                return;
+            }
+            
+            // 计算分页信息
+            totalPages = Math.ceil(papers.length / papersPerPage);
+            currentPage = Math.min(currentPage, totalPages);
+            currentPage = Math.max(currentPage, 1);
+            
+            // 获取当前页的论文
+            const startIndex = (currentPage - 1) * papersPerPage;
+            const endIndex = startIndex + papersPerPage;
+            const currentPagePapers = papers.slice(startIndex, endIndex);
+            
+            // 渲染当前页的论文
+            papersList.innerHTML = currentPagePapers.map(paper => createPaperCard(paper)).join('');
+            
+            // 更新paperCards引用
+            paperCards = document.querySelectorAll('.paper-card');
+            
+            // 更新分页信息
+            updatePaginationInfo(papers.length);
+            
+            // 渲染分页控件
+            renderPagination();
+            
+            // 显示分页容器
+            paginationContainer.style.display = 'block';
+        }
+        
+        // 创建论文卡片HTML
+        function createPaperCard(paper) {
+            // 移除分类相关逻辑，统一显示所有论文
+            
+            // 处理作者列表
+            const authors = paper.authors || [];
+            const authorsHtml = authors.map((author, index) => `
+                <div class="author">
+                    <img src="https://randomuser.me/api/portraits/${getRandomGender()}/${getRandomPortrait()}.jpg" alt="${author}">
+                    <span>${author}</span>
+                </div>
+            `).join('');
+            
+            // 处理链接 - 只显示后端实际存在的字段
+            const links = [];
+            if (paper.pdf_url) links.push(`<a href="${paper.pdf_url}" class="link"><i class="fas fa-file-pdf"></i> PDF全文</a>`);
+            if (paper.code_url) links.push(`<a href="${paper.code_url}" class="link"><i class="fas fa-code"></i> 代码仓库</a>`);
+            
+            // 处理类别标签
+            const categoriesHtml = paper.categories && paper.categories.length > 0
+                ? paper.categories.map(categoryId => {
+                    const categoryText = getCategoryText(categoryId);
+                    const categoryClass = getCategoryClass(categoryId);
+                    return `<span class="category-tag ${categoryClass}">${categoryText}</span>`;
+                }).join('')
+                : '<span class="no-categories">暂无分类</span>';
+            
+            return `
+                <div class="paper-card">
+                    <div class="paper-header">
+                        <h3 class="paper-title">${paper.title}</h3>
+                        <div class="authors">
+                            ${authorsHtml}
+                        </div>
+                        <div class="meta">
+                            <div class="meta-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>${paper.year}年</span>
+                            </div>
+                            ${paper.journal ? `
+                            <div class="meta-item">
+                                <i class="fas fa-book"></i>
+                                <span>${paper.journal}</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                        <div class="categories">
+                            ${categoriesHtml}
+                        </div>
+                    </div>
+                    ${links.length > 0 ? `
+                    <div class="paper-content">
+                        <div class="links">
+                            ${links.join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+
+        
+        // 获取随机头像
+        function getRandomGender() {
+            return Math.random() > 0.5 ? 'men' : 'women';
+        }
+        
+        function getRandomPortrait() {
+            return Math.floor(Math.random() * 99) + 1;
+        }
+        
+        // 显示错误信息
+        function showError(message) {
+            const papersList = document.getElementById('papers-list');
+            papersList.innerHTML = `
+                <div class="paper-card">
+                    <div class="paper-content" style="text-align: center; padding: 3rem;">
+                        <p style="color: #ff6b6b;">${message}</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 更新分页信息
+        function updatePaginationInfo(totalPapers) {
+            const startIndex = (currentPage - 1) * papersPerPage + 1;
+            const endIndex = Math.min(currentPage * papersPerPage, totalPapers);
+            const infoElement = document.getElementById('pagination-info');
+            infoElement.textContent = `显示第 ${startIndex}-${endIndex} 篇，共 ${totalPapers} 篇论文`;
+        }
+        
+        // 渲染分页控件
+        function renderPagination() {
+            const pageNumbersContainer = document.getElementById('page-numbers');
+            const prevButton = document.getElementById('prev-page');
+            const nextButton = document.getElementById('next-page');
+            
+            // 更新上一页/下一页按钮状态
+            prevButton.disabled = currentPage === 1;
+            nextButton.disabled = currentPage === totalPages;
+            
+            // 生成页码
+            let pageNumbersHtml = '';
+            
+            if (totalPages <= 7) {
+                // 如果总页数少于等于7页，显示所有页码
+                for (let i = 1; i <= totalPages; i++) {
+                    pageNumbersHtml += `
+                        <button class="page-number ${i === currentPage ? 'active' : ''}" 
+                                onclick="goToPage(${i})">${i}</button>
+                    `;
+                }
+            } else {
+                // 如果总页数大于7页，显示智能分页
+                if (currentPage <= 4) {
+                    // 当前页在前4页
+                    for (let i = 1; i <= 5; i++) {
+                        pageNumbersHtml += `
+                            <button class="page-number ${i === currentPage ? 'active' : ''}" 
+                                    onclick="goToPage(${i})">${i}</button>
+                        `;
+                    }
+                    pageNumbersHtml += '<span class="page-ellipsis">...</span>';
+                    pageNumbersHtml += `
+                        <button class="page-number" onclick="goToPage(${totalPages})">${totalPages}</button>
+                    `;
+                } else if (currentPage >= totalPages - 3) {
+                    // 当前页在后4页
+                    pageNumbersHtml += `
+                        <button class="page-number" onclick="goToPage(1)">1</button>
+                    `;
+                    pageNumbersHtml += '<span class="page-ellipsis">...</span>';
+                    for (let i = totalPages - 4; i <= totalPages; i++) {
+                        pageNumbersHtml += `
+                            <button class="page-number ${i === currentPage ? 'active' : ''}" 
+                                    onclick="goToPage(${i})">${i}</button>
+                        `;
+                    }
+                } else {
+                    // 当前页在中间
+                    pageNumbersHtml += `
+                        <button class="page-number" onclick="goToPage(1)">1</button>
+                    `;
+                    pageNumbersHtml += '<span class="page-ellipsis">...</span>';
+                    for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+                        pageNumbersHtml += `
+                            <button class="page-number ${i === currentPage ? 'active' : ''}" 
+                                    onclick="goToPage(${i})">${i}</button>
+                        `;
+                    }
+                    pageNumbersHtml += '<span class="page-ellipsis">...</span>';
+                    pageNumbersHtml += `
+                        <button class="page-number" onclick="goToPage(${totalPages})">${totalPages}</button>
+                    `;
+                }
+            }
+            
+            pageNumbersContainer.innerHTML = pageNumbersHtml;
+        }
+        
+        // 跳转到指定页面
+        function goToPage(page) {
+            if (page < 1 || page > totalPages || page === currentPage) {
+                return;
+            }
+            
+            currentPage = page;
+            renderPapers(allPapers);
+            
+            // 平滑滚动到论文列表顶部
+            document.getElementById('papers-list').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+        
+        // 上一页
+        function goToPrevPage() {
+            if (currentPage > 1) {
+                goToPage(currentPage - 1);
+            }
+        }
+        
+        // 下一页
+        function goToNextPage() {
+            if (currentPage < totalPages) {
+                goToPage(currentPage + 1);
+            }
+        }
+        
+        // 更新论文数据
+        function updatePapersData() {
+            // 直接显示所有论文，无需筛选
+        }
+        
+        // 查看更多论文按钮点击事件
+        const viewMoreButton = document.getElementById('view-more-papers');
+        if (viewMoreButton) {
+            viewMoreButton.addEventListener('click', function() {
+                // 显示所有论文卡片
+                renderPapers(allPapers);
+                
+                // 平滑滚动到论文发表部分
+                document.getElementById('papers-section').scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        }
+        
+        // 滚动动画
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 论文页面初始化开始...');
+            
+            // 设置当前页面
+            setCurrentPage('papers');
+            
+            // 初始化Socket.IO连接
+            if (typeof initSocketIO === 'function') {
+                initSocketIO();
+            }
+            
+            // 绑定分页按钮事件
+            document.getElementById('prev-page').addEventListener('click', goToPrevPage);
+            document.getElementById('next-page').addEventListener('click', goToNextPage);
+            
+            // 加载论文数据
+            loadPapers();
+            
+            // 设置自动刷新（每5分钟）
+            setInterval(() => {
+                console.log('🔄 自动刷新论文数据...');
+                loadPapers();
+            }, 5 * 60 * 1000);
+            
+            // 添加实时数据更新监听
+            function setupRealtimeUpdates() {
+                let lastUpdateTime = 0;
+                const updateCooldown = 2000; // 2秒冷却时间，防止重复更新
+                
+                // 监听来自管理页面的postMessage通知
+                window.addEventListener('message', function(event) {
+                    console.log('🔔 收到postMessage消息:', event.data);
+                    
+                                            if (event.data && event.data.type === 'PAPERS_UPDATED') {
+                            const now = Date.now();
+                            if (now - lastUpdateTime < updateCooldown) {
+                                console.log('⏱️ 更新过于频繁，跳过此次更新');
+                                return;
+                            }
+                            lastUpdateTime = now;
+                            
+                            console.log('✅ 收到论文数据更新通知，操作类型:', event.data.operation);
+                            
+                            // 检查是否是排序操作
+                            if (event.data.operation === 'papers_reordered') {
+                                console.log('🔄 检测到排序操作，延迟更新数据...');
+                                setTimeout(() => {
+                                    currentPage = 1; // 重置到第一页
+                                    loadPapers(); // 延迟重新加载论文数据
+                                }, 1500);
+                            } else {
+                                console.log('🔄 开始重新加载论文数据...');
+                                currentPage = 1; // 重置到第一页
+                                loadPapers(); // 立即重新加载论文数据
+                            }
+                            
+                            showMessage(`论文数据已更新 (${event.data.operation})`, 'info');
+                        }
+                });
+
+                // Socket.IO实时刷新
+                if (typeof socket !== 'undefined' && socket) {
+                    socket.on('page_refresh', function(data) {
+                        console.log('📡 收到论文数据更新通知:', data);
+                        
+                        const now = Date.now();
+                        if (now - lastUpdateTime < updateCooldown) {
+                            console.log('⏱️ 更新过于频繁，跳过此次更新');
+                            return;
+                        }
+                        lastUpdateTime = now;
+                        
+                        if (data.page === 'papers' || data.page === 'all') {
+                            // 检查是否是排序操作
+                            if (data.isReorder || data.type === 'papers_reordered') {
+                                console.log('🔄 检测到排序操作，延迟更新数据...');
+                                setTimeout(() => {
+                                    currentPage = 1; // 重置到第一页
+                                    loadPapers(); // 延迟重新加载论文数据
+                                }, 1500);
+                            } else {
+                                console.log('🔄 刷新前端论文数据...');
+                                currentPage = 1; // 重置到第一页
+                                loadPapers(); // 立即重新加载论文数据
+                            }
+                            showMessage('论文数据实时更新中...', 'info');
+                        }
+                    });
+                    
+                    // 监听连接状态
+                    socket.on('connect', function() {
+                        console.log('✅ Socket.IO连接成功，论文页面实时更新已启用');
+                        showMessage('实时数据同步已连接', 'success');
+                    });
+                    
+                    socket.on('disconnect', function() {
+                        console.log('❌ Socket.IO连接断开');
+                        // 减少错误提示频率
+                        if (!window.socketDisconnectNotified) {
+                            showMessage('实时数据同步连接断开', 'error');
+                            window.socketDisconnectNotified = true;
+                            setTimeout(() => {
+                                window.socketDisconnectNotified = false;
+                            }, 10000); // 10秒内不重复提示
+                        }
+                    });
+                }
+                
+                // 监听存储变化事件（多标签页同步）
+                window.addEventListener('storage', (e) => {
+                    if (e.key === 'papers_data_updated') {
+                        const now = Date.now();
+                        if (now - lastUpdateTime < updateCooldown) {
+                            console.log('⏱️ 更新过于频繁，跳过此次更新');
+                            return;
+                        }
+                        lastUpdateTime = now;
+                        
+                        try {
+                            const storedData = JSON.parse(e.newValue);
+                            const isReorder = storedData.isReorder;
+                            const operation = storedData.operation;
+                            
+                            if (isReorder || operation === 'papers_reordered') {
+                                console.log('🔄 检测到排序操作，延迟更新数据...');
+                                setTimeout(() => {
+                                    currentPage = 1; // 重置到第一页
+                                    loadPapers(); // 延迟重新加载论文数据
+                                }, 1500);
+                            } else {
+                                console.log('🔄 检测到其他标签页论文数据更新，刷新当前页面论文数据');
+                                currentPage = 1; // 重置到第一页
+                                loadPapers(); // 立即重新加载论文数据
+                            }
+                        } catch (error) {
+                            console.log('⚠️ 解析localStorage数据失败，使用默认处理');
+                            loadPapers(); // 立即重新加载论文数据
+                        }
+                        showMessage('检测到论文数据更新，正在同步...', 'info');
+                    }
+                });
+                
+                // 定期检查数据更新（备用方案）- 优化版本
+                let checkInterval = null;
+                let lastCheckTime = 0;
+                const checkCooldown = 60000; // 1分钟冷却时间
+                let consecutiveErrors = 0;
+                const maxConsecutiveErrors = 3;
+                
+                function startPeriodicCheck() {
+                    if (checkInterval) {
+                        clearInterval(checkInterval);
+                    }
+                    
+                    checkInterval = setInterval(async () => {
+                        const now = Date.now();
+                        if (now - lastCheckTime < checkCooldown) {
+                            return;
+                        }
+                        lastCheckTime = now;
+                        
+                        try {
+                            const res = await fetch('/api/papers', {
+                                method: 'GET',
+                                headers: {
+                                    'Cache-Control': 'no-cache',
+                                    'Pragma': 'no-cache'
+                                }
+                            });
+                            
+                            if (res.ok) {
+                                const newData = await res.json();
+                                consecutiveErrors = 0; // 重置错误计数
+                                
+                                if (window.lastPapersData && JSON.stringify(window.lastPapersData) !== JSON.stringify(newData)) {
+                                    console.log('🔄 检测到论文数据变化，自动更新...');
+                                    window.lastPapersData = newData;
+                                    allPapers = newData;
+                                    currentPage = 1; // 重置到第一页
+                                    renderPapers(allPapers);
+                                    updatePapersData();
+                                    showMessage('论文数据已自动更新', 'info');
+                                } else if (!window.lastPapersData) {
+                                    window.lastPapersData = newData;
+                                }
+                            } else {
+                                consecutiveErrors++;
+                                if (consecutiveErrors <= maxConsecutiveErrors) {
+                                    console.warn(`⚠️ 定期检查论文数据更新失败 (${consecutiveErrors}/${maxConsecutiveErrors}): HTTP ${res.status}`);
+                                }
+                            }
+                        } catch (err) {
+                            consecutiveErrors++;
+                            if (consecutiveErrors <= maxConsecutiveErrors) {
+                                if (window.ErrorHandler) {
+                                    window.ErrorHandler.logError(err, `定期检查论文数据更新 (${consecutiveErrors}/${maxConsecutiveErrors})`);
+                                } else {
+                                    console.warn(`⚠️ 定期检查论文数据更新失败 (${consecutiveErrors}/${maxConsecutiveErrors}):`, err.message || err);
+                                }
+                            }
+                            
+                            // 如果连续错误过多，停止定期检查
+                            if (consecutiveErrors >= maxConsecutiveErrors) {
+                                console.log('❌ 连续错误过多，停止定期检查');
+                                if (checkInterval) {
+                                    clearInterval(checkInterval);
+                                    checkInterval = null;
+                                }
+                            }
+                        }
+                    }, 60000); // 每60秒检查一次（增加间隔）
+                }
+                
+                // 启动定期检查
+                startPeriodicCheck();
+                
+                // 页面可见性变化时处理定期检查
+                document.addEventListener('visibilitychange', function() {
+                    if (document.hidden) {
+                        // 页面隐藏时暂停定期检查
+                        if (checkInterval) {
+                            clearInterval(checkInterval);
+                            checkInterval = null;
+                        }
+                    } else {
+                        // 页面显示时恢复定期检查
+                        if (!checkInterval) {
+                            startPeriodicCheck();
+                        }
+                    }
+                });
+            }
+
+            // 设置实时更新
+            setupRealtimeUpdates();
+            
+            // 保存初始数据用于比较
+            window.lastPapersData = allPapers;
+            
+            // 暴露loadPapers函数供外部调用
+            window.refreshPapersData = loadPapers;
+            
+            console.log('✅ 论文页面初始化完成');
+        });
+
+        // 渲染论文卡片
+        function renderPaperCard(paper) {
+            const authorsHtml = paper.authors && paper.authors.length > 0 
+                ? paper.authors.map(author => `
+                    <div class="author">
+                        <img src="https://randomuser.me/api/portraits/${getRandomGender()}/${getRandomPortrait()}.jpg" 
+                             alt="${author}" class="author-avatar">
+                        <span>${author}</span>
+                    </div>
+                `).join('')
+                : '<span class="no-authors">暂无作者信息</span>';
+            
+            // 构建类别标签HTML - 使用新的类别系统
+            const categoriesHtml = paper.categories && paper.categories.length > 0
+                ? paper.categories.map(categoryId => {
+                    const categoryText = getCategoryText(categoryId);
+                    const categoryClass = getCategoryClass(categoryId);
+                    return `<span class="category-tag ${categoryClass}">${categoryText}</span>`;
+                }).join('')
+                : '<span class="no-categories">暂无分类</span>';
+            
+            // 构建链接HTML
+            const links = [];
+            if (paper.pdf_url) {
+                links.push(`
+                    <a href="${paper.pdf_url}" class="link pdf-link" target="_blank">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>PDF</span>
+                    </a>
+                `);
+            }
+            
+            return `
+                <div class="paper-card">
+                    <div class="paper-header">
+                        <h3 class="paper-title">${paper.title}</h3>
+                        <div class="authors">
+                            ${authorsHtml}
+                        </div>
+                        <div class="meta">
+                            <div class="meta-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>${paper.year}年</span>
+                            </div>
+                            ${paper.journal ? `
+                            <div class="meta-item">
+                                <i class="fas fa-book"></i>
+                                <span>${paper.journal}</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                        <div class="categories">
+                            ${categoriesHtml}
+                        </div>
+                    </div>
+                    ${links.length > 0 ? `
+                    <div class="paper-content">
+                        <div class="links">
+                            ${links.join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // 类别映射函数
+        function getCategoryText(categoryId) {
+            const categoryMap = {
+                16: 'CCF-A',
+                17: 'CCF-B', 
+                18: 'CCF-C',
+                19: '中科院一区',
+                20: '中科院二区',
+                21: '中科院三区',
+                22: '中科院四区',
+                23: 'JCR一区',
+                24: 'JCR二区',
+                25: 'JCR三区',
+                26: 'JCR四区',
+                27: 'EI源刊',
+                28: 'EI会议',
+                29: '南核',
+                30: 'CSCD',
+                31: '北核',
+                32: '普刊'
+            };
+            return categoryMap[categoryId] || '未知';
+        }
+        
+        // 获取类别样式类
+        function getCategoryClass(categoryId) {
+            if (categoryId >= 16 && categoryId <= 18) return 'ccf-category';
+            if (categoryId >= 19 && categoryId <= 22) return 'cas-category';
+            if (categoryId >= 23 && categoryId <= 26) return 'jcr-category';
+            return 'other-category';
+        }
+</script>
+
+<!-- 访客统计追踪系统 -->
+<!-- 访问统计系统已移除 -->
+</body>
+</html>

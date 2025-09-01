@@ -1,0 +1,1193 @@
+{% extends 'admin/base.html' %}
+{% block title %}ACM实验室 - 论文管理{% endblock %}
+{% block page_title %}论文管理{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<!-- 引入错误处理工具 -->
+<script src="{{ url_for('static', filename='js/error-handler.js') }}"></script>
+<script src="{{ url_for('static', filename='js/extension-error-filter.js') }}"></script>
+<style>
+/* 基础样式 */
+body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.main-content {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* 消息提示系统 */
+.message-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    max-width: 400px;
+}
+
+.message {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translateX(450px);
+    transition: transform 0.3s ease;
+}
+
+.message.show {
+    transform: translateX(0);
+}
+
+.message.success { border-left-color: #22c55e; color: #166534; }
+.message.error { border-left-color: #ef4444; color: #dc2626; }
+.message.info { border-left-color: #3b82f6; color: #1d4ed8; }
+
+.message-icon {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* 卡片美化 */
+.card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* 表格美化 */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.data-table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 16px;
+    font-weight: 600;
+    text-align: left;
+    border: none;
+}
+
+.data-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background-color 0.3s ease;
+}
+
+.sortable-item {
+    transition: all 0.3s ease;
+    cursor: move;
+}
+
+.sortable-item:hover {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+    transform: scale(1.01);
+}
+
+.sortable-chosen {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3)) !important;
+    transform: rotate(2deg) scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.sortable-ghost {
+    opacity: 0.4;
+    transform: scale(0.95);
+}
+
+/* 拖拽手柄美化 */
+.sort-handle {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 6px;
+    cursor: grab;
+    position: relative;
+    transition: all 0.3s ease;
+    margin-right: 8px;
+}
+
+.sort-handle:before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>') no-repeat center;
+    background-size: contain;
+}
+
+.sort-handle:hover {
+    transform: scale(1.1) rotate(15deg);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.sort-handle:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+}
+
+/* 按钮美化 */
+.btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+    color: #1f2937;
+}
+
+.btn-success:hover {
+    color: #1f2937;
+    box-shadow: 0 8px 25px rgba(132, 250, 176, 0.4);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+}
+
+.btn-danger:hover {
+    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 8px;
+}
+
+/* 表单控件美化 */
+input, select, textarea {
+    background: rgba(26, 26, 46, 0.85);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #ffffff;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+/* 确保弹窗中的表单控件文字颜色正确 */
+.modal-content input,
+.modal-content select,
+.modal-content textarea {
+    color: #ffffff;
+    background: rgba(26, 26, 46, 0.9);
+}
+
+.modal-content input::placeholder,
+.modal-content textarea::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+    background: rgba(102, 126, 234, 0.2);
+}
+
+input::placeholder, textarea::placeholder {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* 美化下拉选项 */
+select option {
+    background: #1a1a2e;
+    color: #ffffff;
+    padding: 8px;
+}
+
+/* 模态框样式已统一到base.html中 */
+
+/* 确保弹窗中所有文字都清晰可见 */
+.modal-content label span {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.modal-content label {
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* 类别徽章美化 */
+.badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+    display: inline-block;
+    text-align: center;
+    min-width: 80px;
+}
+
+.badge-quantum { 
+    background: linear-gradient(135deg, rgba(142, 45, 226, 0.2), rgba(142, 45, 226, 0.1)); 
+    color: #c792ea; 
+    border-color: rgba(142, 45, 226, 0.4);
+    box-shadow: 0 2px 8px rgba(142, 45, 226, 0.2);
+}
+
+.badge-all { 
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(0, 240, 255, 0.1)); 
+    color: #00F0FF; 
+    border-color: rgba(0, 240, 255, 0.4);
+    box-shadow: 0 2px 8px rgba(0, 240, 255, 0.2);
+}
+
+/* 新增：不同级别类别的样式 */
+.badge-ccf {
+    background: linear-gradient(135deg, rgba(255, 0, 0, 0.2), rgba(255, 0, 0, 0.1));
+    color: #ff6b6b;
+    border-color: rgba(255, 0, 0, 0.4);
+    box-shadow: 0 2px 8px rgba(255, 0, 0, 0.2);
+}
+
+.badge-ccf-a {
+    background: linear-gradient(135deg, rgba(255, 0, 0, 0.3), rgba(255, 0, 0, 0.2));
+    color: #ff4444;
+    border-color: rgba(255, 0, 0, 0.5);
+    box-shadow: 0 2px 8px rgba(255, 0, 0, 0.3);
+}
+
+.badge-ccf-b {
+    background: linear-gradient(135deg, rgba(255, 69, 0, 0.3), rgba(255, 69, 0, 0.2));
+    color: #ff8c00;
+    border-color: rgba(255, 69, 0, 0.5);
+    box-shadow: 0 2px 8px rgba(255, 69, 0, 0.3);
+}
+
+.badge-ccf-c {
+    background: linear-gradient(135deg, rgba(255, 140, 0, 0.3), rgba(255, 140, 0, 0.2));
+    color: #ffa500;
+    border-color: rgba(255, 140, 0, 0.5);
+    box-shadow: 0 2px 8px rgba(255, 140, 0, 0.3);
+}
+
+.badge-cas {
+    background: linear-gradient(135deg, rgba(255, 165, 0, 0.2), rgba(255, 165, 0, 0.1));
+    color: #ffa500;
+    border-color: rgba(255, 165, 0, 0.4);
+    box-shadow: 0 2px 8px rgba(255, 165, 0, 0.2);
+}
+
+.badge-cas-1 {
+    background: linear-gradient(135deg, rgba(255, 69, 0, 0.3), rgba(255, 69, 0, 0.2));
+    color: #ff8c00;
+    border-color: rgba(255, 69, 0, 0.5);
+    box-shadow: 0 2px 8px rgba(255, 69, 0, 0.3);
+}
+
+.badge-cas-2 {
+    background: linear-gradient(135deg, rgba(255, 140, 0, 0.3), rgba(255, 140, 0, 0.2));
+    color: #ffa500;
+    border-color: rgba(255, 140, 0, 0.5);
+    box-shadow: 0 2px 8px rgba(255, 140, 0, 0.3);
+}
+
+.badge-cas-3 {
+    background: linear-gradient(135deg, rgba(255, 165, 0, 0.3), rgba(255, 165, 0, 0.2));
+    color: #ffb84d;
+    border-color: rgba(255, 165, 0, 0.5);
+    box-shadow: 0 2px 8px rgba(255, 165, 0, 0.3);
+}
+
+.badge-cas-4 {
+    background: linear-gradient(135deg, rgba(255, 180, 0, 0.3), rgba(255, 180, 0, 0.2));
+    color: #ffcc66;
+    border-color: rgba(255, 180, 0, 0.5);
+    box-shadow: 0 2px 8px rgba(255, 180, 0, 0.3);
+}
+
+.badge-jcr {
+    background: linear-gradient(135deg, rgba(255, 255, 0, 0.2), rgba(255, 255, 0, 0.1));
+    color: #ffff00;
+    border-color: rgba(255, 255, 0, 0.4);
+    box-shadow: 0 2px 8px rgba(255, 255, 0, 0.2);
+}
+
+.badge-jcr-1 {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 215, 0, 0.2));
+    color: #ffd700;
+    border-color: rgba(255, 215, 0, 0.5);
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+.badge-jcr-2 {
+    background: linear-gradient(135deg, rgba(255, 255, 0, 0.3), rgba(255, 255, 0, 0.2));
+    color: #ffff00;
+    border-color: rgba(255, 255, 0, 0.5);
+    box-shadow: 0 2px 8px rgba(255, 255, 0, 0.3);
+}
+
+.badge-jcr-3 {
+    background: linear-gradient(135deg, rgba(255, 255, 69, 0.3), rgba(255, 255, 69, 0.2));
+    color: #ffff45;
+    border-color: rgba(255, 255, 69, 0.5);
+    box-shadow: 0 2px 8px rgba(255, 255, 69, 0.3);
+}
+
+.badge-jcr-4 {
+    background: linear-gradient(135deg, rgba(255, 255, 140, 0.3), rgba(255, 255, 140, 0.2));
+    color: #ffff8c;
+    border-color: rgba(255, 255, 140, 0.5);
+    box-shadow: 0 2px 8px rgba(255, 255, 140, 0.3);
+}
+
+/* 搜索和筛选区域美化 */
+.table-actions {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* 表格响应式 */
+.table-responsive {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+/* 作者管理 */
+.authors-container {
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+    padding: 25px;
+    margin-bottom: 25px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.author-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transition: all 0.3s ease;
+}
+
+.author-item:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(0, 198, 255, 0.4);
+    transform: translateY(-1px);
+}
+
+.author-item input {
+    flex: 1;
+    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+    padding: 10px 0;
+}
+
+.btn-remove-author {
+    background: linear-gradient(135deg, #ff4757, #ff3742);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 12px rgba(255, 71, 87, 0.3);
+}
+
+.btn-remove-author:hover {
+    background: linear-gradient(135deg, #ff3742, #ff2d2d);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(255, 71, 87, 0.4);
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2, #667eea);
+}
+
+/* 模态框内容样式 */
+.modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .form-section {
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-content {
+        min-width: 95vw;
+        padding: 12px;
+    }
+}
+
+
+
+
+
+/* 新增：表单部分样式 */
+.form-section {
+    grid-column: 1 / -1; /* 确保表单部分跨两列 */
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+```
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 消息提示容器 -->
+<div class="message-container" id="messageContainer"></div>
+
+<!-- 论文管理 -->
+<div class="card">
+    <h2 style="color: #ffffff; margin-bottom: 24px; font-size: 24px; font-weight: 600; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">📚 论文管理中心</h2>
+    <div class="table-actions" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input id="searchInput" type="text" placeholder="搜索标题、作者、期刊..." style="padding:10px 14px;min-width:280px;">
+        </div>
+        <div class="btn-group">
+            <button id="addPaperBtn" class="btn btn-primary">✨ 新增论文</button>
+            <button id="saveOrderBtn" class="btn btn-success" style="display:none;">💾 保存排序</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table" id="papersTable">
+            <thead>
+                <tr>
+                    <th style="width:40px;">排序</th>
+                    <th>标题</th>
+                    <th>作者</th>
+                    <th>期刊/会议</th>
+                    <th>年份</th>
+                    <th>类别</th>
+                    <th>PDF</th>
+                    <th>代码</th>
+                    <th style="width:160px;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="papersTbody">
+                <!-- 动态渲染 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 弹窗：新增/编辑论文 -->
+<div id="paperModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:9999;">
+            <div class="modal-content" style="min-width:600px;max-width:800px;width:95vw;padding:16px 16px 8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <h3 id="modalTitle" style="margin:0;font-size:18px;color:#ffffff;">新增论文</h3>
+                <button id="modalClose" class="btn" style="border:none;background:rgba(255,255,255,0.1);font-size:20px;cursor:pointer;color:#ffffff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+        
+
+        
+        <form id="paperForm" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <input type="hidden" id="paperId">
+            
+            <!-- 标题部分 -->
+            <div class="form-section" id="titleSection">
+                <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                    <span>标题 *</span>
+                    <input id="titleInput" required placeholder="请输入论文标题">
+                </label>
+            </div>
+            
+            <!-- 基本信息部分 -->
+            <div class="form-section" id="basicSection">
+                <label style="display:flex;flex-direction:column;gap:6px;">
+                    <span>期刊/会议</span>
+                    <input id="journalInput" placeholder="如：IEEE Transactions on Computers">
+                </label>
+                <label style="display:flex;flex-direction:column;gap:6px;">
+                    <span>发表年份</span>
+                    <input id="yearInput" type="number" min="2000" max="2030" value="2024">
+                </label>
+            </div>
+            
+            <!-- 类别部分 -->
+            <div class="form-section" id="categorySection">
+                <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                    <span>类别 *</span>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:8px;">
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <input type="checkbox" value="16" class="category-checkbox"> CCF-A
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <input type="checkbox" value="17" class="category-checkbox"> CCF-B
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <input type="checkbox" value="18" class="category-checkbox"> CCF-C
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <input type="checkbox" value="19" class="category-checkbox"> 中科院一区
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <input type="checkbox" value="20" class="category-checkbox"> 中科院二区
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <input type="checkbox" value="21" class="category-checkbox"> 中科院三区
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <input type="checkbox" value="22" class="category-checkbox"> 中科院四区
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <input type="checkbox" value="23" class="category-checkbox"> JCR一区
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <input type="checkbox" value="24" class="category-checkbox"> JCR二区
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <input type="checkbox" value="25" class="category-checkbox"> JCR三区
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <input type="checkbox" value="26" class="category-checkbox"> JCR四区
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <input type="checkbox" value="27" class="category-checkbox"> EI源刊
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <input type="checkbox" value="28" class="category-checkbox"> EI会议
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <input type="checkbox" value="29" class="category-checkbox"> 南核
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <input type="checkbox" value="30" class="category-checkbox"> CSCD
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <input type="checkbox" value="31" class="category-checkbox"> 北核
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            <input type="checkbox" value="32" class="category-checkbox"> 普刊
+                        </label>
+                    </div>
+                </label>
+            </div>
+            
+            <!-- 作者部分 -->
+            <div class="form-section" id="authorsSection">
+                <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                    <span>作者列表</span>
+                    <div class="authors-container" id="authorsContainer">
+                        <div class="author-item">
+                            <input type="text" placeholder="作者姓名" class="author-input">
+                            <button type="button" class="btn-remove-author">删除</button>
+                        </div>
+                    </div>
+                    <button type="button" id="addAuthorBtn" class="btn btn-sm">➕ 添加作者</button>
+                </label>
+            </div>
+            
+            <!-- 链接部分 -->
+            <div class="form-section" id="linksSection">
+                <label style="display:flex;flex-direction:column;gap:6px;">
+                    <span>PDF链接</span>
+                    <input id="pdfUrlInput" type="url" placeholder="https://example.com/paper.pdf">
+                </label>
+                <label style="display:flex;flex-direction:column;gap:6px;">
+                    <span>代码仓库</span>
+                    <input id="codeUrlInput" type="url" placeholder="https://github.com/user/repo">
+                </label>
+            </div>
+            
+            <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+                <button type="button" id="cancelBtn" class="btn">❌ 取消</button>
+                <button type="submit" class="btn btn-primary">💾 保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// 消息提示系统
+function showMessage(text, type = 'info') {
+    const container = document.getElementById('messageContainer');
+    const message = document.createElement('div');
+    message.className = `message ${type}`;
+    
+    const iconMap = {
+        success: '✓',
+        error: '✕',
+        info: 'ⓘ'
+    };
+    
+    message.innerHTML = `
+        <span class="message-icon">${iconMap[type] || 'ⓘ'}</span>
+        <span>${text}</span>
+    `;
+    
+    container.appendChild(message);
+    
+    // 触发显示动画
+    setTimeout(() => message.classList.add('show'), 100);
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+        message.classList.remove('show');
+        setTimeout(() => {
+            if (message.parentNode) {
+                message.parentNode.removeChild(message);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// ============ 论文管理 ============
+(function(){
+    const tbody = document.getElementById('papersTbody');
+    const addBtn = document.getElementById('addPaperBtn');
+    const modal = document.getElementById('paperModal');
+    const modalClose = document.getElementById('modalClose');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const form = document.getElementById('paperForm');
+    const modalTitle = document.getElementById('modalTitle');
+    const searchInput = document.getElementById('searchInput');
+
+
+    const idInput = document.getElementById('paperId');
+    const titleInput = document.getElementById('titleInput');
+    const journalInput = document.getElementById('journalInput');
+    const yearInput = document.getElementById('yearInput');
+    const pdfUrlInput = document.getElementById('pdfUrlInput');
+    const codeUrlInput = document.getElementById('codeUrlInput');
+    const authorsContainer = document.getElementById('authorsContainer');
+    const addAuthorBtn = document.getElementById('addAuthorBtn');
+
+    let rawData = [];
+    let sortableInstance = null;
+    let hasUnsavedChanges = false;
+
+    // 初始化拖拽排序
+    function initSortable() {
+        if (sortableInstance) {
+            sortableInstance.destroy();
+        }
+        
+        sortableInstance = new Sortable(tbody, {
+            handle: '.sort-handle',
+            animation: 150,
+            onUpdate: function (evt) {
+                hasUnsavedChanges = true;
+                document.getElementById('saveOrderBtn').style.display = 'inline-block';
+            }
+        });
+    }
+
+    // 保存排序
+    async function saveOrder() {
+        const rows = tbody.querySelectorAll('tr[data-id]');
+        const paperIds = Array.from(rows).map(row => parseInt(row.getAttribute('data-id')));
+        
+        try {
+            const res = await fetch('/api/papers/reorder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paper_ids: paperIds })
+            });
+            
+            if (res.ok) {
+                hasUnsavedChanges = false;
+                document.getElementById('saveOrderBtn').style.display = 'none';
+                showMessage('论文排序已保存', 'success');
+                
+                // 通知其他页面更新
+                try {
+                    // 发送postMessage通知
+                    window.parent.postMessage({
+                        type: 'PAPERS_UPDATED',
+                        operation: 'papers_reordered',
+                        timestamp: Date.now()
+                    }, '*');
+                    
+                    // 更新localStorage用于多标签页同步
+                    localStorage.setItem('papers_data_updated', JSON.stringify({
+                        operation: 'papers_reordered',
+                        isReorder: true,
+                        timestamp: Date.now()
+                    }));
+                } catch (notifyError) {
+                    console.warn('通知其他页面失败:', notifyError);
+                }
+                
+                await fetchData();
+            } else {
+                const err = await res.json().catch(() => ({error: '保存失败'}));
+                showMessage(err.error || '保存失败', 'error');
+            }
+        } catch (e) {
+            console.error('保存排序失败:', e);
+            showMessage('网络错误，保存失败', 'error');
+        }
+    }
+
+    // 类别徽章显示
+    function categoryBadge(categories) {
+        if (!categories || categories.length === 0) {
+            return '<span class="badge badge-all">未分类</span>';
+        }
+        
+        // 按级别排序（数字越小级别越高）
+        const sortedCategories = [...categories].sort((a, b) => a - b);
+        
+        // 获取最高级别类别显示
+        const topCategory = sortedCategories[0];
+        const categoryMap = {
+            16: 'CCF-A',
+            17: 'CCF-B',
+            18: 'CCF-C',
+            19: '中科院一区',
+            20: '中科院二区',
+            21: '中科院三区',
+            22: '中科院四区',
+            23: 'JCR一区',
+            24: 'JCR二区',
+            25: 'JCR三区',
+            26: 'JCR四区',
+            27: 'EI源刊',
+            28: 'EI会议',
+            29: '南核',
+            30: 'CSCD',
+            31: '北核',
+            32: '普刊'
+        };
+        
+        const categoryText = categoryMap[topCategory] || '未知';
+        
+        // 根据级别选择样式
+        let badgeClass = 'badge-all';
+        if (topCategory === 16) {
+            badgeClass = 'badge-ccf-a';
+        } else if (topCategory === 17) {
+            badgeClass = 'badge-ccf-b';
+        } else if (topCategory === 18) {
+            badgeClass = 'badge-ccf-c';
+        } else if (topCategory === 19) {
+            badgeClass = 'badge-cas-1';
+        } else if (topCategory === 20) {
+            badgeClass = 'badge-cas-2';
+        } else if (topCategory === 21) {
+            badgeClass = 'badge-cas-3';
+        } else if (topCategory === 22) {
+            badgeClass = 'badge-cas-4';
+        } else if (topCategory === 23) {
+            badgeClass = 'badge-jcr-1';
+        } else if (topCategory === 24) {
+            badgeClass = 'badge-jcr-2';
+        } else if (topCategory === 25) {
+            badgeClass = 'badge-jcr-3';
+        } else if (topCategory === 26) {
+            badgeClass = 'badge-jcr-4';
+        } else if (topCategory >= 27 && topCategory <= 28) {
+            badgeClass = 'badge-quantum';
+        }
+        
+        // 构建悬停提示，显示所有类别
+        const allCategories = sortedCategories.map(c => categoryMap[c] || '未知').join(', ');
+        
+        return `<span class="badge ${badgeClass}" title="包含类别: ${allCategories}">${categoryText}</span>`;
+    }
+
+    // 截断文本
+    function truncate(text, n) {
+        const s = (text || '').trim();
+        return s.length > n ? (s.slice(0, n) + '...') : s;
+    }
+
+    // 打开模态框
+    function openModal(editData) {
+        modal.style.display = 'flex';
+        
+        if (editData) {
+            modalTitle.textContent = '编辑论文';
+            idInput.value = editData.id;
+            titleInput.value = editData.title || '';
+            journalInput.value = editData.journal || '';
+            yearInput.value = editData.year || 2024;
+            pdfUrlInput.value = editData.pdf_url || '';
+            codeUrlInput.value = editData.code_url || '';
+            
+            // 设置作者列表
+            setAuthors(editData.authors || []);
+            // 设置类别
+            setCategories(editData.categories || []);
+        } else {
+            modalTitle.textContent = '新增论文';
+            form.reset();
+            idInput.value = '';
+            yearInput.value = 2024;
+            setAuthors(['']);
+            setCategories([]); // 新增论文时类别为空
+        }
+    }
+
+    function closeModal() { 
+        modal.style.display = 'none'; 
+    }
+
+    // 设置作者列表
+    function setAuthors(authors) {
+        authorsContainer.innerHTML = '';
+        authors.forEach(author => addAuthorInput(author));
+        if (authors.length === 0) {
+            addAuthorInput('');
+        }
+    }
+
+    // 添加作者输入框
+    function addAuthorInput(value = '') {
+        const authorItem = document.createElement('div');
+        authorItem.className = 'author-item';
+        authorItem.innerHTML = `
+            <input type="text" placeholder="作者姓名" class="author-input" value="${value}">
+            <button type="button" class="btn-remove-author">删除</button>
+        `;
+        
+        authorItem.querySelector('.btn-remove-author').addEventListener('click', function() {
+            if (authorsContainer.children.length > 1) {
+                authorItem.remove();
+            } else {
+                showMessage('至少需要保留一位作者', 'info');
+            }
+        });
+        
+        authorsContainer.appendChild(authorItem);
+    }
+
+    // 获取作者列表
+    function getAuthors() {
+        const inputs = authorsContainer.querySelectorAll('.author-input');
+        return Array.from(inputs).map(input => input.value.trim()).filter(author => author);
+    }
+
+    // 获取选中的类别
+    function getSelectedCategories() {
+        const checkboxes = document.querySelectorAll('.category-checkbox:checked');
+        return Array.from(checkboxes).map(cb => parseInt(cb.value)).sort((a, b) => a - b);
+    }
+
+    // 设置类别选中状态
+    function setCategories(categories) {
+        // 先清除所有选中状态
+        document.querySelectorAll('.category-checkbox').forEach(cb => cb.checked = false);
+        
+        // 设置选中的类别
+        if (categories && categories.length > 0) {
+            categories.forEach(categoryId => {
+                const checkbox = document.querySelector(`.category-checkbox[value="${categoryId}"]`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+    }
+
+    // 渲染表格
+    function render(data) {
+        tbody.innerHTML = data.map(item => `
+            <tr class="sortable-item" data-id="${item.id}">
+                <td><span class="sort-handle" title="拖拽排序"></span></td>
+                <td title="${(item.title||'').replace(/\"/g,'&quot;')}">${truncate(item.title, 40)}</td>
+                <td title="${(item.authors||[]).join(', ')}">${truncate((item.authors||[]).join(', '), 30)}</td>
+                <td title="${item.journal || ''}">${truncate(item.journal || '-', 25)}</td>
+                <td>${item.year || '-'}</td>
+                <td>${categoryBadge(item.categories)}</td>
+                <td title="${item.pdf_url || ''}">${item.pdf_url ? '📄' : '-'}</td>
+                <td title="${item.code_url || ''}">${item.code_url ? '💻' : '-'}</td>
+                <td>
+                    <button class="btn btn-sm" data-action="edit" data-id="${item.id}">✏️ 编辑</button>
+                    <button class="btn btn-sm btn-danger" data-action="delete" data-id="${item.id}">🗑️ 删除</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        initSortable();
+    }
+
+    // 获取数据
+    async function fetchData() {
+        try {
+            const res = await fetch('/api/papers');
+            rawData = await res.json();
+            applyFilter();
+        } catch (e) {
+            console.error('数据加载失败:', e);
+            if (window.ErrorHandler) {
+                window.ErrorHandler.handleNetworkError(e, '加载论文数据', showMessage);
+            } else {
+                showMessage('数据加载失败', 'error');
+            }
+        }
+    }
+
+    // 应用筛选
+    function applyFilter() {
+        const search = (searchInput.value || '').trim().toLowerCase();
+        
+        const filtered = rawData.filter(item => {
+            const matchSearch = !search || 
+                (item.title || '').toLowerCase().includes(search) ||
+                (item.authors || []).some(author => author.toLowerCase().includes(search)) ||
+                (item.journal || '').toLowerCase().includes(search);
+            
+            return matchSearch;
+        });
+        
+        render(filtered);
+    }
+
+    // 表格点击事件
+    tbody.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        
+        const id = Number(btn.getAttribute('data-id'));
+        const action = btn.getAttribute('data-action');
+        const current = rawData.find(x => x.id === id);
+        
+        if (action === 'edit') {
+            openModal(current);
+        }
+        
+        if (action === 'delete') {
+            if (!confirm('确认删除该论文？此操作不可恢复！')) return;
+            try {
+                const res = await fetch(`/api/papers/${id}`, { method: 'DELETE' });
+                if (res.ok) { 
+                    await fetchData(); 
+                    showMessage('论文删除成功', 'success');
+                    
+                    // 通知其他页面更新
+                    try {
+                        // 发送postMessage通知
+                        window.parent.postMessage({
+                            type: 'PAPERS_UPDATED',
+                            operation: 'paper_deleted',
+                            timestamp: Date.now()
+                        }, '*');
+                        
+                        // 更新localStorage用于多标签页同步
+                        localStorage.setItem('papers_data_updated', JSON.stringify({
+                            operation: 'paper_deleted',
+                            isReorder: false,
+                            timestamp: Date.now()
+                        }));
+                    } catch (notifyError) {
+                        console.warn('通知其他页面失败:', notifyError);
+                    }
+                } else {
+                    const err = await res.json().catch(() => ({error: '删除失败'}));
+                    showMessage(err.error || '删除失败', 'error');
+                }
+            } catch (e) {
+                console.error('删除论文失败:', e);
+                showMessage('网络错误，删除失败', 'error');
+            }
+        }
+    });
+
+
+
+    // 事件监听
+    addBtn.addEventListener('click', () => openModal());
+    modalClose.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
+    
+    addAuthorBtn.addEventListener('click', () => {
+        addAuthorInput();
+        showMessage('已添加新作者输入框', 'info');
+    });
+
+
+
+    // 表单提交
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!titleInput.value.trim()) {
+            showMessage('请填写论文标题', 'error');
+            titleInput.focus();
+            return;
+        }
+        
+        const authors = getAuthors();
+        if (authors.length === 0) {
+            showMessage('请至少添加一位作者', 'error');
+            return;
+        }
+
+        const categories = getSelectedCategories();
+        if (categories.length === 0) {
+            showMessage('请至少选择一个类别', 'error');
+            return;
+        }
+        
+        const payload = {
+            title: titleInput.value.trim(),
+            authors: authors,
+            journal: journalInput.value.trim(),
+            year: parseInt(yearInput.value) || 2024,
+            categories: categories, // 使用选中的类别
+            status: 'published', // Default status for new papers
+            citation_count: 0, // Default citation count
+            doi: '',
+            abstract: '',
+            pdf_url: pdfUrlInput.value.trim(),
+            code_url: codeUrlInput.value.trim(),
+            video_url: '', // This line was removed
+            demo_url: '' // This line was removed
+        };
+        
+        const id = idInput.value;
+        const isEdit = !!id;
+        
+        try {
+            const res = await fetch(isEdit ? `/api/papers/${id}` : '/api/papers', {
+                method: isEdit ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if (res.ok) {
+                closeModal();
+                await fetchData();
+                showMessage(isEdit ? '论文更新成功' : '论文添加成功', 'success');
+                
+                // 通知其他页面更新
+                try {
+                    const operation = isEdit ? 'paper_updated' : 'paper_created';
+                    
+                    // 发送postMessage通知
+                    window.parent.postMessage({
+                        type: 'PAPERS_UPDATED',
+                        operation: operation,
+                        timestamp: Date.now()
+                    }, '*');
+                    
+                    // 更新localStorage用于多标签页同步
+                    localStorage.setItem('papers_data_updated', JSON.stringify({
+                        operation: operation,
+                        isReorder: false,
+                        timestamp: Date.now()
+                    }));
+                } catch (notifyError) {
+                    console.warn('通知其他页面失败:', notifyError);
+                }
+            } else {
+                const err = await res.json().catch(() => ({error: '提交失败'}));
+                showMessage(err.error || '提交失败', 'error');
+            }
+        } catch (e) {
+            console.error('提交论文失败:', e);
+            showMessage('网络错误，提交失败', 'error');
+        }
+    });
+
+    // 搜索和筛选
+    searchInput.addEventListener('input', applyFilter);
+    
+    // 保存排序
+    document.getElementById('saveOrderBtn').addEventListener('click', saveOrder);
+
+    // 初始化
+    fetchData();
+    setAuthors(['']);
+})();
+
+// 页面加载完成提示
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        showMessage('论文管理系统已就绪！', 'success');
+    }, 500);
+});
+</script>
+{% endblock %} 

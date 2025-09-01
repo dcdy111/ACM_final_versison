@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACM算法研究实验室</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Exo+2:wght@300;500&display=swap" rel="stylesheet">
+    
+    <!-- 新增外部资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/v4-shims.min.css">
+<link rel="stylesheet" href="/static/highlight.css">
+<script defer src="/static/highlight.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #3a86ff;
+            --secondary: #00ffcc;
+            --accent: #ff2d75;
+            --accent2: #b967ff;
+            --dark-bg: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
+            --text-light: #e0e0ff;
+            --text: var(--text-light);
+            --glass: rgba(255, 255, 255, 0.05);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Exo 2', sans-serif;
+            color: var(--text-light);
+            background: var(--dark-bg);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* 粒子背景（展示相关，保留） */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        /* 导航栏（展示相关，保留） */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            backdrop-filter: blur(10px);
+            background: var(--glass);
+            border-bottom: 1px solid rgba(58, 134, 255, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo::before {
+            content: "";
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233a86ff"><path d="M12 2L1 12h3v9h6v-6h4v6h6v-9h3L12 2zm0 2.8L18 10v9h-2v-6H8v6H6v-9l6-7.2z"/></svg>') no-repeat center;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            white-space: nowrap;
+        }
+        
+        .nav-link {
+            position: relative;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 500;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover { color: var(--primary); }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after { width: 100%; }
+        
+        /* 下拉菜单（展示相关，保留） */
+        .dropdown { position: relative; }
+        
+        .dropdown-content {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            min-width: 220px;
+            background: rgba(10, 10, 26, 0.98);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(58, 134, 255, 0.25);
+            border-radius: 8px;
+            padding: 0.6rem 0;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(6px);
+            transition: all 0.22s ease;
+            z-index: 200;
+            white-space: nowrap;
+        }
+        
+        .dropdown:hover .dropdown-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-link {
+            display: block;
+            padding: 0.5rem 1.25rem;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.18s ease;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .dropdown-link:hover {
+            background: rgba(58, 134, 255, 0.12);
+            color: var(--primary);
+            padding-left: 1.5rem;
+        }
+        
+        /* 页脚（展示相关，保留） */
+        footer {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 3rem 5%;
+            text-align: center;
+            margin-top: 5rem;
+            position: relative;
+        }
+        
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+        
+        .footer-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-link { color: var(--text-light); text-decoration: none; transition: color 0.3s; }
+        .footer-link:hover { color: var(--primary); }
+        
+        .footer-social {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .social-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(0, 240, 255, 0.1);
+            color: var(--primary);
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            background-color: var(--primary);
+            color: var(--dark);
+            transform: translateY(-3px);
+        }
+        
+        .social-icon i {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .social-icon:hover i {
+            background: none;
+            -webkit-background-clip: initial;
+            background-clip: initial;
+            color: var(--dark);
+        }
+        
+        .copyright { font-size: 0.9rem; color: rgba(224, 224, 255, 0.6); }
+        
+        /* 必要动画（logo 脉冲） */
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+        
+        /* 新增算法组招生页面样式 */
+        .recruitment-content {
+            position: relative;
+            z-index: 10;
+        }
+        
+        /* 配置Tailwind自定义主题 */
+        .neon-blue { color: #00ffff; }
+        .neon-pink { color: #ff00ff; }
+        .neon-green { color: #00ff00; }
+        .neon-yellow { color: #ffff00; }
+        .dark-bg { background-color: #0a0a16; }
+        .dark-card { background-color: #121229; }
+        
+        .text-shadow-neon-blue {
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.7), 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        .text-shadow-neon-pink {
+            text-shadow: 0 0 5px rgba(255, 0, 255, 0.7), 0 0 10px rgba(255, 0, 255, 0.5);
+        }
+        .border-glow-blue {
+            box-shadow: 0 0 5px rgba(0, 255, 255, 0.7), 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        .border-glow-pink {
+            box-shadow: 0 0 5px rgba(255, 0, 255, 0.7), 0 0 10px rgba(255, 0, 255, 0.5);
+        }
+        .hologram {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 255, 255, 0.1),
+                rgba(0, 255, 255, 0.05)
+            );
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+        .hologram::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(0, 255, 255, 0.8),
+                transparent
+            );
+            animation: scan 4s linear infinite;
+            background-size: 200% 100%;
+        }
+        .grid-pattern {
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .circuit-bg {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2300ffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            animation: flow 20s linear infinite;
+        }
+        .math-formula {
+            position: absolute;
+            color: rgba(0, 255, 255, 0.5);
+            font-family: 'Times New Roman', serif;
+            pointer-events: none;
+        }
+        
+        @keyframes scan {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 0% 100%; }
+        }
+        
+        @keyframes flow {
+            0% { background-position: 0 0; }
+            100% { background-position: -1000px 0; }
+        }
+        
+        @keyframes mathFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(10px, -10px) rotate(2deg); }
+            50% { transform: translate(5px, -15px) rotate(-1deg); }
+            75% { transform: translate(-5px, -5px) rotate(1deg); }
+        }
+        
+        .animate-math-float {
+            animation: mathFloat 8s ease-in-out infinite;
+        }
+        
+        .animate-pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        /* 响应式布局 */
+        .container {
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        
+        @media (min-width: 640px) {
+            .container { max-width: 640px; }
+        }
+        
+        @media (min-width: 768px) {
+            .container { max-width: 768px; }
+        }
+        
+        @media (min-width: 1024px) {
+            .container { max-width: 1024px; }
+        }
+        
+        @media (min-width: 1280px) {
+            .container { max-width: 1280px; }
+        }
+        
+        /* Flexbox和Grid样式 */
+        .flex { display: flex; }
+        .grid { display: grid; }
+        .hidden { display: none; }
+        .block { display: block; }
+        .inline-block { display: inline-block; }
+        .items-center { align-items: center; }
+        .items-start { align-items: flex-start; }
+        .justify-between { justify-content: space-between; }
+        .justify-center { justify-content: center; }
+        .justify-end { justify-content: flex-end; }
+        .flex-col { flex-direction: column; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-3 { gap: 0.75rem; }
+        .gap-4 { gap: 1rem; }
+        .gap-6 { gap: 1.5rem; }
+        .gap-8 { gap: 2rem; }
+        .gap-10 { gap: 2.5rem; }
+        .gap-12 { gap: 3rem; }
+        
+        /* 网格系统 */
+        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        
+        /* 宽度和高度 */
+        .w-full { width: 100%; }
+        .w-6 { width: 1.5rem; }
+        .w-10 { width: 2.5rem; }
+        .w-12 { width: 3rem; }
+        .w-14 { width: 3.5rem; }
+        .w-20 { width: 5rem; }
+        .w-24 { width: 6rem; }
+        .w-64 { width: 16rem; }
+        .h-1 { height: 0.25rem; }
+        .h-6 { height: 1.5rem; }
+        .h-10 { height: 2.5rem; }
+        .h-12 { height: 3rem; }
+        .h-14 { height: 3.5rem; }
+        .h-20 { height: 5rem; }
+        .h-64 { height: 16rem; }
+        .h-80 { height: 20rem; }
+        .max-w-2xl { max-width: 42rem; }
+        .max-w-3xl { max-width: 48rem; }
+        
+        /* 内边距和外边距 */
+        .p-3 { padding: 0.75rem; }
+        .p-6 { padding: 1.5rem; }
+        .p-8 { padding: 2rem; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+        .px-8 { padding-left: 2rem; padding-right: 2rem; }
+        .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+        .py-12 { padding-top: 3rem; padding-bottom: 3rem; }
+        .py-16 { padding-top: 4rem; padding-bottom: 4rem; }
+        .pt-4 { padding-top: 1rem; }
+        .pt-8 { padding-top: 2rem; }
+        .pt-32 { padding-top: 8rem; }
+        .pb-20 { padding-bottom: 5rem; }
+        .pr-16 { padding-right: 4rem; }
+        .pl-16 { padding-left: 4rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-3 { margin-bottom: 0.75rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mb-8 { margin-bottom: 2rem; }
+        .mb-10 { margin-bottom: 2.5rem; }
+        .mb-16 { margin-bottom: 4rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-6 { margin-top: 1.5rem; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        
+        /* 定位 */
+        .relative { position: relative; }
+        .absolute { position: absolute; }
+        .fixed { position: fixed; }
+        .inset-0 { inset: 0px; }
+        .top-0 { top: 0px; }
+        .left-0 { left: 0px; }
+        .right-0 { right: 0px; }
+        .bottom-0 { bottom: 0px; }
+        .z-10 { z-index: 10; }
+        
+        /* 文字样式 */
+        .text-center { text-align: center; }
+        .text-white { color: rgb(255 255 255); }
+        .text-gray-200 { color: rgb(229 231 235); }
+        .text-gray-300 { color: rgb(209 213 219); }
+        .text-gray-400 { color: rgb(156 163 175); }
+        .text-gray-500 { color: rgb(107 114 128); }
+        .text-gray-700 { color: rgb(55 65 81); }
+        .text-sm { font-size: 0.875rem; }
+        .text-lg { font-size: 1.125rem; }
+        .text-xl { font-size: 1.25rem; }
+        .text-2xl { font-size: 1.5rem; }
+        .text-3xl { font-size: 1.875rem; }
+        .text-4xl { font-size: 2.25rem; }
+        .text-5xl { font-size: 3rem; }
+        .text-6xl { font-size: 3.75rem; }
+        .text-7xl { font-size: 4.5rem; }
+        .font-medium { font-weight: 500; }
+        .font-bold { font-weight: 700; }
+        .leading-tight { line-height: 1.25; }
+        
+        /* 边框和圆角 */
+        .border { border-width: 1px; }
+        .border-4 { border-width: 4px; }
+        .border-gray-700 { border-color: rgb(55 65 81); }
+        .border-gray-800 { border-color: rgb(31 41 55); }
+        .border-t { border-top-width: 1px; }
+        .rounded-md { border-radius: 0.375rem; }
+        .rounded-lg { border-radius: 0.5rem; }
+        .rounded-full { border-radius: 9999px; }
+        
+        /* 背景 */
+        .bg-dark-bg { background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%); }
+        .bg-dark-card { background-color: #121229; }
+        .bg-gray-800 { background-color: rgb(31 41 55); }
+        
+        /* 变换和过渡 */
+        .transform { transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)); }
+        .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+        .transition-colors { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+        .transition-transform { transition-property: transform; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+        .duration-300 { transition-duration: 300ms; }
+        .duration-500 { transition-duration: 500ms; }
+        .hover\:scale-110:hover { --tw-scale-x: 1.1; --tw-scale-y: 1.1; }
+        .hover\:-translate-y-2:hover { --tw-translate-y: -0.5rem; }
+        .hover\:border-glow-blue:hover { box-shadow: 0 0 5px rgba(0, 255, 255, 0.7), 0 0 10px rgba(0, 255, 255, 0.5); }
+        .hover\:bg-neon-blue\/20:hover { background-color: rgba(0, 255, 255, 0.2); }
+        .hover\:text-neon-blue:hover { color: #00ffff; }
+        .group:hover .group-hover\:scale-110 { --tw-scale-x: 1.1; --tw-scale-y: 1.1; }
+        .group:hover .group-hover\:scale-150 { --tw-scale-x: 1.5; --tw-scale-y: 1.5; }
+        
+        /* 表单元素 */
+        input[type="text"], input[type="email"], input[type="tel"], textarea, input[type="file"] {
+            appearance: none;
+            outline: none;
+        }
+        
+        input[type="text"]:focus, input[type="email"]:focus, input[type="tel"]:focus, textarea:focus {
+            border-color: #00ffff;
+        }
+        
+        /* 响应式 */
+        @media (min-width: 768px) {
+            .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+            .md\:flex-row { flex-direction: row; }
+            .md\:w-1\/2 { width: 50%; }
+            .md\:w-64 { width: 16rem; }
+            .md\:pr-16 { padding-right: 4rem; }
+            .md\:pl-16 { padding-left: 4rem; }
+            .md\:mb-0 { margin-bottom: 0px; }
+            .md\:mb-24 { margin-bottom: 6rem; }
+            .md\:text-right { text-align: right; }
+            .md\:text-4xl { font-size: 2.25rem; }
+            .md\:text-6xl { font-size: 3.75rem; }
+            .md\:order-1 { order: 1; }
+            .md\:order-2 { order: 2; }
+            .md\:justify-end { justify-content: flex-end; }
+            .md\:float-right { float: right; }
+            .md\:mx-0 { margin-left: 0px; margin-right: 0px; }
+            .md\:ml-auto { margin-left: auto; }
+            .md\:mr-0 { margin-right: 0px; }
+            .md\:block { display: block; }
+            .md\:hidden { display: none; }
+        }
+        
+        @media (min-width: 1024px) {
+            .lg\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .lg\:text-7xl { font-size: 4.5rem; }
+        }
+        
+        /* 空间和溢出 */
+        .space-y-3 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.75rem; }
+        .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 1.5rem; }
+        .overflow-hidden { overflow: hidden; }
+        .overflow-x-hidden { overflow-x: hidden; }
+        
+        /* 透明度 */
+        .opacity-50 { opacity: 0.5; }
+        
+        /* 导航栏样式 */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(58, 134, 255, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #3a86ff, #00ffcc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo::before {
+            content: "";
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233a86ff"><path d="M12 2L1 12h3v9h6v-6h4v6h6v-9h3L12 2zm0 2.8L18 10v9h-2v-6H8v6H6v-9l6-7.2z"/></svg>') no-repeat center;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            white-space: nowrap;
+        }
+        
+        .nav-link {
+            position: relative;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 500;
+            color: #e0e0ff;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: #3a86ff;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: #3a86ff;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .dropdown {
+            position: relative;
+        }
+        
+        .dropdown-content {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            min-width: 220px;
+            background: rgba(10, 10, 26, 0.98);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(58, 134, 255, 0.25);
+            border-radius: 8px;
+            padding: 0.6rem 0;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(6px);
+            transition: all 0.22s ease;
+            z-index: 200;
+            white-space: nowrap;
+        }
+        
+        .dropdown:hover .dropdown-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-link {
+            display: block;
+            padding: 0.5rem 1.25rem;
+            color: #e0e0ff;
+            text-decoration: none;
+            transition: all 0.18s ease;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .dropdown-link:hover {
+            background: rgba(58, 134, 255, 0.12);
+            color: #3a86ff;
+            padding-left: 1.5rem;
+        }
+        
+        .menu-toggle {
+            display: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+        
+        .fullscreen-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(10, 10, 26, 0.95);
+            backdrop-filter: blur(15px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            transform: translateY(-100%);
+            transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0);
+        }
+        
+        .fullscreen-nav.active {
+            transform: translateY(0);
+        }
+        
+        .fullscreen-nav .close-btn {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #e0e0ff;
+            transition: color 0.3s;
+        }
+        
+        .fullscreen-nav .close-btn:hover {
+            color: #ff2d75;
+        }
+        
+        .fullscreen-nav-links {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .fullscreen-nav-link {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: #e0e0ff;
+            text-decoration: none;
+            position: relative;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s;
+        }
+        
+        .fullscreen-nav-link:hover {
+            color: #3a86ff;
+        }
+        
+        .fullscreen-nav-link::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: rgba(58, 134, 255, 0.1);
+            z-index: -1;
+            transition: width 0.3s;
+        }
+        
+        .fullscreen-nav-link:hover::before {
+            width: 100%;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        /* ========================= 统一滚动条美化样式 ========================= */
+        /* 全局滚动条 - 竖直方向 */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        
+        /* 滚动条轨道 */
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+        }
+        
+        /* 滚动条滑块 */
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #3a86ff 0%, #00ffcc 50%, #b967ff 100%);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(58, 134, 255, 0.2);
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #00ffcc 0%, #ff2d75 50%, #3a86ff 100%);
+            box-shadow: 0 4px 15px rgba(58, 134, 255, 0.4);
+            transform: scale(1.05);
+        }
+        
+        /* 滚动条箭头按钮 */
+        ::-webkit-scrollbar-button {
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(45deg, #3a86ff, #00ffcc);
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        /* 竖直滚动条上箭头 */
+        ::-webkit-scrollbar-button:vertical:start:decrement {
+            background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 14l5-5 5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 竖直滚动条下箭头 */
+        ::-webkit-scrollbar-button:vertical:end:increment {
+            background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 水平滚动条左箭头 */
+        ::-webkit-scrollbar-button:horizontal:start:decrement {
+            background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M14 7l-5 5 5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 水平滚动条右箭头 */
+        ::-webkit-scrollbar-button:horizontal:end:increment {
+            background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M10 7l5 5-5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 箭头按钮悬停效果 */
+        ::-webkit-scrollbar-button:hover {
+            background: linear-gradient(45deg, #ff2d75, #b967ff) !important;
+            box-shadow: 0 0 10px rgba(58, 134, 255, 0.6);
+            transform: scale(1.1);
+        }
+        
+        /* 箭头按钮点击效果 */
+        ::-webkit-scrollbar-button:active {
+            background: linear-gradient(45deg, #00ffcc, #3a86ff) !important;
+            transform: scale(0.95);
+        }
+        
+        /* 滚动条角落 */
+        ::-webkit-scrollbar-corner {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+        }
+        
+        /* Firefox滚动条样式 */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #3a86ff rgba(255, 255, 255, 0.08);
+        }
+        
+        /* 移动端滚动条优化 */
+        @media (max-width: 768px) {
+            ::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+        }
+        /* ========================= 滚动条样式结束 ========================= */
+    </style>
+
+</head>
+<body>
+    <!-- 粒子背景 -->
+    <div id="particles-js"></div>
+    
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <a href="/" class="logo">ACM LAB</a>
+        <div class="nav-links">
+            <div class="dropdown">
+                <a href="/introduction" class="nav-link">概况</a>
+            </div>
+            
+            <a href="/team" class="nav-link">团队</a>
+            
+            <div class="dropdown">
+                <a href="/algorithm" class="nav-link">成果</a>
+                <div class="dropdown-content">
+                        <a href="/algorithm" class="dropdown-link">算法</a>
+                        <a href="/paper" class="dropdown-link">论文</a>
+                        <a href="/innovation" class="dropdown-link">科创</a>
+                </div>
+            </div>
+            
+            <a href="/dynamic" class="nav-link">动态</a>
+            
+            <div class="dropdown">
+                <a href="/algorithm-recruitment" class="nav-link">加入我们</a>
+                <div class="dropdown-content">
+                    <a href="/algorithm-recruitment" class="dropdown-link">算法组招生</a>
+                        <a href="/project-recruitment" class="dropdown-link">项目组招生</a>
+                </div>
+            </div>
+            
+
+        </div>
+        <div class="menu-toggle">☰</div>
+        </nav>
+    
+    <!-- 算法组招生内容 -->
+    <div class="recruitment-content">
+        
+        <!-- 页面标题区域 -->
+        <header class="pt-32 pb-20 relative z-10">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-10">
+                    <div class="max-w-2xl">
+                        <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6" style="font-family: 'Orbitron', sans-serif;">
+                            <span class="block text-white">算法组</span>
+                            <span class="block text-shadow-neon-blue mt-2" style="color: #00ffff;">招生计划</span>
+                        </h1>
+                        <p class="text-xl text-gray-300">
+                            加入我们的算法研究团队，探索算法世界的无限可能，挑战最前沿的计算问题，在顶级学术会议上留下你的印记。
+                        </p>
+                    </div>
+                    
+                    <div class="w-full md:w-64 h-64 relative">
+                        <div class="absolute inset-0 rounded-full border-4 animate-pulse-slow" style="border-color: rgba(0, 255, 255, 0.3);"></div>
+                        <div class="absolute rounded-full border-4 animate-pulse-slow" style="inset: 10%; border-color: rgba(0, 255, 255, 0.4); animation-delay: 0.5s;"></div>
+                        <div class="absolute rounded-full border-4 animate-pulse-slow" style="inset: 20%; border-color: rgba(0, 255, 255, 0.5); animation-delay: 1s;"></div>
+                        <div class="absolute flex items-center justify-center" style="inset: 30%;">
+                            <i class="fa fa-code-fork text-5xl text-shadow-neon-blue" style="color: #00ffff;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- 主要内容 -->
+        <main class="relative z-10 pb-20">
+            <!-- 研究方向 -->
+            <section class="py-16">
+                <div class="container mx-auto px-4">
+                    <div class="text-center mb-16">
+                        <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white" style="font-family: 'Orbitron', sans-serif;">
+                            我们的<span class="text-shadow-neon-blue" style="color: #00ffff;">研究方向</span>
+                        </h2>
+                        <div class="w-24 h-1 mx-auto" style="background-color: #00ffff;"></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <!-- 方向1 -->
+                        <div class="hologram rounded-lg p-8 hover:border-glow-blue transition-all duration-500 transform hover:-translate-y-2 group">
+                            <div class="w-14 h-14 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform" style="background-color: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff;">
+                                <i class="fa fa-sitemap text-2xl" style="color: #00ffff;"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-4" style="font-family: 'Orbitron', sans-serif; color: #00ffff;">图算法与复杂网络</h3>
+                            <p class="text-gray-300">
+                                研究图数据的高效处理算法，包括社区发现、路径规划、图神经网络等，解决大规模复杂网络中的关键问题。
+                            </p>
+                        </div>
+                        
+                        <!-- 方向2 -->
+                        <div class="hologram rounded-lg p-8 hover:border-glow-blue transition-all duration-500 transform hover:-translate-y-2 group">
+                            <div class="w-14 h-14 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform" style="background-color: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff;">
+                                <i class="fa fa-random text-2xl" style="color: #00ffff;"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-4" style="font-family: 'Orbitron', sans-serif; color: #00ffff;">随机算法与概率分析</h3>
+                            <p class="text-gray-300">
+                                设计高效的随机化算法，利用概率分析方法解决确定性算法难以处理的问题，分析算法的期望性能和复杂度。
+                            </p>
+                        </div>
+                        
+                        <!-- 方向3 -->
+                        <div class="hologram rounded-lg p-8 hover:border-glow-blue transition-all duration-500 transform hover:-translate-y-2 group">
+                            <div class="w-14 h-14 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform" style="background-color: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff;">
+                                <i class="fa fa-bolt text-2xl" style="color: #00ffff;"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-4" style="font-family: 'Orbitron', sans-serif; color: #00ffff;">近似算法与优化</h3>
+                            <p class="text-gray-300">
+                                针对NP难问题设计多项式时间近似算法，研究近似比理论，探索优化问题的可近似性边界和性能保证。
+                            </p>
+                        </div>
+                        
+                        <!-- 方向4 -->
+                        <div class="hologram rounded-lg p-8 hover:border-glow-blue transition-all duration-500 transform hover:-translate-y-2 group">
+                            <div class="w-14 h-14 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform" style="background-color: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff;">
+                                <i class="fa fa-cogs text-2xl" style="color: #00ffff;"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-4" style="font-family: 'Orbitron', sans-serif; color: #00ffff;">并行与分布式算法</h3>
+                            <p class="text-gray-300">
+                                研究适用于多核和分布式系统的并行算法设计，解决大规模数据处理和计算任务的效率问题。
+                            </p>
+                        </div>
+                        
+                        <!-- 方向5 -->
+                        <div class="hologram rounded-lg p-8 hover:border-glow-blue transition-all duration-500 transform hover:-translate-y-2 group">
+                            <div class="w-14 h-14 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform" style="background-color: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff;">
+                                <i class="fa fa-brain text-2xl" style="color: #00ffff;"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-4" style="font-family: 'Orbitron', sans-serif; color: #00ffff;">机器学习算法理论</h3>
+                            <p class="text-gray-300">
+                                探索机器学习算法的理论基础，研究泛化能力、收敛性分析、样本复杂度等，设计更高效稳定的学习算法。
+                            </p>
+                        </div>
+                        
+                        <!-- 方向6 -->
+                        <div class="hologram rounded-lg p-8 hover:border-glow-blue transition-all duration-500 transform hover:-translate-y-2 group">
+                            <div class="w-14 h-14 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform" style="background-color: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff;">
+                                <i class="fa fa-shield text-2xl" style="color: #00ffff;"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-4" style="font-family: 'Orbitron', sans-serif; color: #00ffff;">密码学与安全算法</h3>
+                            <p class="text-gray-300">
+                                研究密码学基础理论和安全算法设计，包括加密算法、签名方案、零知识证明等，保障信息系统安全。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 能力要求 -->
+            <section class="py-16" style="background-color: rgba(18, 18, 41, 0.5);">
+                <div class="container mx-auto px-4">
+                    <div class="text-center mb-16">
+                        <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white" style="font-family: 'Orbitron', sans-serif;">
+                            我们期待你具备的<span class="text-shadow-neon-blue" style="color: #00ffff;">能力</span>
+                        </h2>
+                        <div class="w-24 h-1 mx-auto" style="background-color: #00ffff;"></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                        <div>
+                            <!-- 能力雷达图 -->
+                            <div class="hologram rounded-lg p-6 mb-8">
+                                <h3 class="text-xl font-bold mb-6 text-center" style="font-family: 'Orbitron', sans-serif; color: #00ffff;">核心能力模型</h3>
+                                <div class="w-full h-80">
+                                    <canvas id="skillsRadarChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-6">
+                            <div class="hologram rounded-lg p-6 hover:border-glow-blue transition-all duration-300">
+                                <div class="flex items-start gap-4">
+                                    <div class="mt-1" style="color: #00ffff;"><i class="fa fa-check-circle text-xl"></i></div>
+                                    <div>
+                                        <h4 class="text-lg font-bold mb-2 text-white" style="font-family: 'Orbitron', sans-serif;">扎实的数学基础</h4>
+                                        <p class="text-gray-400">
+                                            掌握离散数学、概率论与数理统计、线性代数等基础知识，能够进行算法的数学分析和证明。
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="hologram rounded-lg p-6 hover:border-glow-blue transition-all duration-300">
+                                <div class="flex items-start gap-4">
+                                    <div class="mt-1" style="color: #00ffff;"><i class="fa fa-check-circle text-xl"></i></div>
+                                    <div>
+                                        <h4 class="text-lg font-bold mb-2 text-white" style="font-family: 'Orbitron', sans-serif;">优秀的编程能力</h4>
+                                        <p class="text-gray-400">
+                                            熟练掌握C/C++或Python等编程语言，能够高效实现复杂算法，有算法竞赛经验者优先。
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="hologram rounded-lg p-6 hover:border-glow-blue transition-all duration-300">
+                                <div class="flex items-start gap-4">
+                                    <div class="mt-1" style="color: #00ffff;"><i class="fa fa-check-circle text-xl"></i></div>
+                                    <div>
+                                        <h4 class="text-lg font-bold mb-2 text-white" style="font-family: 'Orbitron', sans-serif;">问题分析与解决能力</h4>
+                                        <p class="text-gray-400">
+                                            能够抽象实际问题，设计有效的算法解决方案，具备良好的逻辑思维和创新能力。
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="hologram rounded-lg p-6 hover:border-glow-blue transition-all duration-300">
+                                <div class="flex items-start gap-4">
+                                    <div class="mt-1" style="color: #00ffff;"><i class="fa fa-check-circle text-xl"></i></div>
+                                    <div>
+                                        <h4 class="text-lg font-bold mb-2 text-white" style="font-family: 'Orbitron', sans-serif;">学术阅读与写作能力</h4>
+                                        <p class="text-gray-400">
+                                            能够阅读英文文献，理解前沿研究成果，具备良好的学术写作能力，能够撰写研究论文。
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 培养计划 -->
+            <section class="py-16">
+                <div class="container mx-auto px-4">
+                    <div class="text-center mb-16">
+                        <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white" style="font-family: 'Orbitron', sans-serif;">
+                            算法组<span class="text-shadow-neon-blue" style="color: #00ffff;">培养计划</span>
+                        </h2>
+                        <div class="w-24 h-1 mx-auto" style="background-color: #00ffff;"></div>
+                        <p class="mt-6 text-gray-400 max-w-2xl mx-auto">
+                            我们为算法组成员提供系统化的培养方案，帮助你快速成长为顶尖的算法研究者
+                        </p>
+                    </div>
+                    
+                    <div class="relative">
+                        <!-- 时间线 -->
+                        <div class="hidden md:block absolute left-1/2 top-0 bottom-0 w-1 transform -translate-x-1/2" style="background-color: rgba(0, 255, 255, 0.3);"></div>
+                        
+                        <!-- 阶段1 -->
+                        <div class="relative mb-16 md:mb-24">
+                            <div class="flex flex-col md:flex-row items-center">
+                                <div class="md:w-1/2 md:pr-16 md:text-right mb-8 md:mb-0 md:order-1">
+                                    <h3 class="text-2xl font-bold mb-3" style="font-family: 'Orbitron', sans-serif; color: #00ffff;">基础强化阶段 (1-3个月)</h3>
+                                    <div class="hologram rounded-lg p-6 inline-block md:float-right">
+                                        <ul class="space-y-3 text-gray-300">
+                                            <li class="flex md:justify-end items-center gap-2">
+                                                <span>算法基础理论学习</span>
+                                                <i class="fa fa-angle-right" style="color: #00ffff;"></i>
+                                            </li>
+                                            <li class="flex md:justify-end items-center gap-2">
+                                                <span>经典算法实现训练</span>
+                                                <i class="fa fa-angle-right" style="color: #00ffff;"></i>
+                                            </li>
+                                            <li class="flex md:justify-end items-center gap-2">
+                                                <span>科研论文阅读指导</span>
+                                                <i class="fa fa-angle-right" style="color: #00ffff;"></i>
+                                            </li>
+                                            <li class="flex md:justify-end items-center gap-2">
+                                                <span>小组学术讨论参与</span>
+                                                <i class="fa fa-angle-right" style="color: #00ffff;"></i>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div class="absolute left-1/2 top-0 w-6 h-6 rounded-full border-4 transform -translate-x-1/2 z-10" style="background-color: #00ffff; border-color: #0a0a16;"></div>
+                                
+                                <div class="md:w-1/2 md:pl-16 md:order-2">
+                                    <div class="w-20 h-20 rounded-full border flex items-center justify-center mx-auto md:mx-0" style="background-color: rgba(0, 255, 255, 0.1); border-color: #00ffff;">
+                                        <span class="text-3xl font-bold" style="font-family: 'Orbitron', sans-serif; color: #00ffff;">01</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 阶段2 -->
+                        <div class="relative mb-16 md:mb-24">
+                            <div class="flex flex-col md:flex-row items-center">
+                                <div class="md:w-1/2 md:pr-16 mb-8 md:mb-0">
+                                    <div class="w-20 h-20 rounded-full border flex items-center justify-center mx-auto md:ml-auto md:mr-0" style="background-color: rgba(0, 255, 255, 0.1); border-color: #00ffff;">
+                                        <span class="text-3xl font-bold" style="font-family: 'Orbitron', sans-serif; color: #00ffff;">02</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="absolute left-1/2 top-0 w-6 h-6 rounded-full border-4 transform -translate-x-1/2 z-10" style="background-color: #00ffff; border-color: #0a0a16;"></div>
+                                
+                                <div class="md:w-1/2 md:pl-16">
+                                    <h3 class="text-2xl font-bold mb-3" style="font-family: 'Orbitron', sans-serif; color: #00ffff;">专题研究阶段 (3-6个月)</h3>
+                                    <div class="hologram rounded-lg p-6">
+                                        <ul class="space-y-3 text-gray-300">
+                                            <li class="flex items-center gap-2">
+                                                <i class="fa fa-angle-left" style="color: #00ffff;"></i>
+                                                <span>选定研究方向深入学习</span>
+                                            </li>
+                                            <li class="flex items-center gap-2">
+                                                <i class="fa fa-angle-left" style="color: #00ffff;"></i>
+                                                <span>复现经典论文算法</span>
+                                            </li>
+                                            <li class="flex items-center gap-2">
+                                                <i class="fa fa-angle-left" style="color: #00ffff;"></i>
+                                                <span>参与导师的研究项目</span>
+                                            </li>
+                                            <li class="flex items-center gap-2">
+                                                <i class="fa fa-angle-left" style="color: #00ffff;"></i>
+                                                <span>撰写研究报告和技术博客</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 阶段3 -->
+                        <div class="relative">
+                            <div class="flex flex-col md:flex-row items-center">
+                                <div class="md:w-1/2 md:pr-16 md:text-right mb-8 md:mb-0 md:order-1">
+                                    <h3 class="text-2xl font-bold mb-3" style="font-family: 'Orbitron', sans-serif; color: #00ffff;">创新研究阶段 (6个月+)</h3>
+                                    <div class="hologram rounded-lg p-6 inline-block md:float-right">
+                                        <ul class="space-y-3 text-gray-300">
+                                            <li class="flex md:justify-end items-center gap-2">
+                                                <span>提出原创性算法或改进</span>
+                                                <i class="fa fa-angle-right" style="color: #00ffff;"></i>
+                                            </li>
+                                            <li class="flex md:justify-end items-center gap-2">
+                                                <span>主导小型研究项目</span>
+                                                <i class="fa fa-angle-right" style="color: #00ffff;"></i>
+                                            </li>
+                                            <li class="flex md:justify-end items-center gap-2">
+                                                <span>撰写学术论文并投稿</span>
+                                                <i class="fa fa-angle-right" style="color: #00ffff;"></i>
+                                            </li>
+                                            <li class="flex md:justify-end items-center gap-2">
+                                                <span>参加学术会议交流</span>
+                                                <i class="fa fa-angle-right" style="color: #00ffff;"></i>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div class="absolute left-1/2 top-0 w-6 h-6 rounded-full border-4 transform -translate-x-1/2 z-10" style="background-color: #00ffff; border-color: #0a0a16;"></div>
+                                
+                                <div class="md:w-1/2 md:pl-16 md:order-2">
+                                    <div class="w-20 h-20 rounded-full border flex items-center justify-center mx-auto md:mx-0" style="background-color: rgba(0, 255, 255, 0.1); border-color: #00ffff;">
+                                        <span class="text-3xl font-bold" style="font-family: 'Orbitron', sans-serif; color: #00ffff;">03</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 申请流程 -->
+            <section class="py-16" style="background-color: rgba(18, 18, 41, 0.5);">
+                <div class="container mx-auto px-4">
+                    <div class="text-center mb-16">
+                        <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white" style="font-family: 'Orbitron', sans-serif;">
+                            申请<span class="text-shadow-neon-blue" style="color: #00ffff;">流程</span>
+                        </h2>
+                        <div class="w-24 h-1 mx-auto" style="background-color: #00ffff;"></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <!-- 步骤1 -->
+                        <div class="hologram rounded-lg p-6 hover:border-glow-blue transition-all duration-500 relative overflow-hidden group">
+                            <div class="absolute -right-10 -top-10 w-20 h-20 rounded-full group-hover:scale-150 transition-transform duration-500" style="background-color: rgba(0, 255, 255, 0.1);"></div>
+                            <div class="relative z-10">
+                                <div class="w-12 h-12 rounded-full border flex items-center justify-center mb-6" style="background-color: rgba(0, 255, 255, 0.2); border-color: #00ffff;">
+                                    <span class="font-bold" style="color: #00ffff; font-family: 'Orbitron', sans-serif;">01</span>
+                                </div>
+                                <h3 class="text-lg font-bold mb-3 text-white" style="font-family: 'Orbitron', sans-serif;">提交申请</h3>
+                                <p class="text-gray-400 text-sm">
+                                    填写申请表并提交个人简历、成绩单及相关证明材料，展示你的算法基础和研究兴趣。
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- 步骤2 -->
+                        <div class="hologram rounded-lg p-6 hover:border-glow-blue transition-all duration-500 relative overflow-hidden group">
+                            <div class="absolute -right-10 -top-10 w-20 h-20 rounded-full group-hover:scale-150 transition-transform duration-500" style="background-color: rgba(0, 255, 255, 0.1);"></div>
+                            <div class="relative z-10">
+                                <div class="w-12 h-12 rounded-full border flex items-center justify-center mb-6" style="background-color: rgba(0, 255, 255, 0.2); border-color: #00ffff;">
+                                    <span class="font-bold" style="color: #00ffff; font-family: 'Orbitron', sans-serif;">02</span>
+                                </div>
+                                <h3 class="text-lg font-bold mb-3 text-white" style="font-family: 'Orbitron', sans-serif;">算法测试</h3>
+                                <p class="text-gray-400 text-sm">
+                                    完成我们设计的算法测试题，主要考察算法设计能力、编程实现能力和问题分析能力。
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- 步骤3 -->
+                        <div class="hologram rounded-lg p-6 hover:border-glow-blue transition-all duration-500 relative overflow-hidden group">
+                            <div class="absolute -right-10 -top-10 w-20 h-20 rounded-full group-hover:scale-150 transition-transform duration-500" style="background-color: rgba(0, 255, 255, 0.1);"></div>
+                            <div class="relative z-10">
+                                <div class="w-12 h-12 rounded-full border flex items-center justify-center mb-6" style="background-color: rgba(0, 255, 255, 0.2); border-color: #00ffff;">
+                                    <span class="font-bold" style="color: #00ffff; font-family: 'Orbitron', sans-serif;">03</span>
+                                </div>
+                                <h3 class="text-lg font-bold mb-3 text-white" style="font-family: 'Orbitron', sans-serif;">面试交流</h3>
+                                <p class="text-gray-400 text-sm">
+                                    与算法组导师进行面试交流，讨论你的研究兴趣、学术经历和未来规划，了解实验室情况。
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- 步骤4 -->
+                        <div class="hologram rounded-lg p-6 hover:border-glow-blue transition-all duration-500 relative overflow-hidden group">
+                            <div class="absolute -right-10 -top-10 w-20 h-20 rounded-full group-hover:scale-150 transition-transform duration-500" style="background-color: rgba(0, 255, 255, 0.1);"></div>
+                            <div class="relative z-10">
+                                <div class="w-12 h-12 rounded-full border flex items-center justify-center mb-6" style="background-color: rgba(0, 255, 255, 0.2); border-color: #00ffff;">
+                                    <span class="font-bold" style="color: #00ffff; font-family: 'Orbitron', sans-serif;">04</span>
+                                </div>
+                                <h3 class="text-lg font-bold mb-3 text-white" style="font-family: 'Orbitron', sans-serif;">加入团队</h3>
+                                <p class="text-gray-400 text-sm">
+                                    通过考核后，我们将发送录取通知，安排导师和研究方向，正式加入算法组开始研究工作。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+
+        </main>
+    </div>
+    <!-- 页脚 -->
+    <footer id="footer" class="footer">
+        <a href="/" class="footer-logo">ACM实验室</a>
+        
+        <div class="footer-links">
+            <a href="/introduction" class="footer-link">概况</a>
+            <a href="/team" class="footer-link">团队</a>
+            <a href="/algorithm" class="footer-link">算法</a>
+            <a href="/paper" class="footer-link">论文</a>
+            <a href="/innovation" class="footer-link">科创</a>
+            <a href="/dynamic" class="footer-link">动态</a>
+            <a href="/algorithm-recruitment" class="footer-link">算法组招生</a>
+            <a href="/project-recruitment" class="footer-link">项目组招生</a>
+        </div>
+        
+        <div class="footer-social">
+            <a href="#" class="social-icon" title="微信"><i class="fab fa-weixin"></i></a>
+            <a href="https://s1.imagehub.cc/images/2025/08/28/d80fe4abf0cd9a20fde76c7a3d5849a8.png" class="social-icon" title="微博"><i class="fab fa-weibo"></i></a>
+            <a href="https://s1.imagehub.cc/images/2025/08/28/4859e46f5945f5d8210456ecc89f7494.jpeg" class="social-icon" title="小红书"><i class="fas fa-book-open"></i></a>
+            <a href="#" class="social-icon" title="GitHub"><i class="fab fa-github"></i></a>
+            <a href="https://mp.weixin.qq.com/s/your-wechat-official-account" class="social-icon" title="微信公众号"><i class="fas fa-newspaper"></i></a>
+            <a href="https://space.bilibili.com/1599858052?spm_id_from=333.788.upinfo.head.click" class="social-icon" title="哔哩哔哩"><i class="fab fa-bilibili"></i></a>
+            <a href="#" class="social-icon" title="邮箱"><i class="fas fa-envelope"></i></a>
+        </div>
+        
+        <p class="copyright">© 2023 ACM算法与科研创新实验室. 保留所有权利.</p>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        // 粒子背景初始化（仅保留展示相关）
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 80, density: { enable: true, value_area: 800 } },
+                color: { value: '#3a86ff' },
+                shape: { type: 'circle', stroke: { width: 0, color: '#000000' }, polygon: { nb_sides: 5 } },
+                opacity: { value: 0.5 },
+                size: { value: 3, random: true },
+                line_linked: { enable: true, distance: 150, color: '#3a86ff', opacity: 0.4, width: 1 },
+                move: { enable: true, speed: 2, direction: 'none', random: false, straight: false, out_mode: 'out', bounce: false }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: { onhover: { enable: true, mode: 'grab' }, onclick: { enable: true, mode: 'push' }, resize: true },
+                modes: {
+                    grab: { distance: 140, line_linked: { opacity: 1 } },
+                    bubble: { distance: 400, size: 40, duration: 2, opacity: 8, speed: 3 },
+                    repulse: { distance: 200, duration: 0.4 },
+                    push: { particles_nb: 4 },
+                    remove: { particles_nb: 2 }
+                }
+            },
+            retina_detect: true
+        });
+        
+        // 初始化GSAP的ScrollTrigger插件
+        if (typeof gsap !== 'undefined') {
+            gsap.registerPlugin(ScrollTrigger);
+        }
+        
+        // 能力雷达图
+        if (typeof Chart !== 'undefined') {
+            const ctx = document.getElementById('skillsRadarChart');
+            if (ctx) {
+                const skillsChart = new Chart(ctx.getContext('2d'), {
+                    type: 'radar',
+                    data: {
+                        labels: ['数学基础', '算法设计', '编程能力', '问题分析', '文献阅读', '学术写作'],
+                        datasets: [{
+                            label: '期望能力水平',
+                            data: [90, 95, 85, 90, 85, 80],
+                            backgroundColor: 'rgba(0, 255, 255, 0.2)',
+                            borderColor: 'rgba(0, 255, 255, 0.8)',
+                            pointBackgroundColor: 'rgba(0, 255, 255, 1)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgba(0, 255, 255, 1)'
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            r: {
+                                angleLines: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                pointLabels: {
+                                    color: 'rgba(255, 255, 255, 0.7)',
+                                    font: {
+                                        family: 'Consolas, Monaco, monospace'
+                                    }
+                                },
+                                ticks: {
+                                    color: 'rgba(255, 255, 255, 0.5)',
+                                    backdropColor: 'transparent'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: 'rgba(255, 255, 255, 0.7)',
+                                    font: {
+                                        family: 'Consolas, Monaco, monospace'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+
+        
+        // 滚动动画
+        const animateOnScroll = () => {
+            if (typeof gsap !== 'undefined') {
+                const sections = document.querySelectorAll('section');
+                
+                sections.forEach(section => {
+                    gsap.from(section, {
+                        opacity: 0,
+                        y: 50,
+                        duration: 1,
+                        scrollTrigger: {
+                            trigger: section,
+                            start: 'top 85%',
+                            end: 'top 30%',
+                            toggleActions: 'play none none reverse'
+                        }
+                    });
+                });
+            }
+        };
+        
+        // 页面加载完成后执行动画
+        window.addEventListener('load', () => {
+            animateOnScroll();
+        });
+        
+
+    </script>
+</body>
+</html>

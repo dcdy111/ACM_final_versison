@@ -1,0 +1,1242 @@
+{% extends 'admin/base.html' %}
+{% block title %}ACM实验室 - 后台主页{% endblock %}
+{% block page_title %}后台主页{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<style>
+/* 整体页面美化 */
+body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.main-content {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* 消息提示系统 */
+.message-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    max-width: 400px;
+}
+
+.message {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translateX(450px);
+    transition: transform 0.3s ease;
+}
+
+.message.show {
+    transform: translateX(0);
+}
+
+.message.success { border-left-color: #22c55e; color: #166534; }
+.message.error { border-left-color: #ef4444; color: #dc2626; }
+.message.info { border-left-color: #3b82f6; color: #1d4ed8; }
+
+.message-icon {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* 卡片美化 */
+.card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* 表格美化 */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.data-table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 16px;
+    font-weight: 600;
+    text-align: left;
+    border: none;
+}
+
+.data-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background-color 0.3s ease;
+}
+
+.sortable-item {
+    transition: all 0.3s ease;
+    cursor: move;
+}
+
+.sortable-item:hover {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+    transform: scale(1.01);
+}
+
+.sortable-chosen {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3)) !important;
+    transform: rotate(2deg) scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.sortable-ghost {
+    opacity: 0.4;
+    transform: scale(0.95);
+}
+
+/* 拖拽手柄美化 */
+.sort-handle {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 6px;
+    cursor: grab;
+    position: relative;
+    transition: all 0.3s ease;
+    margin-right: 8px;
+}
+
+.sort-handle:before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>') no-repeat center;
+    background-size: contain;
+}
+
+.sort-handle:hover {
+    transform: scale(1.1) rotate(15deg);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.sort-handle:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+}
+
+/* 按钮美化 */
+.btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+    color: #1f2937;
+}
+
+.btn-success:hover {
+    color: #1f2937;
+    box-shadow: 0 8px 25px rgba(132, 250, 176, 0.4);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+}
+
+.btn-danger:hover {
+    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 8px;
+}
+
+/* 表单控件美化 */
+input, select, textarea {
+    background: rgba(26, 26, 46, 0.85);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #ffffff;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+    background: rgba(102, 126, 234, 0.2);
+}
+
+input::placeholder, textarea::placeholder {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* 美化下拉选项 */
+select option {
+    background: #1a1a2e;
+    color: #ffffff;
+    padding: 8px;
+}
+
+/* 模态框美化 */
+.modal {
+    background: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(8px);
+}
+
+.modal-content {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05)) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    animation: modalSlideIn 0.3s ease;
+    color: #ffffff;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal h3 {
+    color: #ffffff;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.modal label {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.modal label span {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* 状态徽章美化 */
+.status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-active {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+}
+
+.status-inactive {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    color: white;
+}
+
+/* 搜索和筛选区域美化 */
+.table-actions {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* 表格响应式 */
+.table-responsive {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+/* 动画增强 */
+.card, .btn, .sortable-item {
+    will-change: transform;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2, #667eea);
+}
+
+/* 欢迎卡片 */
+.welcome-card {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.welcome-card h2 {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 28px;
+    margin-bottom: 15px;
+}
+
+.welcome-card p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 16px;
+    line-height: 1.6;
+}
+</style>
+{% endblock %}
+{% block content %}
+<!-- 消息提示容器 -->
+<div class="message-container" id="messageContainer"></div>
+
+<!-- 欢迎卡片 -->
+<div class="welcome-card">
+    <h2>👋 欢迎回来，{{ username }}！</h2>
+    <p>这里是后台主页管理系统，您可以管理团队核心领导、科创成果等内容，这些内容将实时显示在前端首页。</p>
+</div>
+
+<!-- 指导老师管理 -->
+<div class="card">
+    <h2 style="color: #ffffff; margin-bottom: 24px; font-size: 24px; font-weight: 600; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">👨‍🏫 指导老师管理</h2>
+    <div class="table-actions" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input id="leaderSearchInput" type="text" placeholder="搜索姓名/职位..." style="padding:10px 14px;min-width:220px;">
+            <select id="statusFilter" style="padding:10px 14px;">
+                <option value="">全部状态</option>
+                <option value="active">活跃</option>
+                <option value="inactive">非活跃</option>
+            </select>
+        </div>
+        <div class="btn-group">
+            <button id="addLeaderBtn" class="btn btn-primary">➕ 新增指导老师</button>
+            <button id="saveLeaderOrderBtn" class="btn btn-success" style="display:none;">💾 保存排序</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table" id="leaderTable">
+            <thead>
+                <tr>
+                    <th style="width:40px;">排序</th>
+                    <th>姓名</th>
+                    <th>职位</th>
+                    <th>状态</th>
+                    <th style="width:160px;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="leaderTbody">
+                <!-- 动态渲染 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 科创成果管理 -->
+<div class="card">
+    <h2 style="color: #ffffff; margin-bottom: 24px; font-size: 24px; font-weight: 600; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🚀 科创成果管理</h2>
+    <div class="table-actions" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input id="projectSearchInput" type="text" placeholder="搜索标题/描述..." style="padding:10px 14px;min-width:220px;">
+            <select id="projectStatusFilter" style="padding:10px 14px;">
+                <option value="">全部状态</option>
+                <option value="active">活跃</option>
+                <option value="inactive">非活跃</option>
+            </select>
+        </div>
+        <div class="btn-group">
+            <button id="addProjectBtn" class="btn btn-primary">🚀 新增项目</button>
+            <button id="saveProjectOrderBtn" class="btn btn-success" style="display:none;">💾 保存排序</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table" id="projectTable">
+            <thead>
+                <tr>
+                    <th style="width:40px;">排序</th>
+                    <th>项目标题</th>
+                    <th>类别</th>
+                    <th>状态</th>
+                    <th style="width:160px;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="projectTbody">
+                <!-- 动态渲染 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 弹窗：新增/编辑指导老师 -->
+<div id="leaderModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:9999;">
+    <div class="modal-content" style="min-width:340px;max-width:640px;width:92vw;padding:16px 16px 8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h3 id="leaderModalTitle" style="margin:0;font-size:18px;color:#ffffff;">新增指导老师</h3>
+            <button id="leaderModalClose" class="btn" style="border:none;background:rgba(255,255,255,0.1);font-size:20px;cursor:pointer;color:#ffffff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+        <form id="leaderForm" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <input type="hidden" id="leaderId">
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>姓名</span>
+                <input id="leaderNameInput" required>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>职称</span>
+                <input id="leaderPositionInput" required>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>研究方向</span>
+                <textarea id="leaderDescInput" rows="3" placeholder="研究方向（可选）"></textarea>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>头像边框颜色</span>
+                <select id="leaderBorderColorInput" required>
+                    <option value="primary">主色调</option>
+                    <option value="secondary">次色调</option>
+                    <option value="accent">强调色</option>
+                </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>状态</span>
+                <select id="leaderStatusInput" required>
+                    <option value="active">活跃</option>
+                    <option value="inactive">非活跃</option>
+                </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>头像图片URL</span>
+                <input id="leaderImageInput" placeholder="https://...（可选）">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>邮箱</span>
+                <input id="leaderEmailInput" type="email" placeholder="可选">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>Google Scholar</span>
+                <input id="leaderGoogleInput" placeholder="可选">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>GitHub</span>
+                <input id="leaderGithubInput" placeholder="可选">
+            </label>
+            <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+                <button type="button" id="leaderCancelBtn" class="btn">❌ 取消</button>
+                <button type="submit" class="btn btn-primary">💾 保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 弹窗：新增/编辑科创成果 -->
+<div id="projectModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:9999;">
+    <div class="modal-content" style="min-width:340px;max-width:720px;width:92vw;padding:16px 16px 8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h3 id="projectModalTitle" style="margin:0;font-size:18px;color:#ffffff;">新增科创成果</h3>
+            <button id="projectModalClose" class="btn" style="border:none;background:rgba(255,255,255,0.1);font-size:20px;cursor:pointer;color:#ffffff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+        <form id="projectForm" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <input type="hidden" id="projectId">
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>项目标题</span>
+                <input id="projectTitleInput" required placeholder="例如：智能推荐系统平台">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>项目类别</span>
+                <select id="projectCategoryInput" required>
+                    <option value="国家级创新创业项目">国家级创新创业项目</option>
+                    <option value="省级创新创业项目">省级创新创业项目</option>
+                    <option value="校级创新创业项目">校级创新创业项目</option>
+                    <option value="企业合作项目">企业合作项目</option>
+                </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>状态</span>
+                <select id="projectStatusInput" required>
+                    <option value="active">活跃</option>
+                    <option value="inactive">非活跃</option>
+                </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>项目描述</span>
+                <textarea id="projectDescInput" rows="4" placeholder="详细描述项目内容" required></textarea>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>技术标签（逗号分隔）</span>
+                <input id="projectTagsInput" placeholder="例如：推荐算法,用户画像,实时计算,A/B测试">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>项目图片URL</span>
+                <div style="display:flex;gap:8px;align-items:end;">
+                    <input id="projectImageInput" placeholder="https://...（可选）" style="flex:1;">
+                    <button type="button" id="uploadProjectImageBtn" class="btn btn-sm" style="white-space:nowrap;">📁 上传图片</button>
+                </div>
+                <input type="file" id="projectImageFile" accept="image/*" style="display:none;">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>详情链接</span>
+                <input id="projectDetailInput" placeholder="https://...（可选）">
+            </label>
+            <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+                <button type="button" id="projectCancelBtn" class="btn">❌ 取消</button>
+                <button type="submit" class="btn btn-primary">💾 保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// 全局消息提示系统
+function showMessage(text, type = 'info') {
+    const container = document.getElementById('messageContainer');
+    const message = document.createElement('div');
+    message.className = `message ${type}`;
+    
+    const iconMap = {
+        success: '✓',
+        error: '✕',
+        info: 'ⓘ'
+    };
+    
+    message.innerHTML = `
+        <span class="message-icon">${iconMap[type] || 'ⓘ'}</span>
+        <span>${text}</span>
+    `;
+    
+    container.appendChild(message);
+    
+    // 触发显示动画
+    setTimeout(() => message.classList.add('show'), 100);
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+        message.classList.remove('show');
+        setTimeout(() => {
+            if (message.parentNode) {
+                message.parentNode.removeChild(message);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// 团队核心领导管理
+(function(){
+    const leaderTbody = document.getElementById('leaderTbody');
+    const addLeaderBtn = document.getElementById('addLeaderBtn');
+    const leaderModal = document.getElementById('leaderModal');
+    const leaderModalClose = document.getElementById('leaderModalClose');
+    const leaderCancelBtn = document.getElementById('leaderCancelBtn');
+    const leaderForm = document.getElementById('leaderForm');
+    const leaderModalTitle = document.getElementById('leaderModalTitle');
+
+    const leaderId = document.getElementById('leaderId');
+    const leaderNameInput = document.getElementById('leaderNameInput');
+    const leaderPositionInput = document.getElementById('leaderPositionInput');
+    const leaderDescInput = document.getElementById('leaderDescInput');
+    const leaderBorderColorInput = document.getElementById('leaderBorderColorInput');
+    const leaderStatusInput = document.getElementById('leaderStatusInput');
+    const leaderImageInput = document.getElementById('leaderImageInput');
+    const leaderEmailInput = document.getElementById('leaderEmailInput');
+    const leaderGoogleInput = document.getElementById('leaderGoogleInput');
+    const leaderGithubInput = document.getElementById('leaderGithubInput');
+
+    const leaderSearchInput = document.getElementById('leaderSearchInput');
+    const statusFilter = document.getElementById('statusFilter');
+
+    let leaderData = [];
+    let leaderSortableInstance = null;
+    let hasUnsavedLeaderChanges = false;
+
+    // 初始化拖拽排序
+    function initLeaderSortable() {
+        if (leaderSortableInstance) {
+            leaderSortableInstance.destroy();
+        }
+        
+        leaderSortableInstance = new Sortable(leaderTbody, {
+            handle: '.sort-handle',
+            animation: 150,
+            onUpdate: function (evt) {
+                hasUnsavedLeaderChanges = true;
+                document.getElementById('saveLeaderOrderBtn').style.display = 'inline-block';
+            }
+        });
+    }
+
+    // 保存排序
+    async function saveLeaderOrder() {
+        const rows = leaderTbody.querySelectorAll('tr[data-id]');
+        const leaderIds = Array.from(rows).map(row => parseInt(row.getAttribute('data-id')));
+        
+        try {
+            const res = await fetch('/api/advisors/reorder', {
+                method: 'POST',
+                credentials: 'same-origin', // 确保包含认证cookie
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ advisor_ids: leaderIds })
+            });
+            
+            if (res.ok) {
+                hasUnsavedLeaderChanges = false;
+                document.getElementById('saveLeaderOrderBtn').style.display = 'none';
+                showMessage('指导老师排序已保存', 'success');
+                await fetchLeaderData(); // 重新加载数据以反映新的排序
+                
+                // 通知前端页面更新团队核心领导数据
+                try {
+                    if (window.opener && !window.opener.closed) {
+                        window.opener.postMessage({
+                            type: 'TEAM_LEADERS_UPDATED',
+                            timestamp: Date.now()
+                        }, '*');
+                    }
+                } catch (e) {
+                    console.log('无法通知前端页面更新');
+                }
+            } else {
+                const err = await res.json().catch(() => ({error: '保存失败'}));
+                showMessage(err.error || '保存失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，保存失败', 'error');
+        }
+    }
+
+    function statusBadge(text){
+        const map = { 'active': 'status-active', 'inactive': 'status-inactive' };
+        const cls = map[text] || 'status-inactive';
+        return `<span class="status ${cls}">${text === 'active' ? '活跃' : '非活跃'}</span>`;
+    }
+
+    function openLeaderModal(editData){
+        leaderModal.style.display = 'flex';
+        if(editData){
+            leaderModalTitle.textContent = '编辑指导老师';
+            leaderId.value = editData.id;
+            leaderNameInput.value = editData.name || '';
+            leaderPositionInput.value = editData.position || '';
+            leaderDescInput.value = editData.description || '';
+            leaderBorderColorInput.value = editData.border_color || 'primary';
+            leaderStatusInput.value = editData.status || 'active';
+            leaderImageInput.value = editData.image_url || '';
+            leaderEmailInput.value = editData.email || '';
+            leaderGoogleInput.value = editData.google_scholar || '';
+            leaderGithubInput.value = editData.github || '';
+        }else{
+            leaderModalTitle.textContent = '新增指导老师';
+            leaderForm.reset();
+            leaderId.value = '';
+        }
+    }
+    function closeLeaderModal(){ leaderModal.style.display = 'none'; }
+
+    function renderLeaders(data){
+        leaderTbody.innerHTML = data.map(l => `
+            <tr class="sortable-item" data-id="${l.id}">
+                <td><span class="sort-handle" title="拖拽排序"></span></td>
+                <td>${l.name || ''}</td>
+                <td>${l.position || ''}</td>
+                <td>${statusBadge(l.status || '')}</td>
+                <td>
+                    <button class="btn btn-sm" data-action="edit" data-id="${l.id}">✏️ 编辑</button>
+                    <button class="btn btn-sm btn-danger" data-action="delete" data-id="${l.id}">🗑️ 删除</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        // 重新初始化拖拽
+        initLeaderSortable();
+    }
+
+    async function fetchLeaderData(){
+        try {
+            const res = await fetch('/api/advisors/admin', {
+                method: 'GET',
+                credentials: 'same-origin', // 确保包含认证cookie
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (res.ok) {
+                leaderData = await res.json();
+                applyLeaderFilter();
+            } else {
+                console.error('获取指导老师数据失败:', res.status);
+                showMessage('获取指导老师数据失败', 'error');
+                leaderData = [];
+                applyLeaderFilter();
+            }
+        } catch (error) {
+            console.error('获取指导老师数据出错:', error);
+            showMessage('获取指导老师数据出错', 'error');
+            leaderData = [];
+            applyLeaderFilter();
+        }
+    }
+
+    function applyLeaderFilter(){
+        const kw = (leaderSearchInput.value || '').trim();
+        const s = statusFilter.value || '';
+        const filtered = leaderData.filter(l => {
+            const hitKw = !kw || [l.name, l.position].some(v => (v||'').includes(kw));
+            const hitS = !s || l.status === s;
+            return hitKw && hitS;
+        });
+        renderLeaders(filtered);
+    }
+
+    leaderTbody.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button');
+        if(!btn) return;
+        const id = Number(btn.getAttribute('data-id'));
+        const action = btn.getAttribute('data-action');
+        const current = leaderData.find(x => x.id === id);
+        if(action === 'edit'){
+            openLeaderModal(current);
+        }
+        if(action === 'delete'){
+            if(!confirm('确认删除该指导老师？此操作不可恢复！')) return;
+            try {
+                const res = await fetch(`/api/advisors/${id}`, { 
+                    method: 'DELETE',
+                    credentials: 'same-origin' // 确保包含认证cookie
+                });
+                if(res.ok){ 
+                    await fetchLeaderData(); 
+                    showMessage('指导老师删除成功', 'success');
+                    
+                    // 通知前端页面更新指导老师数据
+                    try {
+                        if (window.opener && !window.opener.closed) {
+                            window.opener.postMessage({
+                                type: 'ADVISORS_UPDATED',
+                                timestamp: Date.now()
+                            }, '*');
+                        }
+                    } catch (e) {
+                        console.log('无法通知前端页面更新');
+                    }
+                } else {
+                    const err = await res.json().catch(() => ({error: '删除失败'}));
+                    showMessage(err.error || '删除失败', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showMessage('网络错误，删除失败', 'error');
+            }
+        }
+    });
+
+    addLeaderBtn.addEventListener('click', () => openLeaderModal());
+    leaderModalClose.addEventListener('click', closeLeaderModal);
+    leaderCancelBtn.addEventListener('click', closeLeaderModal);
+    leaderModal.addEventListener('click', (e) => { if(e.target === leaderModal) closeLeaderModal(); });
+
+    leaderForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // 表单验证
+        if (!leaderNameInput.value.trim()) {
+            showMessage('请填写指导老师姓名', 'error');
+            leaderNameInput.focus();
+            return;
+        }
+        
+        if (!leaderPositionInput.value.trim()) {
+            showMessage('请填写指导老师职称', 'error');
+            leaderPositionInput.focus();
+            return;
+        }
+        
+        const payload = {
+            name: leaderNameInput.value.trim(),
+            position: leaderPositionInput.value.trim(),
+            description: leaderDescInput.value.trim(),
+            border_color: leaderBorderColorInput.value,
+            status: leaderStatusInput.value,
+            image_url: leaderImageInput.value.trim(),
+            email: leaderEmailInput.value.trim(),
+            google_scholar: leaderGoogleInput.value.trim(),
+            github: leaderGithubInput.value.trim()
+        };
+        const id = leaderId.value;
+        const isEdit = !!id;
+        const res = await fetch(isEdit ? `/api/advisors/${id}` : '/api/advisors', {
+            method: isEdit ? 'PUT' : 'POST',
+            credentials: 'same-origin', // 确保包含认证cookie
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if(res.ok){
+            closeLeaderModal();
+            await fetchLeaderData();
+            showMessage(isEdit ? '指导老师信息更新成功' : '指导老师添加成功', 'success');
+            
+            // 通知前端页面更新指导老师数据
+            try {
+                if (window.opener && !window.opener.closed) {
+                    window.opener.postMessage({
+                        type: 'ADVISORS_UPDATED',
+                        timestamp: Date.now()
+                    }, '*');
+                }
+            } catch (e) {
+                console.log('无法通知前端页面更新');
+            }
+        }else{
+            const err = await res.json().catch(()=>({error:'提交失败'}));
+            showMessage(err.error || '提交失败', 'error');
+        }
+    });
+
+    leaderSearchInput.addEventListener('input', applyLeaderFilter);
+    statusFilter.addEventListener('change', applyLeaderFilter);
+
+    // 保存排序按钮事件
+    document.getElementById('saveLeaderOrderBtn').addEventListener('click', saveLeaderOrder);
+
+    fetchLeaderData();
+})();
+
+// 科创成果管理
+(function(){
+    const projectTbody = document.getElementById('projectTbody');
+    const addProjectBtn = document.getElementById('addProjectBtn');
+    const projectModal = document.getElementById('projectModal');
+    const projectModalClose = document.getElementById('projectModalClose');
+    const projectCancelBtn = document.getElementById('projectCancelBtn');
+    const projectForm = document.getElementById('projectForm');
+    const projectModalTitle = document.getElementById('projectModalTitle');
+
+    const projectId = document.getElementById('projectId');
+    const projectTitleInput = document.getElementById('projectTitleInput');
+    const projectCategoryInput = document.getElementById('projectCategoryInput');
+    const projectStatusInput = document.getElementById('projectStatusInput');
+    const projectDescInput = document.getElementById('projectDescInput');
+    const projectTagsInput = document.getElementById('projectTagsInput');
+    const projectImageInput = document.getElementById('projectImageInput');
+    const projectDetailInput = document.getElementById('projectDetailInput');
+
+    const projectSearchInput = document.getElementById('projectSearchInput');
+    const projectStatusFilter = document.getElementById('projectStatusFilter');
+
+    // 图片上传相关元素
+    const uploadProjectImageBtn = document.getElementById('uploadProjectImageBtn');
+    const projectImageFile = document.getElementById('projectImageFile');
+
+    let projectData = [];
+    let projectSortableInstance = null;
+    let hasUnsavedProjectChanges = false;
+
+    // 状态徽章函数
+    function statusBadge(text){
+        const map = { 'active': 'status-active', 'inactive': 'status-inactive' };
+        const cls = map[text] || 'status-inactive';
+        return `<span class="status ${cls}">${text === 'active' ? '活跃' : '非活跃'}</span>`;
+    }
+
+    // 初始化拖拽排序
+    function initProjectSortable() {
+        if (projectSortableInstance) {
+            projectSortableInstance.destroy();
+        }
+        
+        projectSortableInstance = new Sortable(projectTbody, {
+            handle: '.sort-handle',
+            animation: 150,
+            onUpdate: function (evt) {
+                hasUnsavedProjectChanges = true;
+                document.getElementById('saveProjectOrderBtn').style.display = 'inline-block';
+            }
+        });
+    }
+
+    // 保存排序
+    async function saveProjectOrder() {
+        const rows = projectTbody.querySelectorAll('tr[data-id]');
+        const projectIds = Array.from(rows).map(row => parseInt(row.getAttribute('data-id')));
+        
+        try {
+            const res = await fetch('/api/innovation-projects/reorder', {
+                method: 'POST',
+                credentials: 'same-origin', // 确保包含认证cookie
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ project_ids: projectIds })
+            });
+            
+            if (res.ok) {
+                hasUnsavedProjectChanges = false;
+                document.getElementById('saveProjectOrderBtn').style.display = 'none';
+                showMessage('科创成果排序已保存', 'success');
+                await fetchProjectData(); // 重新加载数据以反映新的排序
+            } else {
+                const err = await res.json().catch(() => ({error: '保存失败'}));
+                showMessage(err.error || '保存失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，保存失败', 'error');
+        }
+    }
+
+    function openProjectModal(editData){
+        projectModal.style.display = 'flex';
+        if(editData){
+            projectModalTitle.textContent = '编辑科创成果';
+            projectId.value = editData.id;
+            projectTitleInput.value = editData.title || '';
+            projectCategoryInput.value = editData.category || '国家级创新创业项目';
+            projectStatusInput.value = editData.status || 'active';
+            projectDescInput.value = editData.description || '';
+            projectTagsInput.value = editData.tags || '';
+            projectImageInput.value = editData.image_url || '';
+            projectDetailInput.value = editData.detail_url || '';
+        }else{
+            projectModalTitle.textContent = '新增科创成果';
+            projectForm.reset();
+            projectId.value = '';
+        }
+    }
+    function closeProjectModal(){ projectModal.style.display = 'none'; }
+
+    function renderProjects(data){
+        projectTbody.innerHTML = data.map(p => `
+            <tr class="sortable-item" data-id="${p.id}">
+                <td><span class="sort-handle" title="拖拽排序"></span></td>
+                <td>${p.title || ''}</td>
+                <td>${p.category || ''}</td>
+                <td>${statusBadge(p.status || '')}</td>
+                <td>
+                    <button class="btn btn-sm" data-action="edit" data-id="${p.id}">✏️ 编辑</button>
+                    <button class="btn btn-sm btn-danger" data-action="delete" data-id="${p.id}">🗑️ 删除</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        // 重新初始化拖拽
+        initProjectSortable();
+    }
+
+    async function fetchProjectData(){
+        try {
+            const res = await fetch('/api/innovation-projects/admin', {
+                method: 'GET',
+                credentials: 'same-origin', // 确保包含认证cookie
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (res.ok) {
+                projectData = await res.json();
+                applyProjectFilter();
+            } else {
+                console.error('获取项目数据失败:', res.status);
+                showMessage('获取项目数据失败', 'error');
+                projectData = [];
+                applyProjectFilter();
+            }
+        } catch (error) {
+            console.error('获取项目数据出错:', error);
+            showMessage('获取项目数据出错', 'error');
+            projectData = [];
+            applyProjectFilter();
+        }
+    }
+
+    function applyProjectFilter(){
+        const kw = (projectSearchInput.value || '').trim();
+        const s = projectStatusFilter.value || '';
+        const filtered = projectData.filter(p => {
+            const hitKw = !kw || [p.title, p.description].some(v => (v||'').includes(kw));
+            const hitS = !s || p.status === s;
+            return hitKw && hitS;
+        });
+        renderProjects(filtered);
+    }
+
+    projectTbody.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button');
+        if(!btn) return;
+        const id = Number(btn.getAttribute('data-id'));
+        const action = btn.getAttribute('data-action');
+        const current = projectData.find(x => x.id === id);
+        if(action === 'edit'){
+            openProjectModal(current);
+        }
+        if(action === 'delete'){
+            if(!confirm('确认删除该科创成果？此操作不可恢复！')) return;
+            try {
+                const res = await fetch(`/api/innovation-projects/${id}`, { 
+                    method: 'DELETE',
+                    credentials: 'same-origin' // 确保包含认证cookie
+                });
+                if(res.ok){ 
+                    await fetchProjectData(); 
+                    showMessage('科创成果删除成功', 'success');
+                    
+                    // 通知前端页面刷新数据（如果前端页面打开的话）
+                    try {
+                        if (window.opener && !window.opener.closed) {
+                            window.opener.postMessage({
+                                type: 'INNOVATION_PROJECTS_UPDATED',
+                                timestamp: Date.now()
+                            }, '*');
+                        }
+                    } catch (e) {
+                        console.log('无法通知前端页面刷新');
+                    }
+                } else {
+                    const err = await res.json().catch(() => ({error: '删除失败'}));
+                    showMessage(err.error || '删除失败', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showMessage('网络错误，删除失败', 'error');
+            }
+        }
+    });
+
+    addProjectBtn.addEventListener('click', () => openProjectModal());
+    projectModalClose.addEventListener('click', closeProjectModal);
+    projectCancelBtn.addEventListener('click', closeProjectModal);
+    projectModal.addEventListener('click', (e) => { if(e.target === projectModal) closeProjectModal(); });
+
+    // 图片上传功能
+    uploadProjectImageBtn.addEventListener('click', () => {
+        projectImageFile.click();
+    });
+
+    projectImageFile.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // 检查文件类型
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            showMessage('请选择有效的图片文件（JPG、PNG、GIF、WebP）', 'error');
+            return;
+        }
+
+        // 检查文件大小（限制为5MB）
+        if (file.size > 5 * 1024 * 1024) {
+            showMessage('图片文件大小不能超过5MB', 'error');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch('/api/innovation-projects/upload-image', {
+                method: 'POST',
+                credentials: 'same-origin', // 确保包含认证cookie
+                body: formData
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                projectImageInput.value = result.image_url;
+                showMessage('图片上传成功', 'success');
+            } else {
+                const error = await response.json().catch(() => ({error: '上传失败'}));
+                showMessage(error.error || '图片上传失败', 'error');
+            }
+        } catch (error) {
+            console.error('图片上传错误:', error);
+            showMessage('图片上传失败，请重试', 'error');
+        }
+    });
+
+    projectForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // 表单验证
+        if (!projectTitleInput.value.trim()) {
+            showMessage('请填写项目标题', 'error');
+            projectTitleInput.focus();
+            return;
+        }
+        
+        if (!projectDescInput.value.trim()) {
+            showMessage('请填写项目描述', 'error');
+            projectDescInput.focus();
+            return;
+        }
+        
+        const payload = {
+            title: projectTitleInput.value.trim(),
+            category: projectCategoryInput.value,
+            status: projectStatusInput.value,
+            description: projectDescInput.value.trim(),
+            tags: projectTagsInput.value.trim(),
+            image_url: projectImageInput.value.trim(),
+            detail_url: projectDetailInput.value.trim()
+        };
+        const id = projectId.value;
+        const isEdit = !!id;
+        const res = await fetch(isEdit ? `/api/innovation-projects/${id}` : '/api/innovation-projects', {
+            method: isEdit ? 'PUT' : 'POST',
+            credentials: 'same-origin', // 确保包含认证cookie
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if(res.ok){
+            closeProjectModal();
+            await fetchProjectData();
+            showMessage(isEdit ? '科创成果更新成功' : '科创成果添加成功', 'success');
+            
+            // 通知前端页面刷新数据（如果前端页面打开的话）
+            try {
+                // 尝试通知前端页面刷新数据
+                if (window.opener && !window.opener.closed) {
+                    window.opener.postMessage({
+                        type: 'INNOVATION_PROJECTS_UPDATED',
+                        timestamp: Date.now()
+                    }, '*');
+                }
+            } catch (e) {
+                console.log('无法通知前端页面刷新');
+            }
+        }else{
+            const err = await res.json().catch(()=>({error:'提交失败'}));
+            showMessage(err.error || '提交失败', 'error');
+        }
+    });
+
+    projectSearchInput.addEventListener('input', applyProjectFilter);
+    projectStatusFilter.addEventListener('change', applyProjectFilter);
+
+    // 保存排序按钮事件
+    document.getElementById('saveProjectOrderBtn').addEventListener('click', saveProjectOrder);
+
+    fetchProjectData();
+    
+    // 监听来自前端页面的消息，用于实时更新
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'FRONTEND_READY') {
+            console.log('前端页面已准备就绪，可以接收更新通知');
+        }
+    });
+})();
+
+// Socket.IO 实时刷新功能
+document.addEventListener('DOMContentLoaded', function() {
+    // 设置当前页面
+    if (typeof setCurrentPage === 'function') {
+        setCurrentPage('home');
+    }
+    
+    // 初始化Socket.IO连接
+    if (typeof initSocketIO === 'function') {
+        initSocketIO();
+    }
+    
+    // 监听页面刷新事件
+    if (typeof socket !== 'undefined' && socket) {
+        socket.on('page_refresh', function(data) {
+            console.log('收到主页数据更新通知:', data);
+            
+            // 如果是首页相关数据更新，重新加载页面内容
+            if (data.page === 'home' || data.page === 'all') {
+                console.log('刷新主页内容...');
+                // 检查是否是指导老师相关更新
+                if (data.payload && (data.payload.type === 'advisor_created' || 
+                    data.payload.type === 'advisor_updated' || 
+                    data.payload.type === 'advisor_deleted' || 
+                    data.payload.type === 'advisors_reordered')) {
+                    console.log('收到指导老师数据更新，刷新指导老师列表');
+                    if (typeof fetchLeaderData === 'function') {
+                        fetchLeaderData();
+                    }
+                } else {
+                    // 其他数据更新，简单刷新页面
+                    location.reload();
+                }
+            }
+        });
+    }
+    
+    console.log('主页管理 - Socket.IO实时刷新已初始化');
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,1879 @@
+{% extends 'admin/base.html' %}
+{% block title %}ACM实验室 - 团队管理{% endblock %}
+{% block page_title %}团队管理{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<!-- Socket.IO客户端库 - 实时数据同步 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+<style>
+/* 整体页面美化 */
+body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.main-content {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* 消息提示系统 */
+.message-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    max-width: 400px;
+}
+
+.message {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translateX(450px);
+    transition: transform 0.3s ease;
+}
+
+.message.show {
+    transform: translateX(0);
+}
+
+.message.success { border-left-color: #22c55e; color: #166534; }
+.message.error { border-left-color: #ef4444; color: #dc2626; }
+.message.info { border-left-color: #3b82f6; color: #1d4ed8; }
+
+.message-icon {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* 卡片美化 */
+.card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* 表格美化 */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.data-table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 16px;
+    font-weight: 600;
+    text-align: left;
+    border: none;
+}
+
+.data-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background-color 0.3s ease;
+}
+
+.sortable-item {
+    transition: all 0.3s ease;
+    cursor: move;
+}
+
+.sortable-item:hover {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+    transform: scale(1.01);
+}
+
+.sortable-chosen {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3)) !important;
+    transform: rotate(2deg) scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.sortable-ghost {
+    opacity: 0.4;
+    transform: scale(0.95);
+}
+
+/* 拖拽手柄美化 */
+.sort-handle {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 6px;
+    cursor: grab;
+    position: relative;
+    transition: all 0.3s ease;
+    margin-right: 8px;
+}
+
+.sort-handle:before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>') no-repeat center;
+    background-size: contain;
+}
+
+.sort-handle:hover {
+    transform: scale(1.1) rotate(15deg);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.sort-handle:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+}
+
+/* 按钮美化 */
+.btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+    color: #1f2937;
+}
+
+.btn-success:hover {
+    color: #1f2937;
+    box-shadow: 0 8px 25px rgba(132, 250, 176, 0.4);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+}
+
+.btn-danger:hover {
+    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 8px;
+}
+
+/* 表单控件美化 */
+input, select, textarea {
+    background: rgba(26, 26, 46, 0.85);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #ffffff;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+    background: rgba(102, 126, 234, 0.2);
+}
+
+input::placeholder, textarea::placeholder {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* 美化下拉选项 */
+select option {
+    background: #1a1a2e;
+    color: #ffffff;
+    padding: 8px;
+}
+
+/* 模态框样式已统一到base.html中 */
+
+/* 状态徽章美化 */
+.status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-approved {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+}
+
+.status-pending {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.status-neutral {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    color: white;
+}
+
+/* 搜索和筛选区域美化 */
+.table-actions {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* 表格响应式 */
+.table-responsive {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+/* 动画增强 */
+.card, .btn, .sortable-item {
+    will-change: transform;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2, #667eea);
+}
+</style>
+{% endblock %}
+{% block content %}
+<!-- 消息提示容器 -->
+<div class="message-container" id="messageContainer"></div>
+
+<!-- 同步状态指示器 -->
+<div id="syncStatus" style="position: fixed; top: 80px; right: 20px; z-index: 1000; background: rgba(0,0,0,0.8); color: white; padding: 8px 12px; border-radius: 20px; font-size: 12px; display: none;">
+    <span id="syncIcon">🔄</span>
+    <span id="syncText">同步中...</span>
+</div>
+
+<!-- 团队成员管理 -->
+<div class="card">
+    <h2 style="color: #ffffff; margin-bottom: 24px; font-size: 24px; font-weight: 600; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">👥 团队成员管理</h2>
+    <div class="table-actions" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input id="searchInput" type="text" placeholder="搜索姓名/年级/角色..." style="padding:10px 14px;min-width:220px;">
+            <select id="gradeFilter" style="padding:10px 14px;">
+                <option value="">全部年级</option>
+                <option value="2024级">2024级</option>
+                <option value="2023级">2023级</option>
+                <option value="2022级">2022级</option>
+                <option value="2021级">2021级</option>
+                <option value="2020级">2020级</option>
+                <option value="2019级">2019级</option>
+                <option value="2018级">2018级</option>
+                <option value="2017级">2017级</option>
+                <option value="2016级">2016级</option>
+            </select>
+        </div>
+        <div class="btn-group">
+            <button id="addMemberBtn" class="btn btn-primary">➕ 新增成员</button>
+            <button id="saveOrderBtn" class="btn btn-success" style="display:none;">💾 保存排序</button>
+            <button id="testSyncBtn" class="btn" style="background: linear-gradient(135deg, #667eea, #764ba2);">🔄 测试同步</button>
+        </div>
+    </div>
+    
+    <!-- 调试信息显示区域 -->
+    <div id="debugInfo"></div>
+    
+    <div class="table-responsive">
+        <table class="data-table" id="teamTable">
+            <thead>
+                <tr>
+                    <th style="width:40px;">排序</th>
+                    <th>姓名</th>
+                    <th>年级</th>
+                    <th>角色/职位</th>
+                    <th style="width:160px;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="teamTbody">
+                <!-- 动态渲染 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 年级管理 -->
+<div class="card">
+    <h2 style="color: #ffffff; margin-bottom: 24px; font-size: 24px; font-weight: 600; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">📚 年级管理</h2>
+    <div class="table-actions" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input id="gradeSearchInput" type="text" placeholder="搜索年级名称..." style="padding:10px 14px;min-width:220px;">
+        </div>
+        <div class="btn-group">
+            <button id="addGradeBtn" class="btn btn-primary">📚 新增年级</button>
+            <button id="saveGradeOrderBtn" class="btn btn-success" style="display:none;">💾 保存排序</button>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="data-table" id="gradeTable">
+            <thead>
+                <tr>
+                    <th style="width:40px;">排序</th>
+                    <th>年级名称</th>
+                    <th>成员数量</th>
+                    <th>创建时间</th>
+                    <th style="width:160px;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="gradeTbody">
+                <!-- 动态渲染 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 研究领域管理 -->
+<div class="card">
+    <h2 style="color: #ffffff; margin-bottom: 24px; font-size: 24px; font-weight: 600; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🔬 研究领域管理</h2>
+    <div class="table-actions" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input id="researchSearchInput" type="text" placeholder="搜索标题/描述..." style="padding:10px 14px;min-width:220px;">
+            <select id="categoryFilter" style="padding:10px 14px;">
+                <option value="">全部类别</option>
+                <option value="深度学习">深度学习</option>
+                <option value="证据理论">证据理论</option>
+                <option value="文献计量">文献计量</option>
+            </select>
+        </div>
+        <div class="btn-group">
+            <button id="addResearchBtn" class="btn btn-primary">🔬 新增研究领域</button>
+            <button id="saveResearchOrderBtn" class="btn btn-success" style="display:none;">💾 保存排序</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table" id="researchTable">
+            <thead>
+                <tr>
+                    <th style="width:40px;">排序</th>
+                    <th>标题</th>
+                    <th>类别</th>
+                    <th>描述</th>
+                    <th style="width:160px;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="researchTbody">
+                <!-- 动态渲染 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 弹窗：新增/编辑成员 -->
+<div id="memberModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:9999;">
+            <div class="modal-content" style="min-width:340px;max-width:640px;width:92vw;padding:16px 16px 8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <h3 id="modalTitle" style="margin:0;font-size:18px;color:#ffffff;">新增成员</h3>
+                <button id="modalClose" class="btn" style="border:none;background:rgba(255,255,255,0.1);font-size:20px;cursor:pointer;color:#ffffff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+        <form id="memberForm" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <input type="hidden" id="memberId">
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>姓名 <span style="color: #ef4444;">*</span></span>
+                <input id="nameInput" required>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>年级 <span style="color: #ef4444;">*</span></span>
+                <select id="gradeInput" required>
+                    <option value="">请选择年级</option>
+                    <option value="2024级">2024级</option>
+                    <option value="2023级">2023级</option>
+                    <option value="2022级">2022级</option>
+                    <option value="2021级">2021级</option>
+                    <option value="2020级">2020级</option>
+                    <option value="2019级">2019级</option>
+                    <option value="2018级">2018级</option>
+                    <option value="2017级">2017级</option>
+                    <option value="2016级">2016级</option>
+                </select>
+            </label>
+
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>角色/职位 <span style="color: #ef4444;">*</span></span>
+                <input id="roleInput" placeholder="例如：高级研究员 | 自然语言处理" required>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>个人简介</span>
+                <textarea id="descInput" rows="3" placeholder="简介（可选）"></textarea>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>头像图片URL</span>
+                <input id="imgInput" placeholder="https://...（可选）">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>QQ</span>
+                <input id="qqInput" placeholder="可选">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>微信</span>
+                <input id="wechatInput" placeholder="可选">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>邮箱</span>
+                <input id="emailInput" type="email" placeholder="可选">
+            </label>
+            <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+                <button type="button" id="cancelBtn" class="btn">❌ 取消</button>
+                <button type="submit" class="btn btn-primary">💾 保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 弹窗：新增/编辑研究领域 -->
+<div id="researchModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:9999;">
+    <div class="modal-content" style="min-width:340px;max-width:720px;width:92vw;padding:16px 16px 8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h3 id="researchModalTitle" style="margin:0;font-size:18px;color:#ffffff;">新增研究领域</h3>
+            <button id="researchModalClose" class="btn" style="border:none;background:rgba(255,255,255,0.1);font-size:20px;cursor:pointer;color:#ffffff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+        <form id="researchForm" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <input type="hidden" id="researchId">
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>标题</span>
+                <input id="titleInputR" required placeholder="例如：自然语言处理">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>类别</span>
+                <select id="categoryInputR" required>
+                    <option value="深度学习">深度学习</option>
+                    <option value="证据理论">证据理论</option>
+                    <option value="文献计量">文献计量</option>
+                </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>描述</span>
+                <textarea id="descInputR" rows="3" placeholder="简要描述研究方向" required></textarea>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;grid-column:1 / -1;">
+                <span>成员标签（可选，逗号分隔）</span>
+                <input id="membersInputR" placeholder="例如：α, β, γ">
+            </label>
+            <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+                <button type="button" id="researchCancelBtn" class="btn">❌ 取消</button>
+                <button type="submit" class="btn btn-primary">💾 保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 弹窗：新增/编辑年级 -->
+<div id="gradeModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:9999;">
+    <div class="modal-content" style="min-width:340px;max-width:500px;width:92vw;padding:16px 16px 8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h3 id="gradeModalTitle" style="margin:0;font-size:18px;color:#ffffff;">新增年级</h3>
+            <button id="gradeModalClose" class="btn" style="border:none;background:rgba(255,255,255,0.1);font-size:20px;cursor:pointer;color:#ffffff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+        <form id="gradeForm" style="display:grid;grid-template-columns:1fr;gap:12px;">
+            <input type="hidden" id="gradeId">
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>年级名称 <span style="color: #ef4444;">*</span></span>
+                <input id="gradeNameInput" required placeholder="例如：2025级" pattern="^\d{4}级$" title="请输入正确的年级格式，如：2025级">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;">
+                <span>年级描述（可选）</span>
+                <textarea id="gradeDescInput" rows="3" placeholder="年级简介或备注信息"></textarea>
+            </label>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+                <button type="button" id="cancelGradeBtn" class="btn">❌ 取消</button>
+                <button type="submit" class="btn btn-primary">💾 保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// 全局消息提示系统
+function showMessage(text, type = 'info') {
+    const container = document.getElementById('messageContainer');
+    const message = document.createElement('div');
+    message.className = `message ${type}`;
+    
+    const iconMap = {
+        success: '✓',
+        error: '✕',
+        info: 'ⓘ'
+    };
+    
+    message.innerHTML = `
+        <span class="message-icon">${iconMap[type] || 'ⓘ'}</span>
+        <span>${text}</span>
+    `;
+    
+    container.appendChild(message);
+    
+    // 触发显示动画
+    setTimeout(() => message.classList.add('show'), 100);
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+        message.classList.remove('show');
+        setTimeout(() => {
+            if (message.parentNode) {
+                message.parentNode.removeChild(message);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// ============ 团队成员管理 ============
+(function(){
+    const tbody = document.getElementById('teamTbody');
+    const addBtn = document.getElementById('addMemberBtn');
+    const modal = document.getElementById('memberModal');
+    const modalClose = document.getElementById('modalClose');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const form = document.getElementById('memberForm');
+    const modalTitle = document.getElementById('modalTitle');
+    const searchInput = document.getElementById('searchInput');
+    const gradeFilter = document.getElementById('gradeFilter');
+
+    const idInput = document.getElementById('memberId');
+    const nameInput = document.getElementById('nameInput');
+    const roleInput = document.getElementById('roleInput');
+    const descInput = document.getElementById('descInput');
+    const imgInput = document.getElementById('imgInput');
+    const qqInput = document.getElementById('qqInput');
+    const wechatInput = document.getElementById('wechatInput');
+    const emailInput = document.getElementById('emailInput');
+    const gradeInput = document.getElementById('gradeInput');
+
+    let rawData = [];
+    let sortableInstance = null;
+    let hasUnsavedChanges = false;
+
+    // 初始化拖拽排序
+    function initSortable() {
+        if (sortableInstance) {
+            sortableInstance.destroy();
+        }
+        
+        sortableInstance = new Sortable(tbody, {
+            handle: '.sort-handle',
+            animation: 150,
+            onUpdate: function (evt) {
+                hasUnsavedChanges = true;
+                document.getElementById('saveOrderBtn').style.display = 'inline-block';
+            }
+        });
+    }
+
+    // 保存排序
+    async function saveOrder() {
+        const rows = tbody.querySelectorAll('tr[data-id]');
+        const memberIds = Array.from(rows).map(row => parseInt(row.getAttribute('data-id')));
+        
+        console.log('🔄 开始保存团队成员排序，成员ID列表:', memberIds);
+        
+        if (memberIds.length === 0) {
+            showMessage('没有可保存的排序数据', 'error');
+            return;
+        }
+        
+        try {
+            const res = await fetch('/api/team/reorder', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache'
+                },
+                body: JSON.stringify({ member_ids: memberIds })
+            });
+            
+            if (res.ok) {
+                const result = await res.json();
+                console.log('✅ 排序保存成功:', result);
+                
+                hasUnsavedChanges = false;
+                document.getElementById('saveOrderBtn').style.display = 'none';
+                showMessage('团队成员排序已保存', 'success');
+                
+                // 重新获取数据以确保排序正确
+                await fetchData();
+                
+                // 立即通知前端页面更新
+                notifyFrontendUpdate('TEAM_MEMBERS_UPDATED', 'reordered');
+                
+                // 显示同步状态
+                console.log('✅ 团队成员排序已同步到前端页面');
+            } else {
+                const err = await res.json().catch(() => ({error: '保存失败'}));
+                console.error('❌ 排序保存失败:', err);
+                showMessage(err.error || '保存失败', 'error');
+            }
+        } catch (e) {
+            console.error('❌ 排序保存网络错误:', e);
+            showMessage('网络错误，保存失败', 'error');
+        }
+    }
+
+    function statusBadge(text){
+        const map = { '在职': 'status-approved', '试用期': 'status-pending' };
+        const cls = map[text] || 'status-neutral';
+        return `<span class="status ${cls}">${text}</span>`;
+    }
+
+    function openModal(editData){
+        modal.style.display = 'flex';
+        if(editData){
+            modalTitle.textContent = '编辑成员';
+            idInput.value = editData.id;
+            nameInput.value = editData.name || '';
+            roleInput.value = editData.position || editData.role || '';
+            descInput.value = editData.desc || editData.description || '';
+            imgInput.value = editData.img || editData.image_url || '';
+            qqInput.value = editData.qq || '';
+            wechatInput.value = editData.wechat || '';
+            emailInput.value = editData.email || '';
+            
+            // 设置年级选择
+            if (editData.grade) {
+                gradeInput.value = editData.grade;
+            } else {
+                gradeInput.value = '2024级';
+            }
+            
+
+        }else{
+            modalTitle.textContent = '新增成员';
+            form.reset();
+            idInput.value = '';
+        }
+        
+        // 动态加载年级选项
+        loadGradeOptions();
+    }
+    function closeModal(){ modal.style.display = 'none'; }
+
+    // 动态加载年级选项
+    async function loadGradeOptions() {
+        try {
+            console.log('🔄 开始加载年级选项...');
+            
+            // 从年级API获取年级列表
+            const gradeRes = await fetch('/api/grades');
+            if (gradeRes.ok) {
+                const gradeData = await gradeRes.json();
+                const gradeInput = document.getElementById('gradeInput');
+                const gradeFilterEl = document.getElementById('gradeFilter');
+                
+                if (!gradeInput) {
+                    console.warn('⚠️ 年级输入框不存在');
+                    return;
+                }
+                
+                console.log('✅ 年级数据加载成功:', gradeData);
+                
+                // 清空现有选项（保留第一个"请选择年级"选项）
+                gradeInput.innerHTML = '<option value="">请选择年级</option>';
+                
+                // 添加年级选项，按新增顺序（ID降序）排列，让新增的年级在最前面
+                if (gradeData && gradeData.length > 0) {
+                    const sortedGrades = gradeData
+                        .sort((a, b) => {
+                            // 首先按ID降序排列，让新增的年级在前面
+                            if (a.id && b.id) {
+                                return b.id - a.id;
+                            }
+                            // 如果没有ID，按创建时间降序排列
+                            if (a.created_at && b.created_at) {
+                                return new Date(b.created_at) - new Date(a.created_at);
+                            }
+                            // 最后按年级名称降序排列（数字大的年级在前面）
+                            const yearA = parseInt((a.name || '').replace(/[^\d]/g, ''));
+                            const yearB = parseInt((b.name || '').replace(/[^\d]/g, ''));
+                            return yearB - yearA;
+                        })
+                        .map(g => g.name);
+                    
+                    sortedGrades.forEach(grade => {
+                        const option = document.createElement('option');
+                        option.value = grade;
+                        option.textContent = grade;
+                        gradeInput.appendChild(option);
+                    });
+                    
+                    // 同时更新年级过滤器
+                    if (gradeFilterEl) {
+                        gradeFilterEl.innerHTML = '<option value="">全部年级</option>';
+                        sortedGrades.forEach(grade => {
+                            const option = document.createElement('option');
+                            option.value = grade;
+                            option.textContent = grade;
+                            gradeFilterEl.appendChild(option);
+                        });
+                    }
+                    
+                    console.log('✅ 年级选项更新成功，共', sortedGrades.length, '个年级');
+                } else {
+                    console.warn('⚠️ 没有年级数据，使用默认年级选项');
+                    // 使用默认年级选项
+                    const defaultGrades = ['2024级', '2023级', '2022级', '2021级', '2020级', '2019级', '2018级', '2017级', '2016级'];
+                    defaultGrades.forEach(grade => {
+                        const option = document.createElement('option');
+                        option.value = grade;
+                        option.textContent = grade;
+                        gradeInput.appendChild(option);
+                    });
+                    
+                    // 同时更新年级过滤器
+                    if (gradeFilterEl) {
+                        gradeFilterEl.innerHTML = '<option value="">全部年级</option>';
+                        defaultGrades.forEach(grade => {
+                            const option = document.createElement('option');
+                            option.value = grade;
+                            option.textContent = grade;
+                            gradeFilterEl.appendChild(option);
+                        });
+                    }
+                }
+            } else {
+                throw new Error(`HTTP ${gradeRes.status}: ${gradeRes.statusText}`);
+            }
+        } catch (error) {
+            console.error('❌ 加载年级选项失败:', error);
+            // 如果加载失败，使用默认年级选项
+            const gradeInput = document.getElementById('gradeInput');
+            const gradeFilterEl = document.getElementById('gradeFilter');
+            if (gradeInput) {
+                gradeInput.innerHTML = `
+                    <option value="">请选择年级</option>
+                    <option value="2024级">2024级</option>
+                    <option value="2023级">2023级</option>
+                    <option value="2022级">2022级</option>
+                    <option value="2021级">2021级</option>
+                    <option value="2020级">2020级</option>
+                    <option value="2019级">2019级</option>
+                    <option value="2018级">2018级</option>
+                    <option value="2017级">2017级</option>
+                    <option value="2016级">2016级</option>
+                `;
+            }
+            
+            // 同时更新年级过滤器
+            if (gradeFilterEl) {
+                gradeFilterEl.innerHTML = `
+                    <option value="">全部年级</option>
+                    <option value="2024级">2024级</option>
+                    <option value="2023级">2023级</option>
+                    <option value="2022级">2022级</option>
+                    <option value="2021级">2021级</option>
+                    <option value="2020级">2020级</option>
+                    <option value="2019级">2019级</option>
+                    <option value="2018级">2018级</option>
+                    <option value="2017级">2017级</option>
+                    <option value="2016级">2016级</option>
+                `;
+            }
+        }
+    }
+
+    function render(data){
+        tbody.innerHTML = data.map(m => `
+            <tr class="sortable-item" data-id="${m.id}">
+                <td><span class="sort-handle" title="拖拽排序"></span></td>
+                <td>${m.name || ''}</td>
+                <td>${m.grade || '2024级'}</td>
+                <td>${m.position || m.role || ''}</td>
+                <td>
+                    <button class="btn btn-sm" data-action="edit" data-id="${m.id}">✏️ 编辑</button>
+                    <button class="btn btn-sm btn-danger" data-action="delete" data-id="${m.id}">🗑️ 删除</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        // 如果没有数据，显示空状态
+        if (data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem; color: rgba(255, 255, 255, 0.7);">
+                        <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                        <p>暂无团队成员数据</p>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">点击"新增成员"按钮添加团队成员</p>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        initSortable();
+    }
+
+    async function fetchData(){
+        try {
+            console.log('🔄 开始加载团队成员数据...');
+            const res = await fetch('/api/team', {
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
+            const gradeData = await res.json();
+            
+            // 将年级分组数据转换为扁平化的成员列表
+            rawData = [];
+            if (Array.isArray(gradeData)) {
+                gradeData.forEach(grade => {
+                    if (grade.members && Array.isArray(grade.members)) {
+                        grade.members.forEach(member => {
+                            // 确保每个成员都有年级信息和正确的排序索引
+                            rawData.push({
+                                ...member,
+                                grade: grade.grade || '2024级',
+                                order_index: member.order_index || 0
+                            });
+                        });
+                    }
+                });
+            }
+            
+            // 按order_index排序，确保与管理页面显示顺序一致
+            rawData.sort((a, b) => {
+                const orderA = a.order_index || 0;
+                const orderB = b.order_index || 0;
+                return orderA - orderB;
+            });
+            
+            console.log('✅ 团队成员数据加载成功，共', rawData.length, '位成员，已按排序索引排序');
+            applyFilter();
+        } catch (error) {
+            console.error('❌ 加载团队成员数据失败:', error);
+            showMessage('加载团队成员数据失败', 'error');
+            rawData = [];
+            applyFilter();
+        }
+    }
+
+    function applyFilter(){
+        const kw = (searchInput.value || '').trim();
+        const gr = (gradeFilter.value || '').trim();
+        
+        const filtered = rawData.filter(m => {
+            const hitKw = !kw || [m.name, m.grade, m.position || m.role].some(v => (v||'').toLowerCase().includes(kw.toLowerCase()));
+            const hitGr = !gr || (m.grade || '2024级') === gr;
+            return hitKw && hitGr;
+        });
+        render(filtered);
+    }
+
+    tbody.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button');
+        if(!btn) return;
+        const id = Number(btn.getAttribute('data-id'));
+        const action = btn.getAttribute('data-action');
+        const current = rawData.find(x => x.id === id);
+        
+        if(action === 'edit'){
+            openModal(current);
+        }
+        
+        if(action === 'delete'){
+            if(!confirm('确认删除该成员？此操作不可恢复！')) return;
+            
+            try {
+                const res = await fetch(`/api/team/${id}`, { 
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                            if(res.ok){ 
+                await fetchData();
+                showMessage('成员删除成功', 'success');
+                
+                // 立即通知前端页面更新
+                notifyFrontendUpdate('TEAM_MEMBERS_UPDATED', 'deleted');
+                
+                // 显示同步状态
+                console.log('✅ 团队成员删除已同步到前端页面');
+            } else {
+                const err = await res.json().catch(() => ({error: '删除失败'}));
+                showMessage(err.error || '删除失败', 'error');
+            }
+            } catch (e) {
+                console.error(e);
+                showMessage('网络错误，删除失败', 'error');
+            }
+        }
+    });
+
+    addBtn.addEventListener('click', () => openModal());
+    modalClose.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!nameInput.value.trim()) {
+            showMessage('请填写成员姓名', 'error');
+            nameInput.focus();
+            return;
+        }
+        
+        if (!roleInput.value.trim()) {
+            showMessage('请填写成员角色/职位', 'error');
+            roleInput.focus();
+            return;
+        }
+        
+        const payload = {
+            name: nameInput.value.trim(),
+            position: roleInput.value.trim(),
+            role: roleInput.value.trim(),
+            description: descInput.value.trim(),
+            desc: descInput.value.trim(),
+            image_url: imgInput.value.trim(),
+            img: imgInput.value.trim(),
+            qq: qqInput.value.trim(),
+            wechat: wechatInput.value.trim(),
+            email: emailInput.value.trim(),
+            grade: gradeInput.value
+        };
+        
+        const id = idInput.value;
+        const isEdit = !!id;
+        
+        try {
+            console.log(`🔄 ${isEdit ? '更新' : '创建'}团队成员:`, payload);
+            
+            const res = await fetch(isEdit ? `/api/team/${id}` : '/api/team', {
+                method: isEdit ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if(res.ok){
+                const result = await res.json();
+                console.log('✅ 团队成员操作成功:', result);
+                
+                closeModal();
+                await fetchData();
+                showMessage(isEdit ? '成员信息更新成功' : '成员添加成功', 'success');
+                
+                // 立即通知前端页面更新 - 优化版本
+                const operation = isEdit ? 'updated' : 'created';
+                notifyFrontendUpdate('TEAM_MEMBERS_UPDATED', operation);
+                
+                // 显示同步状态
+                console.log('✅ 团队成员数据已同步到前端页面');
+                
+                // 重新加载年级选项，确保年级过滤器同步
+                await loadGradeOptions();
+            }else{
+                const err = await res.json().catch(()=>({error:'提交失败'}));
+                console.error('❌ 团队成员操作失败:', err);
+                showMessage(err.error || '提交失败', 'error');
+            }
+        } catch (error) {
+            console.error('❌ 团队成员操作网络错误:', error);
+            showMessage('网络错误，提交失败', 'error');
+        }
+    });
+
+    searchInput.addEventListener('input', applyFilter);
+    if (gradeFilter) gradeFilter.addEventListener('change', applyFilter);
+    document.getElementById('saveOrderBtn').addEventListener('click', saveOrder);
+    
+    // 测试同步功能
+    document.getElementById('testSyncBtn').addEventListener('click', async function() {
+        showMessage('正在测试与前端页面的同步...', 'info');
+        updateSyncStatus('show', '🔄', '测试同步中...');
+        
+        try {
+            // 测试1: 检查Socket.IO连接状态
+            console.log('🧪 测试1: 检查Socket.IO连接状态');
+            if (typeof socket !== 'undefined' && socket && socket.connected) {
+                console.log('✅ Socket.IO连接正常，连接ID:', socket.id);
+            } else {
+                console.warn('⚠️ Socket.IO未连接，尝试重新连接');
+                if (typeof initAdminSocketIO === 'function') {
+                    initAdminSocketIO();
+                }
+            }
+            
+            // 测试2: 测试管理页面的通知机制
+            console.log('🧪 测试2: 管理页面通知机制');
+            notifyFrontendUpdate('TEAM_MEMBERS_UPDATED', 'test-sync');
+            
+            // 测试3: 测试后端API的实时通知
+            console.log('🧪 测试3: 后端API实时通知');
+            const testRes = await fetch('/api/team');
+            if (testRes.ok) {
+                const teamData = await testRes.json();
+                console.log('✅ 后端API连接正常，团队成员数据:', teamData.length, '个年级');
+                
+                // 模拟一个后端通知（通过Socket.IO）
+                if (typeof socket !== 'undefined' && socket && socket.connected) {
+                    socket.emit('page_refresh', {
+                        page: 'team',
+                        type: 'data_updated',
+                        payload: {
+                            test_notification: true,
+                            message: '后端API实时通知测试'
+                        }
+                    });
+                    console.log('✅ 后端API Socket.IO通知已发送');
+                } else {
+                    console.warn('⚠️ Socket.IO未连接，无法发送实时通知');
+                }
+            }
+            
+            // 测试4: 测试后端API直接通知
+            console.log('🧪 测试4: 后端API直接通知');
+            try {
+                const notifyRes = await fetch('/api/test-notification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        page: 'team',
+                        payload: {
+                            test_notification: true,
+                            message: '后端API直接通知测试'
+                        }
+                    })
+                });
+                if (notifyRes.ok) {
+                    console.log('✅ 后端API直接通知测试成功');
+                } else {
+                    console.warn('⚠️ 后端API直接通知测试失败');
+                }
+            } catch (error) {
+                console.warn('⚠️ 后端API直接通知测试失败:', error);
+            }
+            
+            // 测试5: 测试前端页面接收通知
+            console.log('🧪 测试5: 前端页面接收通知');
+            setTimeout(() => {
+                showMessage('✅ 同步测试完成！请检查前端页面是否收到更新通知', 'success');
+                updateSyncStatus('show', '✅', '测试完成');
+                setTimeout(() => {
+                    updateSyncStatus('hide');
+                }, 3000);
+            }, 2000);
+            
+        } catch (error) {
+            console.error('❌ 同步测试失败:', error);
+            showMessage('同步测试失败，请检查网络连接', 'error');
+            updateSyncStatus('error', '❌', '测试失败');
+        }
+    });
+
+    fetchData();
+})();
+
+// ============ 年级管理 ============
+(function(){
+    const gradeTbody = document.getElementById('gradeTbody');
+    const addGradeBtn = document.getElementById('addGradeBtn');
+    const gradeModal = document.getElementById('gradeModal');
+    const gradeModalClose = document.getElementById('gradeModalClose');
+    const cancelGradeBtn = document.getElementById('cancelGradeBtn');
+    const gradeForm = document.getElementById('gradeForm');
+    const gradeModalTitle = document.getElementById('gradeModalTitle');
+    const gradeSearchInput = document.getElementById('gradeSearchInput');
+
+    const gradeIdInput = document.getElementById('gradeId');
+    const gradeNameInput = document.getElementById('gradeNameInput');
+    const gradeDescInput = document.getElementById('gradeDescInput');
+
+    let gradeRawData = [];
+    let gradeSortableInstance = null;
+    let gradeHasUnsavedChanges = false;
+
+    function initSortable() {
+        if (gradeSortableInstance) {
+            gradeSortableInstance.destroy();
+        }
+        
+        gradeSortableInstance = new Sortable(gradeTbody, {
+            handle: '.sort-handle',
+            animation: 150,
+            onUpdate: function (evt) {
+                gradeHasUnsavedChanges = true;
+                document.getElementById('saveGradeOrderBtn').style.display = 'inline-block';
+            }
+        });
+    }
+
+    async function saveOrder() {
+        const rows = gradeTbody.querySelectorAll('tr[data-id]');
+        const gradeIds = Array.from(rows).map(row => parseInt(row.getAttribute('data-id')));
+        
+        try {
+            const res = await fetch('/api/grades/reorder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ grade_ids: gradeIds })
+            });
+            
+            if (res.ok) {
+                gradeHasUnsavedChanges = false;
+                document.getElementById('saveGradeOrderBtn').style.display = 'none';
+                showMessage('年级排序已保存', 'success');
+                await fetchData();
+                
+                // 立即通知前端页面更新
+                notifyFrontendUpdate('GRADE_DATA_UPDATED', 'reordered');
+            } else {
+                const err = await res.json().catch(() => ({error: '保存失败'}));
+                showMessage(err.error || '保存失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，保存失败', 'error');
+        }
+    }
+
+    function openModal(editData){
+        gradeModal.style.display = 'flex';
+        if(editData){
+            gradeModalTitle.textContent = '编辑年级';
+            gradeIdInput.value = editData.id;
+            gradeNameInput.value = editData.name || '';
+            gradeDescInput.value = editData.description || editData.desc || '';
+        }else{
+            gradeModalTitle.textContent = '新增年级';
+            gradeForm.reset();
+            gradeIdInput.value = '';
+        }
+    }
+    
+    function closeModal(){ 
+        gradeModal.style.display = 'none'; 
+    }
+
+    function render(data){
+        gradeTbody.innerHTML = data.map(item => `
+            <tr class="sortable-item" data-id="${item.id}">
+                <td><span class="sort-handle" title="拖拽排序"></span></td>
+                <td>${item.name || ''}</td>
+                <td>${item.member_count || 0}</td>
+                <td>${item.created_at ? new Date(item.created_at).toLocaleDateString() : '未知'}</td>
+                <td>
+                    <button class="btn btn-sm" data-action="edit" data-id="${item.id}">✏️ 编辑</button>
+                    <button class="btn btn-sm btn-danger" data-action="delete" data-id="${item.id}">🗑️ 删除</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        // 如果没有数据，显示空状态
+        if (data.length === 0) {
+            gradeTbody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem; color: rgba(255, 255, 255, 0.7);">
+                        <i class="fas fa-graduation-cap" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                        <p>暂无年级数据</p>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">点击"新增年级"按钮添加年级</p>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        initSortable();
+    }
+
+    async function fetchData(){
+        try {
+            console.log('🔄 开始加载年级数据...');
+            
+            // 使用新的年级API
+            const gradeRes = await fetch('/api/grades');
+            if (gradeRes.ok) {
+                const gradeData = await gradeRes.json();
+                // 对年级数据进行排序：新增的年级（ID更大）放在最上面
+                gradeRawData = gradeData.sort((a, b) => {
+                    // 首先按ID降序排列，让新增的年级在前面
+                    if (a.id && b.id) {
+                        return b.id - a.id;
+                    }
+                    // 如果没有ID，按创建时间降序排列
+                    if (a.created_at && b.created_at) {
+                        return new Date(b.created_at) - new Date(a.created_at);
+                    }
+                    // 最后按年级名称降序排列（数字大的年级在前面）
+                    const yearA = parseInt((a.name || '').replace(/[^\d]/g, ''));
+                    const yearB = parseInt((b.name || '').replace(/[^\d]/g, ''));
+                    return yearB - yearA;
+                });
+                console.log('✅ 年级数据加载成功，已按新增顺序排序:', gradeRawData);
+                applyFilter();
+            } else {
+                throw new Error(`HTTP ${gradeRes.status}: ${gradeRes.statusText}`);
+            }
+        } catch (error) {
+            console.error('❌ 加载年级数据失败:', error);
+            showMessage('加载年级数据失败', 'error');
+            gradeRawData = [];
+            applyFilter();
+        }
+    }
+
+    function applyFilter(){
+        const kw = (gradeSearchInput.value || '').trim();
+        const filtered = gradeRawData.filter(grade => {
+            const hitKw = !kw || (grade.name || '').includes(kw);
+            return hitKw;
+        });
+        render(filtered);
+    }
+
+    gradeTbody.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button');
+        if(!btn) return;
+        const id = Number(btn.getAttribute('data-id'));
+        const action = btn.getAttribute('data-action');
+        const current = gradeRawData.find(x => x.id === id);
+        
+        if(action === 'edit'){
+            openModal(current);
+        }
+        
+        if(action === 'delete'){
+            if(!confirm('确认删除该年级？此操作不可恢复！')) return;
+            
+            try {
+                const res = await fetch(`/api/grades/${id}`, { 
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if(res.ok){ 
+                    await fetchData();
+                    showMessage('年级删除成功', 'success');
+                    
+                    // 立即通知前端页面更新
+                    notifyFrontendUpdate('GRADE_DATA_UPDATED', 'deleted');
+                } else {
+                    const err = await res.json().catch(() => ({error: '删除失败'}));
+                    showMessage(err.error || '删除失败', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showMessage('网络错误，删除失败', 'error');
+            }
+        }
+    });
+
+    addGradeBtn.addEventListener('click', () => openModal());
+    gradeModalClose.addEventListener('click', closeModal);
+    cancelGradeBtn.addEventListener('click', closeModal);
+    gradeModal.addEventListener('click', (e) => { if(e.target === gradeModal) closeModal(); });
+
+    gradeForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!gradeNameInput.value.trim()) {
+            showMessage('请填写年级名称', 'error');
+            gradeNameInput.focus();
+            return;
+        }
+        
+        // 验证年级格式
+        const gradeName = gradeNameInput.value.trim();
+        if (!/^\d{4}级$/.test(gradeName)) {
+            showMessage('年级格式不正确，应为YYYY级格式（如：2025级）', 'error');
+            gradeNameInput.focus();
+            return;
+        }
+        
+        const payload = {
+            name: gradeName,
+            description: gradeDescInput.value.trim()
+        };
+        
+        const id = gradeIdInput.value;
+        const isEdit = !!id;
+        
+        try {
+            console.log(`🔄 ${isEdit ? '更新' : '创建'}年级:`, payload);
+            
+            const res = await fetch(isEdit ? `/api/grades/${id}` : '/api/grades', {
+                method: isEdit ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if (res.ok) {
+                const result = await res.json();
+                console.log('✅ 年级操作成功:', result);
+                
+                closeModal();
+                await fetchData();
+                showMessage(isEdit ? '年级更新成功' : '年级添加成功', 'success');
+                
+                // 立即通知前端页面更新
+                const operation = isEdit ? 'updated' : 'created';
+                notifyFrontendUpdate('GRADE_DATA_UPDATED', operation);
+                
+                // 重新加载年级选项
+                await loadGradeOptions();
+            } else {
+                const errorData = await res.json().catch(() => ({error: '操作失败'}));
+                console.error('❌ 年级操作失败:', errorData);
+                showMessage(errorData.error || '操作失败', 'error');
+            }
+        } catch (error) {
+            console.error('❌ 年级操作网络错误:', error);
+            showMessage('网络错误，操作失败', 'error');
+        }
+    });
+
+    gradeSearchInput.addEventListener('input', applyFilter);
+    document.getElementById('saveGradeOrderBtn').addEventListener('click', saveOrder);
+
+    fetchData();
+})();
+
+// ============ 研究领域管理 ============
+(function(){
+    const researchTbody = document.getElementById('researchTbody');
+    const addResearchBtn = document.getElementById('addResearchBtn');
+    const researchModal = document.getElementById('researchModal');
+    const researchModalClose = document.getElementById('researchModalClose');
+    const researchCancelBtn = document.getElementById('researchCancelBtn');
+    const researchForm = document.getElementById('researchForm');
+    const researchModalTitle = document.getElementById('researchModalTitle');
+    const researchSearchInput = document.getElementById('researchSearchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+
+    const researchIdInput = document.getElementById('researchId');
+    const titleInput = document.getElementById('titleInputR');
+    const categoryInput = document.getElementById('categoryInputR');
+    const researchDescInput = document.getElementById('descInputR');
+    const membersInput = document.getElementById('membersInputR');
+
+    let researchRawData = [];
+    let researchSortableInstance = null;
+    let researchHasUnsavedChanges = false;
+
+    function initSortable() {
+        if (researchSortableInstance) {
+            researchSortableInstance.destroy();
+        }
+        
+        researchSortableInstance = new Sortable(researchTbody, {
+            handle: '.sort-handle',
+            animation: 150,
+            onUpdate: function (evt) {
+                researchHasUnsavedChanges = true;
+                document.getElementById('saveResearchOrderBtn').style.display = 'inline-block';
+            }
+        });
+    }
+
+    async function saveOrder() {
+        const rows = researchTbody.querySelectorAll('tr[data-id]');
+        const researchIds = Array.from(rows).map(row => parseInt(row.getAttribute('data-id')));
+        
+        try {
+            const res = await fetch('/api/research-areas/reorder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ area_ids: researchIds })
+            });
+            
+            if (res.ok) {
+                researchHasUnsavedChanges = false;
+                document.getElementById('saveResearchOrderBtn').style.display = 'none';
+                showMessage('研究领域排序已保存', 'success');
+                await fetchData();
+                
+                // 立即通知前端页面更新
+                notifyFrontendUpdate('RESEARCH_DATA_UPDATED', 'reordered');
+            } else {
+                const err = await res.json().catch(() => ({error: '保存失败'}));
+                showMessage(err.error || '保存失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，保存失败', 'error');
+        }
+    }
+
+    function openModal(editData){
+        researchModal.style.display = 'flex';
+        if(editData){
+            researchModalTitle.textContent = '编辑研究领域';
+            researchIdInput.value = editData.id;
+            titleInput.value = editData.title || '';
+            categoryInput.value = editData.category || '深度学习';
+            researchDescInput.value = editData.desc || editData.description || '';
+            membersInput.value = Array.isArray(editData.members) ? editData.members.join(', ') : (editData.members || '');
+        }else{
+            researchModalTitle.textContent = '新增研究领域';
+            researchForm.reset();
+            researchIdInput.value = '';
+        }
+    }
+    function closeModal(){ researchModal.style.display = 'none'; }
+
+    function truncate(text, n){
+        const s = (text||'').trim();
+        return s.length > n ? (s.slice(0, n) + '...') : s;
+    }
+
+    function render(data){
+        researchTbody.innerHTML = data.map(item => `
+            <tr class="sortable-item" data-id="${item.id}">
+                <td><span class="sort-handle" title="拖拽排序"></span></td>
+                <td>${item.title || ''}</td>
+                <td>${item.category || ''}</td>
+                <td title="${(item.desc||'').replace(/\"/g,'&quot;')}">${truncate(item.desc, 40)}</td>
+                <td>
+                    <button class="btn btn-sm" data-action="edit" data-id="${item.id}">✏️ 编辑</button>
+                    <button class="btn btn-sm btn-danger" data-action="delete" data-id="${item.id}">🗑️ 删除</button>
+                </td>
+            </tr>
+        `).join('');
+        initSortable();
+    }
+
+    async function fetchData(){
+        try {
+            console.log('🔄 开始加载研究领域数据...');
+            // 管理后台需要获取所有数据，设置较大的per_page值
+            const res = await fetch('/api/research-areas?per_page=100');
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
+            const responseData = await res.json();
+            
+            // 处理分页格式的响应数据
+            if (responseData.data && Array.isArray(responseData.data)) {
+                researchRawData = responseData.data;
+            } else if (Array.isArray(responseData)) {
+                // 兼容旧格式
+                researchRawData = responseData;
+            } else {
+                researchRawData = [];
+            }
+            
+            console.log('✅ 研究领域数据加载成功:', researchRawData);
+            applyFilter();
+        } catch (error) {
+            console.error('❌ 加载研究领域数据失败:', error);
+            showMessage('加载研究领域数据失败', 'error');
+            researchRawData = [];
+            applyFilter();
+        }
+    }
+
+    function applyFilter(){
+        const kw = (researchSearchInput.value || '').trim();
+        const c = categoryFilter.value || '';
+        const filtered = researchRawData.filter(r => {
+            const hitKw = !kw || [r.title, r.desc].some(v => (v||'').includes(kw));
+            const hitC = !c || r.category === c;
+            return hitKw && hitC;
+        });
+        render(filtered);
+    }
+
+    researchTbody.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button');
+        if(!btn) return;
+        const id = Number(btn.getAttribute('data-id'));
+        const action = btn.getAttribute('data-action');
+        const current = researchRawData.find(x => x.id === id);
+        if(action === 'edit'){
+            openModal(current);
+        }
+        if(action === 'delete'){
+            if(!confirm('确认删除该研究领域？此操作不可恢复！')) return;
+            try {
+                const res = await fetch(`/api/research-areas/${id}`, { method: 'DELETE' });
+                if(res.ok){ 
+                    await fetchData(); 
+                    showMessage('研究领域删除成功', 'success');
+                    
+                    // 立即通知前端页面更新
+                    notifyFrontendUpdate('RESEARCH_DATA_UPDATED', 'deleted');
+                } else {
+                    const err = await res.json().catch(() => ({error: '删除失败'}));
+                    showMessage(err.error || '删除失败', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showMessage('网络错误，删除失败', 'error');
+            }
+        }
+    });
+
+    addResearchBtn.addEventListener('click', () => openModal());
+    researchModalClose.addEventListener('click', closeModal);
+    researchCancelBtn.addEventListener('click', closeModal);
+    researchModal.addEventListener('click', (e) => { if(e.target === researchModal) closeModal(); });
+
+    researchForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!titleInput.value.trim()) {
+            showMessage('请填写研究领域标题', 'error');
+            titleInput.focus();
+            return;
+        }
+        
+        if (!researchDescInput.value.trim()) {
+            showMessage('请填写研究领域描述', 'error');
+            researchDescInput.focus();
+            return;
+        }
+        
+        const membersRaw = (membersInput.value || '').trim();
+        const members = membersRaw ? membersRaw.split(/[,，、]/).map(s => s.trim()).filter(Boolean) : [];
+        const payload = {
+            title: titleInput.value.trim(),
+            category: categoryInput.value,
+            description: researchDescInput.value.trim(),
+            desc: researchDescInput.value.trim(),
+            members: members
+        };
+        const id = researchIdInput.value;
+        const isEdit = !!id;
+        
+        try {
+            const res = await fetch(isEdit ? `/api/research-areas/${id}` : '/api/research-areas', {
+                method: isEdit ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if(res.ok){
+                closeModal();
+                await fetchData();
+                showMessage(isEdit ? '研究领域更新成功' : '研究领域添加成功', 'success');
+                
+                // 立即通知前端页面更新
+                const operation = isEdit ? 'updated' : 'created';
+                notifyFrontendUpdate('RESEARCH_DATA_UPDATED', operation);
+            }else{
+                const err = await res.json().catch(()=>({error:'提交失败'}));
+                showMessage(err.error || '提交失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage('网络错误，提交失败', 'error');
+        }
+    });
+
+    researchSearchInput.addEventListener('input', applyFilter);
+    categoryFilter.addEventListener('change', applyFilter);
+    document.getElementById('saveResearchOrderBtn').addEventListener('click', saveOrder);
+
+    fetchData();
+})();
+
+// 同步状态管理
+function updateSyncStatus(status, icon = '🔄', text = '同步中...') {
+    const syncStatus = document.getElementById('syncStatus');
+    const syncIcon = document.getElementById('syncIcon');
+    const syncText = document.getElementById('syncText');
+    
+    if (syncStatus && syncIcon && syncText) {
+        if (status === 'show') {
+            syncStatus.style.display = 'block';
+            syncIcon.textContent = icon;
+            syncText.textContent = text;
+        } else if (status === 'hide') {
+            syncStatus.style.display = 'none';
+        } else {
+            syncIcon.textContent = icon;
+            syncText.textContent = text;
+        }
+    }
+}
+
+    // 通知前端页面更新的函数 - 优化版本
+    function notifyFrontendUpdate(type, operation) {
+        console.log(`📢 通知前端更新: ${type}, 操作: ${operation}`);
+        
+        // 显示同步状态
+        updateSyncStatus('show', '🔄', '正在同步到前端页面...');
+        
+        // 通过postMessage通知前端页面
+        try {
+            window.postMessage({
+                type: type,
+                operation: operation,
+                timestamp: Date.now()
+            }, '*');
+            console.log('✅ postMessage通知已发送');
+        } catch (error) {
+            console.error('❌ postMessage通知失败:', error);
+        }
+        
+        // 通过Socket.IO通知前端页面 - 优化版本
+        if (typeof socket !== 'undefined' && socket && socket.connected) {
+            try {
+                // 发送到特定页面
+                socket.emit('page_refresh', {
+                    page: 'home',
+                    operation: operation,
+                    type: type,
+                    timestamp: Date.now()
+                });
+                
+                // 同时发送到团队页面
+                socket.emit('page_refresh', {
+                    page: 'team',
+                    operation: operation,
+                    type: type,
+                    timestamp: Date.now()
+                });
+                
+                // 发送到所有页面
+                socket.emit('page_refresh', {
+                    page: 'all',
+                    operation: operation,
+                    type: type,
+                    timestamp: Date.now()
+                });
+                
+                // 发送特定类型的通知
+                if (type === 'TEAM_MEMBERS_UPDATED') {
+                    socket.emit('team_members_updated', {
+                        operation: operation,
+                        timestamp: Date.now()
+                    });
+                }
+                
+                console.log('✅ Socket.IO通知已发送');
+            } catch (error) {
+                console.error('❌ Socket.IO通知失败:', error);
+            }
+        } else {
+            console.warn('⚠️ Socket.IO未连接，无法发送实时通知');
+        }
+        
+        // 通过localStorage通知其他标签页
+        try {
+            let key;
+            if (type === 'TEAM_MEMBERS_UPDATED') {
+                key = 'team_data_updated';
+            } else if (type === 'RESEARCH_DATA_UPDATED') {
+                key = 'research_data_updated';
+            } else if (type === 'GRADE_DATA_UPDATED') {
+                key = 'grade_data_updated';
+            } else {
+                key = 'data_updated';
+            }
+            localStorage.setItem(key, Date.now().toString());
+            console.log('✅ localStorage通知已发送');
+        } catch (error) {
+            console.error('❌ localStorage通知失败:', error);
+        }
+        
+        // 通过fetch API直接通知后端（备用方案）
+        try {
+            fetch('/api/test-notification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    page: 'home',
+                    type: type,
+                    operation: operation,
+                    payload: {
+                        notification: true,
+                        message: `团队成员数据已${operation}`
+                    }
+                })
+            }).catch(error => {
+                console.warn('⚠️ 后端通知失败:', error);
+            });
+        } catch (error) {
+            console.warn('⚠️ 后端通知请求失败:', error);
+        }
+        
+        // 延迟隐藏同步状态
+        setTimeout(() => {
+            updateSyncStatus('show', '✅', '同步完成');
+            setTimeout(() => {
+                updateSyncStatus('hide');
+            }, 2000);
+        }, 1000);
+    }
+
+// 页面加载完成提示
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        showMessage('团队管理系统已就绪！', 'success');
+    }, 500);
+    
+    // 初始化Socket.IO连接
+    initAdminSocketIO();
+});
+
+// 初始化管理页面的Socket.IO连接
+function initAdminSocketIO() {
+    try {
+        // 创建Socket.IO连接
+        const socket = io({
+            transports: ['websocket', 'polling'],
+            timeout: 15000,
+            reconnection: true,
+            reconnectionAttempts: 10,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            maxReconnectionAttempts: 10,
+            forceNew: false,
+            autoConnect: true,
+            upgrade: true,
+            rememberUpgrade: true,
+            pingTimeout: 10000,
+            pingInterval: 5000
+        });
+        
+        // 连接成功
+        socket.on('connect', function() {
+            console.log('✅ 管理页面Socket.IO连接成功');
+            
+            // 加入管理页面房间
+            socket.emit('join_page', { page: 'admin' });
+            console.log('📡 已加入管理页面房间');
+            
+            // 更新调试信息
+            updateDebugInfo();
+        });
+        
+        // 连接断开
+        socket.on('disconnect', function(reason) {
+            console.log('❌ 管理页面Socket.IO连接断开:', reason);
+            updateDebugInfo();
+        });
+        
+        // 连接错误
+        socket.on('connect_error', function(error) {
+            console.error('❌ 管理页面Socket.IO连接错误:', error);
+            updateDebugInfo();
+        });
+        
+        // 监听团队成员更新通知
+        socket.on('team_members_updated', function(data) {
+            console.log('🔄 收到团队成员更新通知:', data);
+            showMessage('团队成员数据已更新', 'success', 3000);
+            
+            // 自动刷新团队成员数据
+            setTimeout(() => {
+                loadTeamMembers();
+            }, 500);
+        });
+
+        // 监听页面刷新通知
+        socket.on('page_refresh', function(data) {
+            console.log('🔄 收到页面刷新通知:', data);
+            
+            if (data.action === 'updated' || data.action === 'deleted' || data.action === 'reordered') {
+                showMessage('数据已更新，正在刷新...', 'info', 2000);
+                
+                // 根据操作类型刷新相应数据
+                setTimeout(() => {
+                    if (data.action === 'updated' || data.action === 'deleted') {
+                        loadTeamMembers();
+                    }
+                }, 500);
+            }
+        });
+
+        // 将socket对象暴露到全局作用域，供notifyFrontendUpdate函数使用
+        window.socket = socket;
+        
+        // 定期更新调试信息
+        setInterval(updateDebugInfo, 2000);
+        
+    } catch (error) {
+        console.error('❌ 初始化管理页面Socket.IO失败:', error);
+    }
+}
+
+// 更新调试信息
+function updateDebugInfo() {
+    const debugInfo = document.getElementById('debugInfo');
+    if (debugInfo) {
+        const socketStatus = window.socket && window.socket.connected ? '已连接' : '未连接';
+        const connectionId = window.socket ? window.socket.id : 'N/A';
+        
+        debugInfo.innerHTML = `
+            <div style="background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 8px; font-size: 12px; margin-top: 10px;">
+                <h4 style="margin: 0 0 8px 0;">🔧 调试信息</h4>
+                <div>Socket.IO状态: <span style="color: ${socketStatus === '已连接' ? '#22c55e' : '#ef4444'}">${socketStatus}</span></div>
+                <div>连接ID: ${connectionId}</div>
+                <div>当前时间: ${new Date().toLocaleTimeString()}</div>
+            </div>
+        `;
+    }
+}
+</script>
+{% endblock %} 

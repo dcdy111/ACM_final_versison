@@ -1,0 +1,2078 @@
+{% extends "admin/base.html" %}
+
+{% block title %}获奖记录和项目概览管理 - 管理后台{% endblock %}
+
+{% block extra_head %}
+<!-- 使用更稳定的Sortable.js CDN链接 -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<style>
+/* 整体页面美化 */
+body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.main-content {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* 消息提示系统 */
+.message-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    max-width: 400px;
+}
+
+.message {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translateX(450px);
+    transition: transform 0.3s ease;
+}
+
+.message.show {
+    transform: translateX(0);
+}
+
+.message.success { border-left-color: #22c55e; color: #166534; }
+.message.error { border-left-color: #ef4444; color: #dc2626; }
+.message.info { border-left-color: #3b82f6; color: #1d4ed8; }
+
+.message-icon {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* 卡片美化 - 调整背景色提高对比度 */
+.card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* 表格美化 - 调整背景色提高对比度 */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 2px solid rgba(102, 126, 234, 0.3);
+}
+
+.table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 16px;
+    font-weight: 700;
+    text-align: left;
+    border: none;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+    position: relative;
+}
+
+.table th:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 20%;
+    height: 60%;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.table td {
+    padding: 16px;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.15);
+    transition: all 0.3s ease;
+    background: rgba(15, 15, 35, 0.8);
+    vertical-align: middle;
+    position: relative;
+}
+
+.table tbody tr:nth-child(even) td {
+    background: rgba(25, 25, 45, 0.9);
+}
+
+.table tbody tr:nth-child(odd) td {
+    background: rgba(20, 20, 40, 0.9);
+}
+
+.table tbody tr:hover td {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+    transform: scale(1.005);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* 表格列分隔线 */
+.table td:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 15%;
+    height: 70%;
+    width: 1px;
+    background: rgba(102, 126, 234, 0.2);
+}
+
+/* 拖拽手柄美化 - 提高可见性 */
+.sort-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 8px;
+    cursor: grab;
+    position: relative;
+    transition: all 0.3s ease;
+    margin: 0 auto;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.sort-handle:before {
+    content: '⋮⋮';
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.sort-handle:hover {
+    transform: scale(1.15) rotate(5deg);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.6);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.sort-handle:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+}
+
+/* 表格内容样式增强 */
+.table td strong {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.table td .badge {
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.table td code {
+    background: rgba(102, 126, 234, 0.25);
+    padding: 6px 10px;
+    border-radius: 6px;
+    color: #667eea;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    display: inline-block;
+    min-width: 60px;
+    text-align: center;
+}
+
+/* 状态徽章样式优化 */
+.badge.bg-success {
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+}
+
+.badge.bg-secondary {
+    background: linear-gradient(135deg, #6b7280, #4b5563) !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(107, 114, 128, 0.3);
+}
+
+.badge.bg-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2) !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+/* 操作按钮样式优化 */
+.table td .btn {
+    margin: 2px;
+    font-size: 0.8rem;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.table td .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.table td .btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.table td .btn-danger:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* 表格响应式优化 */
+.table-responsive {
+    border-radius: 15px;
+    overflow: hidden;
+    border: 2px solid rgba(102, 126, 234, 0.3);
+}
+
+/* 表格行美化 - 提高清晰度 */
+.sortable-item {
+    transition: all 0.3s ease;
+    cursor: move;
+    border-left: 3px solid transparent;
+}
+
+.sortable-item:hover {
+    border-left-color: #667eea;
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+}
+
+.sortable-chosen {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.4), rgba(118, 75, 162, 0.4)) !important;
+    transform: rotate(1deg) scale(1.02);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    border-left-color: #667eea;
+}
+
+.sortable-ghost {
+    opacity: 0.6;
+    transform: scale(0.98);
+    background: rgba(102, 126, 234, 0.1) !important;
+}
+
+/* 表格空状态美化 */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    margin: 1rem;
+}
+
+.empty-state i {
+    font-size: 3.5rem;
+    margin-bottom: 1.5rem;
+    display: block;
+    color: rgba(102, 126, 234, 0.6);
+    text-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.empty-state p {
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.empty-state .sub-text {
+    font-size: 1rem;
+    margin-top: 0.5rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
+}
+
+/* 按钮美化 */
+.btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+    color: #1f2937;
+}
+
+.btn-success:hover {
+    color: #1f2937;
+    box-shadow: 0 8px 25px rgba(132, 250, 176, 0.4);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+}
+
+.btn-danger:hover {
+    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 8px;
+}
+
+/* 表单控件美化 - 调整背景色提高对比度 */
+input, select, textarea {
+    background: rgba(255, 255, 255, 0.12);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #ffffff;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    width: 100%;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+    background: rgba(255, 255, 255, 0.18);
+}
+
+input::placeholder, textarea::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* 美化下拉选项 */
+select option {
+    background: #2a2a4a;
+    color: #ffffff;
+    padding: 8px;
+}
+
+/* 表单组样式 */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group .form-label {
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 500;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.form-group .form-label span {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* 表单验证样式 */
+.form-control.is-invalid {
+    border-color: #ef4444;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+.invalid-feedback {
+    display: block;
+    color: #ef4444;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* 代码编辑器样式 - 调整背景色提高对比度 */
+.code-editor {
+    font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+    font-size: 13px;
+    line-height: 1.4;
+    background: rgba(255, 255, 255, 0.15) !important;
+    border: 1px solid rgba(102, 126, 234, 0.5) !important;
+}
+
+.code-editor:focus {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: #667eea !important;
+}
+
+/* 按钮加载状态 */
+.btn-loading {
+    display: none;
+}
+
+.btn.loading .btn-text {
+    display: none;
+}
+
+.btn.loading .btn-loading {
+    display: inline-block;
+}
+
+.btn.loading {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+/* 模态框样式已统一到base.html中 */
+
+.modal label {
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.modal label span {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* 状态徽章美化 */
+.badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge.bg-success {
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    color: white !important;
+}
+
+.badge.bg-secondary {
+    background: linear-gradient(135deg, #6b7280, #4b5563) !important;
+    color: white !important;
+}
+
+.badge.bg-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2) !important;
+    color: white !important;
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    color: white !important;
+}
+
+/* 页面标题美化 */
+.page-title-box {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.page-title {
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+}
+
+.breadcrumb {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 16px;
+    margin: 0 0 16px 0;
+    border-radius: 8px;
+}
+
+.breadcrumb-item a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.breadcrumb-item a:hover {
+    color: #667eea;
+}
+
+.breadcrumb-item.active {
+    color: #667eea;
+}
+
+/* 卡片头部美化 - 调整背景色提高对比度 */
+.card-header {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.25), rgba(118, 75, 162, 0.25));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 15px 15px 0 0;
+    padding: 20px 24px;
+}
+
+.header-title {
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* 表格响应式 */
+.table-responsive {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+/* 响应式设计改进 */
+@media (max-width: 768px) {
+    .table-actions {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .btn-group {
+        justify-content: center;
+    }
+    
+    .table th, .table td {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+    
+    .modal-dialog {
+        margin: 10px;
+    }
+    
+    .card {
+        padding: 16px;
+    }
+    
+    .page-title-box {
+        padding: 16px;
+    }
+    
+    .page-title {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 576px) {
+    .table-responsive {
+        font-size: 12px;
+    }
+    
+    .btn {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+    
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+    
+    .modal-dialog {
+        margin: 5px;
+    }
+    
+    .modal-body {
+        padding: 16px;
+    }
+    
+    .modal-footer {
+        padding: 12px 16px;
+    }
+}
+
+/* 动画增强 */
+.card, .btn, .table tbody tr {
+    will-change: transform;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2, #667eea);
+}
+
+/* 空状态美化 */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+    color: rgba(102, 126, 234, 0.6);
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state .sub-text {
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* 搜索和筛选区域美化 - 调整背景色提高对比度 */
+.table-actions {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* 表格行美化 */
+.sortable-item {
+    transition: all 0.3s ease;
+    cursor: move;
+}
+
+.sortable-item:hover {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.25), rgba(118, 75, 162, 0.25));
+    transform: scale(1.01);
+}
+
+.sortable-chosen {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.35), rgba(118, 75, 162, 0.35)) !important;
+    transform: rotate(2deg) scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.sortable-ghost {
+    opacity: 0.4;
+    transform: scale(0.95);
+}
+
+/* 表格列宽优化 */
+.table th:nth-child(1) { width: 80px; }  /* 排序列 */
+.table th:nth-child(2) { width: auto; }  /* 标题列 */
+.table th:nth-child(3) { width: 120px; } /* 分类/竞赛名称列 */
+.table th:nth-child(4) { width: 120px; } /* 时间复杂度/获奖等级列 */
+.table th:nth-child(5) { width: 120px; } /* 空间复杂度/获奖者列 */
+.table th:nth-child(6) { width: 100px; } /* 比赛日期列 */
+.table th:nth-child(7) { width: 100px; } /* 状态列 */
+.table th:nth-child(8) { width: 160px; } /* 操作列 */
+
+/* 表格行交替背景色增强 */
+.table tbody tr:nth-child(even) {
+    background: rgba(25, 25, 45, 0.9);
+}
+
+.table tbody tr:nth-child(odd) {
+    background: rgba(20, 20, 40, 0.9);
+}
+
+.table tbody tr:nth-child(even):hover {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.25), rgba(118, 75, 162, 0.25)) !important;
+}
+
+.table tbody tr:nth-child(odd):hover {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.25), rgba(118, 75, 162, 0.25)) !important;
+}
+
+/* 表格单元格内容对齐优化 */
+.table td {
+    vertical-align: top;
+    padding: 16px 12px;
+}
+
+/* 表格标题列特殊样式 */
+.table td:nth-child(2) {
+    text-align: left;
+    padding-left: 16px;
+}
+
+/* 表格内容列居中对齐 */
+.table td:nth-child(1),
+.table td:nth-child(3),
+.table td:nth-child(4),
+.table td:nth-child(5),
+.table td:nth-child(6),
+.table td:nth-child(7),
+.table td:nth-child(8) {
+    text-align: center;
+}
+
+/* 表格行分隔线增强 */
+.table tbody tr:not(:last-child) td {
+    border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+/* 表格悬停效果增强 */
+.table tbody tr:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    z-index: 1;
+    position: relative;
+}
+
+/* 表格内容文本阴影 */
+.table td strong,
+.table td div:first-child {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* 表格徽章悬停效果 */
+.table td .badge {
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+.table td .badge:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* 表格代码块悬停效果 */
+.table td code {
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+.table td code:hover {
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+/* 表格按钮组样式优化 */
+.table td .btn-group {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* 表格空状态增强 */
+.empty-state {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.05));
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+/* 响应式表格优化 */
+@media (max-width: 768px) {
+    .table th, .table td {
+        padding: 12px 8px;
+        font-size: 0.85rem;
+    }
+    
+    .table td .btn {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+    
+    .table td .badge {
+        padding: 6px 8px;
+        font-size: 0.7rem;
+    }
+    
+    .table td code {
+        padding: 6px 8px;
+        font-size: 0.8rem;
+        min-width: 50px;
+    }
+}
+
+@media (max-width: 576px) {
+    .table-responsive {
+        font-size: 0.8rem;
+    }
+    
+    .table th, .table td {
+        padding: 8px 6px;
+        font-size: 0.8rem;
+    }
+    
+    .table td .btn {
+        padding: 3px 6px;
+        font-size: 0.7rem;
+    }
+    
+    .sort-handle {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .sort-handle:before {
+        font-size: 12px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 消息提示容器 -->
+<div id="messageContainer" class="message-container"></div>
+
+<div class="container-fluid">
+ 
+    
+
+    <!-- 项目概览管理 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <h2 style="color: #ffffff; margin-bottom: 24px; font-size: 24px; font-weight: 600; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">📊 项目概览管理</h2>
+                <div class="table-actions" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input id="overviewSearchInput" type="text" placeholder="搜索统计项..." style="padding:10px 14px;min-width:220px;">
+                    </div>
+                    <div class="btn-group" style="display:flex;gap:12px;align-items:center;">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#overviewModal">
+                            <i class="fas fa-plus"></i> 添加统计项
+                        </button>
+                        <button id="saveOverviewOrderBtn" class="btn btn-success" style="display:none;">💾 保存排序</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th width="50">排序</th>
+                                <th>名称</th>
+                                <th>数值</th>
+                                <th>图标</th>
+                                <th>描述</th>
+                                <th>状态</th>
+                                <th width="150">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="overviewTableBody">
+                            <!-- 概览数据将通过JavaScript动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 竞赛获奖管理 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <h2 style="color: #ffffff; margin-bottom: 24px; font-size: 24px; font-weight: 600; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🏆 竞赛获奖管理</h2>
+                <div class="table-actions" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input id="awardSearchInput" type="text" placeholder="搜索获奖记录..." style="padding:10px 14px;min-width:220px;">
+                        <select id="awardLevelFilter" style="padding:10px 14px;">
+                            <option value="">全部等级</option>
+                            <option value="特等奖">特等奖</option>
+                            <option value="一等奖">一等奖</option>
+                            <option value="二等奖">二等奖</option>
+                            <option value="三等奖">三等奖</option>
+                            <option value="优秀奖">优秀奖</option>
+                        </select>
+                    </div>
+                    <div class="btn-group" style="display:flex;gap:12px;align-items:center;">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#awardModal">
+                            <i class="fas fa-plus"></i> 添加获奖记录
+                        </button>
+                        <button id="saveAwardOrderBtn" class="btn btn-success" style="display:none;">💾 保存排序</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th width="50">排序</th>
+                                <th>标题</th>
+                                <th>竞赛名称</th>
+                                <th>获奖等级</th>
+                                <th>获奖者</th>
+                                <th>比赛日期</th>
+                                <th>状态</th>
+                                <th width="150">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="awardTableBody">
+                            <!-- 获奖数据将通过JavaScript动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<!-- 竞赛获奖模态框 -->
+<div class="modal fade" id="awardModal" tabindex="-1" aria-labelledby="awardModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="awardModalLabel">添加获奖记录</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭" tabindex="0"></button>
+            </div>
+            <form id="awardForm" novalidate>
+                <div class="modal-body">
+                    <input type="hidden" id="awardId" name="id">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="awardTitle" class="form-label">标题 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="awardTitle" name="title" required 
+                                       placeholder="请输入获奖标题" autocomplete="off">
+                                <div class="invalid-feedback">请输入获奖标题</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="awardCompetitionName" class="form-label">竞赛名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="awardCompetitionName" name="competition_name" required 
+                                       placeholder="请输入竞赛名称" autocomplete="off">
+                                <div class="invalid-feedback">请输入竞赛名称</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="awardLevel" class="form-label">获奖等级 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="awardLevel" name="award_level" required>
+                                    <option value="">请选择等级</option>
+                                    <option value="特等奖">特等奖</option>
+                                    <option value="一等奖">一等奖</option>
+                                    <option value="二等奖">二等奖</option>
+                                    <option value="三等奖">三等奖</option>
+                                    <option value="优秀奖">优秀奖</option>
+                                </select>
+                                <div class="invalid-feedback">请选择获奖等级</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="awardWinnerName" class="form-label">获奖者</label>
+                                <input type="text" class="form-control" id="awardWinnerName" name="winner_name" 
+                                       placeholder="请输入获奖者姓名" autocomplete="off">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="awardCompetitionDate" class="form-label">比赛日期</label>
+                                <input type="date" class="form-control" id="awardCompetitionDate" name="competition_date">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="awardCompetitionLocation" class="form-label">比赛地点</label>
+                                <input type="text" class="form-control" id="awardCompetitionLocation" name="competition_location" 
+                                       placeholder="请输入比赛地点" autocomplete="off">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="awardTeamScore" class="form-label">团队得分</label>
+                                <input type="text" class="form-control" id="awardTeamScore" name="team_score" 
+                                       placeholder="如：95.5分" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="awardImageUrl" class="form-label">图片链接</label>
+                                <input type="url" class="form-control" id="awardImageUrl" name="image_url" 
+                                       placeholder="https://example.com/image.jpg" autocomplete="off">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group mt-3">
+                        <label for="awardDescription" class="form-label">描述</label>
+                        <textarea class="form-control" id="awardDescription" name="description" rows="3" 
+                                  placeholder="请输入获奖描述"></textarea>
+                    </div>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="awardStatus" class="form-label">状态</label>
+                                <select class="form-select" id="awardStatus" name="status">
+                                    <option value="active">启用</option>
+                                    <option value="inactive">禁用</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="awardOrderIndex" class="form-label">排序</label>
+                                <input type="number" class="form-control" id="awardOrderIndex" name="order_index" 
+                                       value="0" min="0" autocomplete="off">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" tabindex="0">取消</button>
+                    <button type="submit" class="btn btn-primary" id="saveAwardBtn">
+                        <span class="btn-text">保存</span>
+                        <span class="btn-loading" style="display: none;">
+                            <i class="fas fa-spinner fa-spin"></i> 保存中...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 项目概览模态框 -->
+<div class="modal fade" id="overviewModal" tabindex="-1" aria-labelledby="overviewModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="overviewModalLabel">添加统计项</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭" tabindex="0"></button>
+            </div>
+            <form id="overviewForm" novalidate>
+                <div class="modal-body">
+                    <input type="hidden" id="overviewId" name="id">
+                    <div class="form-group">
+                        <label for="overviewName" class="form-label">名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="overviewName" name="name" required 
+                               placeholder="请输入统计项名称" autocomplete="off">
+                        <div class="invalid-feedback">请输入统计项名称</div>
+                    </div>
+                    <div class="form-group mt-3">
+                        <label for="overviewValue" class="form-label">数值</label>
+                        <input type="number" class="form-control" id="overviewValue" name="value" value="0" min="0" 
+                               autocomplete="off">
+                    </div>
+                    <div class="form-group mt-3">
+                        <label for="overviewIcon" class="form-label">图标</label>
+                        <input type="text" class="form-control" id="overviewIcon" name="icon" value="fa-chart-bar" 
+                               placeholder="FontAwesome图标类名，如：fa-chart-bar" autocomplete="off">
+                    </div>
+                    <div class="form-group mt-3">
+                        <label for="overviewDescription" class="form-label">描述</label>
+                        <textarea class="form-control" id="overviewDescription" name="description" rows="3" 
+                                  placeholder="请输入统计项描述"></textarea>
+                    </div>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="overviewStatus" class="form-label">状态</label>
+                                <select class="form-select" id="overviewStatus" name="status">
+                                    <option value="active">启用</option>
+                                    <option value="inactive">禁用</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="overviewOrderIndex" class="form-label">排序</label>
+                                <input type="number" class="form-control" id="overviewOrderIndex" name="order_index" 
+                                       value="0" min="0" autocomplete="off">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" tabindex="0">取消</button>
+                    <button type="submit" class="btn btn-primary" id="saveOverviewBtn">
+                        <span class="btn-text">保存</span>
+                        <span class="btn-loading" style="display: none;">
+                            <i class="fas fa-spinner fa-spin"></i> 保存中...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭" tabindex="0"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #f59e0b; margin-bottom: 1rem;"></i>
+                    <p class="mb-0">确定要删除这条记录吗？</p>
+                    <p class="text-muted small">此操作不可恢复，请谨慎操作。</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" tabindex="0">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete" tabindex="0">
+                    <span class="btn-text">确定删除</span>
+                    <span class="btn-loading" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i> 删除中...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- 使用更稳定的Sortable.js CDN链接 -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+let currentDeleteId = null;
+let currentDeleteType = null;
+
+// 全局消息提示系统
+function showMessage(text, type = 'info') {
+    const container = document.getElementById('messageContainer');
+    const message = document.createElement('div');
+    message.className = `message ${type}`;
+    
+    const iconMap = {
+        success: '✓',
+        error: '✕',
+        info: 'ⓘ'
+    };
+    
+    message.innerHTML = `
+        <span class="message-icon">${iconMap[type] || 'ⓘ'}</span>
+        <span>${text}</span>
+    `;
+    
+    container.appendChild(message);
+    
+    // 触发显示动画
+    setTimeout(() => message.classList.add('show'), 100);
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+        message.classList.remove('show');
+        setTimeout(() => {
+            if (message.parentNode) {
+                message.parentNode.removeChild(message);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 开始初始化获奖记录和项目概览管理系统...');
+    
+    // 显示加载状态
+    showMessage('正在加载数据...', 'info');
+    
+    // 检查必要的依赖
+    if (typeof bootstrap === 'undefined') {
+        console.error('❌ Bootstrap 未加载');
+        showMessage('Bootstrap 库未加载，请刷新页面重试', 'error');
+        return;
+    }
+    
+    // 添加错误处理
+    window.addEventListener('error', function(event) {
+        console.error('JavaScript错误:', event.error);
+        showMessage(`JavaScript错误: ${event.message}`, 'error');
+    });
+    
+    window.addEventListener('unhandledrejection', function(event) {
+        console.error('未处理的Promise拒绝:', event.reason);
+        showMessage(`Promise错误: ${event.reason}`, 'error');
+    });
+    
+    // 并行加载数据，即使某个模块失败也继续初始化其他功能
+    Promise.allSettled([
+        loadAwards(),
+        loadOverviews()
+    ]).then((results) => {
+        console.log('✅ 数据加载完成，开始初始化功能...');
+        
+        // 检查每个模块的加载结果
+        results.forEach((result, index) => {
+            const moduleNames = ['获奖记录', '项目概览'];
+            if (result.status === 'fulfilled') {
+                console.log(`✅ ${moduleNames[index]}模块加载成功`);
+            } else {
+                console.error(`❌ ${moduleNames[index]}模块加载失败:`, result.reason);
+                showMessage(`${moduleNames[index]}模块加载失败: ${result.reason}`, 'error');
+            }
+        });
+        
+        // 按顺序初始化功能
+        try {
+            initializeSortable();
+            console.log('✅ 拖拽排序初始化完成');
+            
+            initializeForms();
+            console.log('✅ 表单初始化完成');
+            
+            initializeSearch();
+            console.log('✅ 搜索功能初始化完成');
+            
+            setupFormValidation();
+            console.log('✅ 表单验证初始化完成');
+            
+            initializeModalEvents();
+            console.log('✅ 模态框事件初始化完成');
+            
+            // 页面加载完成提示
+            setTimeout(() => {
+                showMessage('获奖记录和项目概览管理系统已就绪！', 'success');
+                console.log('🎉 获奖记录和项目概览管理系统初始化完成！');
+            }, 500);
+        } catch (error) {
+            console.error('❌ 功能初始化失败:', error);
+            showMessage('功能初始化失败，请刷新重试', 'error');
+        }
+    }).catch((error) => {
+        console.error('❌ 初始化过程出错:', error);
+        showMessage('系统初始化失败，请刷新重试', 'error');
+    });
+});
+
+// 初始化拖拽排序
+function initializeSortable() {
+    try {
+        // 检查Sortable是否可用
+        if (typeof Sortable === 'undefined') {
+            console.warn('⚠️ Sortable库未加载，跳过拖拽排序初始化');
+            return;
+        }
+        
+
+        // 获奖记录排序
+        const awardTableBody = document.getElementById('awardTableBody');
+        if (awardTableBody) {
+            new Sortable(awardTableBody, {
+                animation: 150,
+                handle: '.sort-handle',
+                onUpdate: function(evt) {
+                    const saveBtn = document.getElementById('saveAwardOrderBtn');
+                    if (saveBtn) {
+                        saveBtn.style.display = 'inline-block';
+                    }
+                }
+            });
+        }
+        
+        // 项目概览排序
+        const overviewTableBody = document.getElementById('overviewTableBody');
+        if (overviewTableBody) {
+            new Sortable(overviewTableBody, {
+                animation: 150,
+                handle: '.sort-handle',
+                onUpdate: function(evt) {
+                    const saveBtn = document.getElementById('saveOverviewOrderBtn');
+                    if (saveBtn) {
+                        saveBtn.style.display = 'inline-block';
+                    }
+                }
+            });
+        }
+    } catch (error) {
+        console.error('❌ 初始化拖拽排序失败:', error);
+        showMessage('拖拽排序功能初始化失败，但不影响其他功能', 'error');
+    }
+}
+
+// 初始化搜索功能
+function initializeSearch() {
+    // 获奖记录搜索
+    const awardSearchInput = document.getElementById('awardSearchInput');
+    const awardLevelFilter = document.getElementById('awardLevelFilter');
+    
+    if (awardSearchInput) {
+        awardSearchInput.addEventListener('input', applyAwardFilter);
+    }
+    if (awardLevelFilter) {
+        awardLevelFilter.addEventListener('change', applyAwardFilter);
+    }
+    
+    // 项目概览搜索
+    const overviewSearchInput = document.getElementById('overviewSearchInput');
+    
+    if (overviewSearchInput) {
+        overviewSearchInput.addEventListener('input', applyOverviewFilter);
+    }
+}
+
+// 获奖记录过滤
+function applyAwardFilter() {
+    const searchInput = document.getElementById('awardSearchInput');
+    const levelFilter = document.getElementById('awardLevelFilter');
+    
+    if (!searchInput || !levelFilter) return;
+    
+    const keyword = (searchInput.value || '').trim().toLowerCase();
+    const level = (levelFilter.value || '').trim();
+    
+    const filteredAwards = window.awardData ? window.awardData.filter(award => {
+        const matchKeyword = !keyword || 
+            (award.title && award.title.toLowerCase().includes(keyword)) ||
+            (award.competition_name && award.competition_name.toLowerCase().includes(keyword)) ||
+            (award.winner_name && award.winner_name.toLowerCase().includes(keyword));
+        
+        const matchLevel = !level || award.award_level === level;
+        
+        return matchKeyword && matchLevel;
+    }) : [];
+    
+    renderAwardTable(filteredAwards);
+}
+
+// 项目概览过滤
+function applyOverviewFilter() {
+    const searchInput = document.getElementById('overviewSearchInput');
+    
+    if (!searchInput) return;
+    
+    const keyword = (searchInput.value || '').trim().toLowerCase();
+    
+    const filteredOverviews = window.overviewData ? window.overviewData.filter(overview => {
+        return !keyword || 
+            (overview.name && overview.name.toLowerCase().includes(keyword)) ||
+            (overview.description && overview.description.toLowerCase().includes(keyword));
+    }) : [];
+    
+    renderOverviewTable(filteredOverviews);
+}
+
+// 初始化表单
+function initializeForms() {
+    // 获奖记录表单
+    const awardForm = document.getElementById('awardForm');
+    if (awardForm) {
+        awardForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveAward();
+        });
+    }
+    
+    // 项目概览表单
+    const overviewForm = document.getElementById('overviewForm');
+    if (overviewForm) {
+        overviewForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveOverview();
+        });
+    }
+    
+    // 删除确认
+    const confirmDeleteBtn = document.getElementById('confirmDelete');
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', function() {
+            if (currentDeleteId && currentDeleteType) {
+                deleteItem(currentDeleteId, currentDeleteType);
+            }
+        });
+    }
+    
+    // 排序按钮事件
+    const saveAwardOrderBtn = document.getElementById('saveAwardOrderBtn');
+    if (saveAwardOrderBtn) {
+        saveAwardOrderBtn.addEventListener('click', updateAwardOrder);
+    }
+    
+    const saveOverviewOrderBtn = document.getElementById('saveOverviewOrderBtn');
+    if (saveOverviewOrderBtn) {
+        saveOverviewOrderBtn.addEventListener('click', updateOverviewOrder);
+    }
+}
+
+
+
+// 加载获奖记录数据
+function loadAwards() {
+    console.log('🔍 开始加载获奖记录数据...');
+    return fetch('/api/admin/algorithm-awards')
+        .then(response => {
+            console.log('获奖记录API响应状态:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('获奖记录API响应数据:', data);
+            console.log('数据类型:', typeof data);
+            console.log('是否为数组:', Array.isArray(data));
+            
+            if (Array.isArray(data)) {
+                window.awardData = data;
+                console.log('获奖记录数据已设置到window.awardData');
+                renderAwardTable(data);
+                console.log(`✅ 成功加载 ${data.length} 个获奖记录`);
+                return data;
+            } else if (data && typeof data === 'object' && data.error) {
+                console.error('加载获奖记录失败:', data.error);
+                throw new Error(data.error || '加载获奖记录失败');
+            } else {
+                console.error('API返回的数据格式不正确:', data);
+                throw new Error('API返回的数据格式不正确');
+            }
+        })
+        .catch(error => {
+            console.error('加载获奖记录出错:', error);
+            showMessage(`加载获奖记录出错: ${error.message}`, 'error');
+            // 显示空状态
+            renderAwardTable([]);
+            // 不抛出错误，让其他模块继续加载
+            return [];
+        });
+}
+
+// 渲染获奖记录表格
+function renderAwardTable(awards) {
+    const tbody = document.getElementById('awardTableBody');
+    tbody.innerHTML = '';
+    
+    if (awards.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="empty-state">
+                    <i class="fas fa-trophy"></i>
+                    <p>暂无获奖记录</p>
+                    <p class="sub-text">点击"添加获奖记录"按钮添加新的获奖记录</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    awards.forEach(award => {
+        const row = document.createElement('tr');
+        row.className = 'sortable-item';
+        row.setAttribute('data-id', award.id);
+        const date = award.competition_date ? new Date(award.competition_date).toLocaleDateString() : '-';
+        row.innerHTML = `
+            <td style="text-align: center;">
+                <span class="sort-handle" title="拖拽排序"></span>
+            </td>
+            <td>
+                <div style="font-weight: 600; color: #ffffff; font-size: 1rem; margin-bottom: 4px;">${award.title || ''}</div>
+                ${award.description ? `<div style="color: rgba(255, 255, 255, 0.7); font-size: 0.85rem; line-height: 1.4;">${award.description.substring(0, 50)}${award.description.length > 50 ? '...' : ''}</div>` : ''}
+            </td>
+            <td>
+                <div style="color: #ffffff; font-weight: 500; font-size: 0.95rem;">${award.competition_name || ''}</div>
+                ${award.competition_location ? `<div style="color: rgba(255, 255, 255, 0.6); font-size: 0.8rem; margin-top: 2px;">📍 ${award.competition_location}</div>` : ''}
+            </td>
+            <td style="text-align: center;">
+                <span class="badge bg-warning" style="font-size: 0.8rem; padding: 8px 12px; background: linear-gradient(135deg, #f59e0b, #d97706) !important;">
+                    🏆 ${award.award_level || ''}
+                </span>
+            </td>
+            <td style="text-align: center;">
+                <div style="color: #ffffff; font-weight: 500; font-size: 0.95rem;">${award.winner_name || '-'}</div>
+                ${award.team_score ? `<div style="color: rgba(255, 255, 255, 0.7); font-size: 0.8rem; margin-top: 2px;">${award.team_score}</div>` : ''}
+            </td>
+            <td style="text-align: center;">
+                <div style="color: rgba(255, 255, 255, 0.9); font-weight: 500; font-size: 0.9rem;">${date}</div>
+            </td>
+            <td style="text-align: center;">
+                <span class="badge ${award.status === 'active' ? 'bg-success' : 'bg-secondary'}" style="font-size: 0.8rem; padding: 8px 12px;">
+                    ${award.status === 'active' ? '✅ 启用' : '❌ 禁用'}
+                </span>
+            </td>
+            <td style="text-align: center;">
+                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn btn-sm" onclick="editAward(${award.id})" title="编辑" style="background: linear-gradient(135deg, #667eea, #764ba2); border: 1px solid rgba(255, 255, 255, 0.2);">
+                        ✏️ 编辑
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="showDeleteModal(${award.id}, 'award')" title="删除" style="background: linear-gradient(135deg, #ef4444, #dc2626); border: 1px solid rgba(239, 68, 68, 0.3);">
+                        🗑️ 删除
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// 加载项目概览数据
+function loadOverviews() {
+    console.log('🔍 开始加载项目概览数据...');
+    return fetch('/api/admin/project-overview')
+        .then(response => {
+            console.log('项目概览API响应状态:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('项目概览API响应数据:', data);
+            console.log('数据类型:', typeof data);
+            console.log('是否为数组:', Array.isArray(data));
+            
+            if (Array.isArray(data)) {
+                window.overviewData = data;
+                console.log('项目概览数据已设置到window.overviewData');
+                renderOverviewTable(data);
+                console.log(`✅ 成功加载 ${data.length} 个统计项`);
+                return data;
+            } else if (data && typeof data === 'object' && data.error) {
+                console.error('加载项目概览失败:', data.error);
+                throw new Error(data.error || '加载项目概览失败');
+            } else {
+                console.error('API返回的数据格式不正确:', data);
+                throw new Error('API返回的数据格式不正确');
+            }
+        })
+        .catch(error => {
+            console.error('加载项目概览出错:', error);
+            showMessage(`加载项目概览出错: ${error.message}`, 'error');
+            // 显示空状态
+            renderOverviewTable([]);
+            // 不抛出错误，让其他模块继续加载
+            return [];
+        });
+}
+
+// 渲染项目概览表格
+function renderOverviewTable(overviews) {
+    const tbody = document.getElementById('overviewTableBody');
+    tbody.innerHTML = '';
+    
+    if (overviews.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="empty-state">
+                    <i class="fas fa-chart-bar"></i>
+                    <p>暂无统计项数据</p>
+                    <p class="sub-text">点击"添加统计项"按钮添加新的统计项</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    overviews.forEach(overview => {
+        const row = document.createElement('tr');
+        row.className = 'sortable-item';
+        row.setAttribute('data-id', overview.id);
+        row.innerHTML = `
+            <td style="text-align: center;">
+                <span class="sort-handle" title="拖拽排序"></span>
+            </td>
+            <td>
+                <div style="font-weight: 600; color: #ffffff; font-size: 1rem; margin-bottom: 4px;">${overview.name || ''}</div>
+                ${overview.description ? `<div style="color: rgba(255, 255, 255, 0.7); font-size: 0.85rem; line-height: 1.4;">${overview.description.substring(0, 50)}${overview.description.length > 50 ? '...' : ''}</div>` : ''}
+            </td>
+            <td style="text-align: center;">
+                <div style="font-size: 1.5em; font-weight: bold; color: #667eea; text-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);">${overview.value || 0}</div>
+            </td>
+            <td style="text-align: center;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fas ${overview.icon || 'fa-chart-bar'}" style="color: #764ba2; font-size: 1.2rem; text-shadow: 0 2px 4px rgba(118, 75, 162, 0.3);"></i>
+                    <span style="color: rgba(255, 255, 255, 0.8); font-size: 0.8rem;">${overview.icon || 'fa-chart-bar'}</span>
+                </div>
+            </td>
+            <td>
+                <div style="color: rgba(255, 255, 255, 0.9); font-size: 0.9rem; line-height: 1.4;">${overview.description || '-'}</div>
+            </td>
+            <td style="text-align: center;">
+                <span class="badge ${overview.status === 'active' ? 'bg-success' : 'bg-secondary'}" style="font-size: 0.8rem; padding: 8px 12px;">
+                    ${overview.status === 'active' ? '✅ 启用' : '❌ 禁用'}
+                </span>
+            </td>
+            <td style="text-align: center;">
+                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn btn-sm" onclick="editOverview(${overview.id})" title="编辑" style="background: linear-gradient(135deg, #667eea, #764ba2); border: 1px solid rgba(255, 255, 255, 0.2);">
+                        ✏️ 编辑
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="showDeleteModal(${overview.id}, 'overview')" title="删除" style="background: linear-gradient(135deg, #ef4444, #dc2626); border: 1px solid rgba(239, 68, 68, 0.3);">
+                        🗑️ 删除
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+
+
+// 编辑获奖记录
+function editAward(id) {
+    fetch(`/api/admin/algorithm-awards/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const award = data.award;
+                document.getElementById('awardId').value = award.id;
+                document.getElementById('awardTitle').value = award.title;
+                document.getElementById('awardCompetitionName').value = award.competition_name;
+                document.getElementById('awardLevel').value = award.award_level;
+                document.getElementById('awardWinnerName').value = award.winner_name || '';
+                document.getElementById('awardCompetitionDate').value = award.competition_date || '';
+                document.getElementById('awardCompetitionLocation').value = award.competition_location || '';
+                document.getElementById('awardTeamScore').value = award.team_score || '';
+                document.getElementById('awardImageUrl').value = award.image_url || '';
+                document.getElementById('awardDescription').value = award.description || '';
+                document.getElementById('awardStatus').value = award.status;
+                document.getElementById('awardOrderIndex').value = award.order_index;
+                
+                document.getElementById('awardModalLabel').textContent = '编辑获奖记录';
+                const modal = new bootstrap.Modal(document.getElementById('awardModal'));
+                modal.show();
+            }
+        })
+        .catch(error => {
+            console.error('获取获奖记录数据出错:', error);
+            showMessage('获取获奖记录数据失败', 'error');
+        });
+}
+
+// 编辑项目概览
+function editOverview(id) {
+    fetch(`/api/admin/project-overview/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const overview = data.overview;
+                document.getElementById('overviewId').value = overview.id;
+                document.getElementById('overviewName').value = overview.name;
+                document.getElementById('overviewValue').value = overview.value;
+                document.getElementById('overviewIcon').value = overview.icon;
+                document.getElementById('overviewDescription').value = overview.description || '';
+                document.getElementById('overviewStatus').value = overview.status;
+                document.getElementById('overviewOrderIndex').value = overview.order_index;
+                
+                document.getElementById('overviewModalLabel').textContent = '编辑统计项';
+                const modal = new bootstrap.Modal(document.getElementById('overviewModal'));
+                modal.show();
+            }
+        })
+        .catch(error => {
+            console.error('获取项目概览数据出错:', error);
+            showMessage('获取项目概览数据失败', 'error');
+        });
+}
+
+
+
+// 保存获奖记录
+function saveAward() {
+    const form = document.getElementById('awardForm');
+    const submitBtn = document.getElementById('saveAwardBtn');
+    
+    // 表单验证
+    if (!form.checkValidity()) {
+        form.classList.add('was-validated');
+        return;
+    }
+    
+    // 显示加载状态
+    submitBtn.classList.add('loading');
+    
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    const id = document.getElementById('awardId').value;
+    const url = id ? `/api/admin/algorithm-awards/${id}` : '/api/admin/algorithm-awards';
+    const method = id ? 'PUT' : 'POST';
+    
+    console.log('保存获奖记录数据:', data);
+    console.log('请求URL:', url);
+    console.log('请求方法:', method);
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        console.log('保存获奖记录响应状态:', response.status);
+        return response.json();
+    })
+    .then(result => {
+        console.log('保存获奖记录响应数据:', result);
+        if (result.success) {
+            showMessage(result.message || '获奖记录保存成功', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('awardModal')).hide();
+            resetAwardForm();
+            // 重新加载数据
+            loadAwards().then(() => {
+                console.log('获奖记录数据重新加载完成');
+            });
+        } else {
+            showMessage(result.error || '保存失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('保存获奖记录出错:', error);
+        showMessage('保存失败，请重试', 'error');
+    })
+    .finally(() => {
+        // 隐藏加载状态
+        submitBtn.classList.remove('loading');
+    });
+}
+
+// 保存项目概览
+function saveOverview() {
+    const form = document.getElementById('overviewForm');
+    const submitBtn = document.getElementById('saveOverviewBtn');
+    
+    // 表单验证
+    if (!form.checkValidity()) {
+        form.classList.add('was-validated');
+        return;
+    }
+    
+    // 显示加载状态
+    submitBtn.classList.add('loading');
+    
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    const id = document.getElementById('overviewId').value;
+    const url = id ? `/api/admin/project-overview/${id}` : '/api/admin/project-overview';
+    const method = id ? 'PUT' : 'POST';
+    
+    console.log('保存项目概览数据:', data);
+    console.log('请求URL:', url);
+    console.log('请求方法:', method);
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        console.log('保存项目概览响应状态:', response.status);
+        return response.json();
+    })
+    .then(result => {
+        console.log('保存项目概览响应数据:', result);
+        if (result.success) {
+            showMessage(result.message || '统计项保存成功', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('overviewModal')).hide();
+            resetOverviewForm();
+            // 重新加载数据
+            loadOverviews().then(() => {
+                console.log('项目概览数据重新加载完成');
+            });
+        } else {
+            showMessage(result.error || '保存失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('保存项目概览出错:', error);
+        showMessage('保存失败，请重试', 'error');
+    })
+    .finally(() => {
+        // 隐藏加载状态
+        submitBtn.classList.remove('loading');
+    });
+}
+
+// 显示删除确认模态框
+function showDeleteModal(id, type) {
+    currentDeleteId = id;
+    currentDeleteType = type;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+// 删除项目
+function deleteItem(id, type) {
+    const confirmBtn = document.getElementById('confirmDelete');
+    
+    // 显示加载状态
+    confirmBtn.classList.add('loading');
+    
+    let url = '';
+    let typeName = '';
+    switch(type) {
+        case 'award':
+            url = `/api/admin/algorithm-awards/${id}`;
+            typeName = '获奖记录';
+            break;
+        case 'overview':
+            url = `/api/admin/project-overview/${id}`;
+            typeName = '统计项';
+            break;
+    }
+    
+    fetch(url, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showMessage(result.message || `${typeName}删除成功`, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+            
+            // 重新加载数据
+            switch(type) {
+                case 'award':
+                    loadAwards();
+                    break;
+                case 'overview':
+                    loadOverviews();
+                    break;
+            }
+        } else {
+            showMessage(result.error || '删除失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('删除出错:', error);
+        showMessage('删除失败，请重试', 'error');
+    })
+    .finally(() => {
+        // 隐藏加载状态
+        confirmBtn.classList.remove('loading');
+    });
+}
+
+
+
+// 更新获奖记录排序
+function updateAwardOrder() {
+    const rows = document.querySelectorAll('#awardTableBody tr[data-id]');
+    const orderData = [];
+    
+    rows.forEach((row, index) => {
+        const id = row.getAttribute('data-id');
+        if (id) {
+            orderData.push({
+                id: parseInt(id),
+                order_index: index
+            });
+        }
+    });
+    
+    fetch('/api/admin/algorithm-awards/reorder', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ order: orderData })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showMessage('获奖记录排序更新成功', 'success');
+            document.getElementById('saveAwardOrderBtn').style.display = 'none';
+        } else {
+            showMessage(result.error || '排序更新失败', 'error');
+            loadAwards(); // 重新加载以恢复原顺序
+        }
+    })
+    .catch(error => {
+        console.error('更新排序出错:', error);
+        showMessage('排序更新失败', 'error');
+        loadAwards(); // 重新加载以恢复原顺序
+    });
+}
+
+// 更新项目概览排序
+function updateOverviewOrder() {
+    const rows = document.querySelectorAll('#overviewTableBody tr[data-id]');
+    const orderData = [];
+    
+    rows.forEach((row, index) => {
+        const id = row.getAttribute('data-id');
+        if (id) {
+            orderData.push({
+                id: parseInt(id),
+                order_index: index
+            });
+        }
+    });
+    
+    fetch('/api/admin/project-overview/reorder', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ order: orderData })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showMessage('统计项排序更新成功', 'success');
+            document.getElementById('saveOverviewOrderBtn').style.display = 'none';
+        } else {
+            showMessage(result.error || '排序更新失败', 'error');
+            loadOverviews(); // 重新加载以恢复原顺序
+        }
+    })
+    .catch(error => {
+        console.error('更新排序出错:', error);
+        showMessage('排序更新失败', 'error');
+        loadOverviews(); // 重新加载以恢复原顺序
+    });
+}
+
+
+
+// 重置获奖记录表单
+function resetAwardForm() {
+    document.getElementById('awardForm').reset();
+    document.getElementById('awardId').value = '';
+    document.getElementById('awardModalLabel').textContent = '添加获奖记录';
+}
+
+// 重置项目概览表单
+function resetOverviewForm() {
+    document.getElementById('overviewForm').reset();
+    document.getElementById('overviewId').value = '';
+    document.getElementById('overviewModalLabel').textContent = '添加统计项';
+}
+
+
+
+// 初始化模态框事件处理
+function initializeModalEvents() {
+    // 获奖记录模态框事件
+    const awardModal = document.getElementById('awardModal');
+    if (awardModal) {
+        awardModal.addEventListener('hidden.bs.modal', function() {
+            resetAwardForm();
+            // 清除验证状态
+            const form = this.querySelector('form');
+            if (form) {
+                form.classList.remove('was-validated');
+            }
+        });
+        
+        awardModal.addEventListener('shown.bs.modal', function() {
+            setTimeout(() => {
+                const firstInput = this.querySelector('input[type="text"]:not([type="hidden"])');
+                if (firstInput) firstInput.focus();
+            }, 100);
+        });
+    }
+    
+    // 项目概览模态框事件
+    const overviewModal = document.getElementById('overviewModal');
+    if (overviewModal) {
+        overviewModal.addEventListener('hidden.bs.modal', function() {
+            resetOverviewForm();
+            // 清除验证状态
+            const form = this.querySelector('form');
+            if (form) {
+                form.classList.remove('was-validated');
+            }
+        });
+        
+        overviewModal.addEventListener('shown.bs.modal', function() {
+            setTimeout(() => {
+                const firstInput = this.querySelector('input[type="text"]:not([type="hidden"])');
+                if (firstInput) firstInput.focus();
+            }, 100);
+        });
+    }
+}
+
+// 表单验证实时反馈
+function setupFormValidation() {
+    const forms = document.querySelectorAll('form[novalidate]');
+    forms.forEach(form => {
+        const inputs = form.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.hasAttribute('required') && !this.value.trim()) {
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            });
+            
+            input.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid') && this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        });
+    });
+}
+
+// 移除重复的setupFormValidation调用，已在主初始化函数中调用
+</script>
+{% endblock %} 

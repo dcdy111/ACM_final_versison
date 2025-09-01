@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Code Rain - 数字雨</title>
+    <link rel="stylesheet" href="/static/highlight.css">
+<script defer src="/static/highlight.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            cursor: none;
+        }
+
+        #matrix-canvas {
+            display: block;
+            background: #000;
+        }
+
+        .info-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: #00ff41;
+            font-size: 14px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #00ff41;
+            box-shadow: 0 0 20px #00ff41;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .info-panel:hover {
+            opacity: 1;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: #00ff41;
+            font-size: 12px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #00ff41;
+            box-shadow: 0 0 15px #00ff41;
+        }
+
+        .control-item {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider {
+            background: #000;
+            border: 1px solid #00ff41;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            background: #00ff41;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ff41;
+        }
+
+        .title {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ff41;
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 50;
+            opacity: 0;
+            text-shadow: 0 0 20px #00ff41;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .title.show {
+            opacity: 1;
+        }
+
+        /* 鼠标跟随光晕效果 */
+        .cursor-glow {
+            position: fixed;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 65, 0.3) 0%, rgba(0, 255, 65, 0) 70%);
+            pointer-events: none;
+            z-index: 10;
+            mix-blend-mode: screen;
+        }
+
+        /* 返回按钮样式 */
+        .back-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 100;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+            text-transform: uppercase;
+        }
+
+        .back-button:hover {
+            background: rgba(0, 255, 65, 0.1);
+            box-shadow: 0 0 25px rgba(0, 255, 65, 0.6);
+            transform: translateY(-2px);
+            text-shadow: 0 0 10px #00ff41;
+        }
+
+        .back-button:active {
+            transform: translateY(0);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.4);
+        }
+
+        .back-button::before {
+            content: "◀";
+            font-size: 16px;
+            transition: transform 0.3s ease;
+        }
+
+        .back-button:hover::before {
+            transform: translateX(-3px);
+        }
+
+        /* ========================= 统一滚动条美化样式 ========================= */
+        /* 全局滚动条 - 竖直方向 */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        
+        /* 滚动条轨道 */
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+        }
+        
+        /* 滚动条滑块 */
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #3a86ff 0%, #00ffcc 50%, #b967ff 100%);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(58, 134, 255, 0.2);
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #00ffcc 0%, #ff2d75 50%, #3a86ff 100%);
+            box-shadow: 0 4px 15px rgba(58, 134, 255, 0.4);
+            transform: scale(1.05);
+        }
+        
+        /* 滚动条箭头按钮 */
+        ::-webkit-scrollbar-button {
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(45deg, #3a86ff, #00ffcc);
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        /* 竖直滚动条上箭头 */
+        ::-webkit-scrollbar-button:vertical:start:decrement {
+            background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 14l5-5 5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 竖直滚动条下箭头 */
+        ::-webkit-scrollbar-button:vertical:end:increment {
+            background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 水平滚动条左箭头 */
+        ::-webkit-scrollbar-button:horizontal:start:decrement {
+            background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M14 7l-5 5 5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 水平滚动条右箭头 */
+        ::-webkit-scrollbar-button:horizontal:end:increment {
+            background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M10 7l5 5-5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 箭头按钮悬停效果 */
+        ::-webkit-scrollbar-button:hover {
+            background: linear-gradient(45deg, #ff2d75, #b967ff) !important;
+            box-shadow: 0 0 10px rgba(58, 134, 255, 0.6);
+            transform: scale(1.1);
+        }
+        
+        /* 箭头按钮点击效果 */
+        ::-webkit-scrollbar-button:active {
+            background: linear-gradient(45deg, #00ffcc, #3a86ff) !important;
+            transform: scale(0.95);
+        }
+        
+        /* 滚动条角落 */
+        ::-webkit-scrollbar-corner {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+        }
+        
+        /* Firefox滚动条样式 */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #3a86ff rgba(255, 255, 255, 0.08);
+        }
+        
+        /* 移动端滚动条优化 */
+        @media (max-width: 768px) {
+            ::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+        }
+        /* ========================= 滚动条样式结束 ========================= */
+    </style>
+</head>
+<body>
+    <canvas id="matrix-canvas"></canvas>
+    
+    <div class="cursor-glow" id="cursor-glow"></div>
+    
+    <!-- 返回按钮 -->
+    <a href="/" class="back-button" title="返回主页">
+        返回主页
+    </a>
+    
+    <div class="info-panel">
+        <div><strong>Matrix Code Rain</strong></div>
+        <div>数字雨 - 黑客帝国风格</div>
+        <div>FPS: <span id="fps">60</span></div>
+        <div>字符数: <span id="char-count">0</span></div>
+    </div>
+
+    <div class="controls">
+        <div class="control-item">
+            <span>速度:</span>
+            <input type="range" min="0.5" max="5" step="0.1" value="2" id="speed-slider" class="slider">
+        </div>
+        <div class="control-item">
+            <span>密度:</span>
+            <input type="range" min="0.1" max="2" step="0.1" value="0.8" id="density-slider" class="slider">
+        </div>
+        <div class="control-item">
+            <span>颜色:</span>
+            <select id="color-select" style="background: #000; color: #00ff41; border: 1px solid #00ff41;">
+                <option value="green">绿色 Matrix</option>
+                <option value="blue">蓝色科技</option>
+                <option value="red">红色警报</option>
+                <option value="rainbow">彩虹模式</option>
+            </select>
+        </div>
+        <div class="control-item">
+            <button onclick="togglePause()" style="background: #000; color: #00ff41; border: 1px solid #00ff41; padding: 5px 10px; cursor: pointer;">
+                暂停/继续
+            </button>
+        </div>
+    </div>
+
+    <div class="title" id="title">
+        WELCOME TO THE MATRIX<br>
+        <div style="font-size: 24px; margin-top: 20px;">点击任意位置进入</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        const cursorGlow = document.getElementById('cursor-glow');
+        const title = document.getElementById('title');
+        const fpsDisplay = document.getElementById('fps');
+        const charCountDisplay = document.getElementById('char-count');
+        
+        let animationId;
+        let isPaused = false;
+        let showTitle = true;
+        let lastTime = 0;
+        let fps = 0;
+
+        // 设置canvas尺寸
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+
+        // 字符集 - 包含数字、英文、日文片假名、中文字符
+        const matrixChars = 'ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789算法数据结构编程代码矩阵黑客';
+        
+        // 雨滴类
+        class MatrixDrop {
+            constructor(x, fontSize) {
+                this.x = x;
+                this.y = Math.random() * -canvas.height;
+                this.fontSize = fontSize;
+                this.speed = Math.random() * 3 + 2;
+                this.chars = [];
+                this.length = Math.random() * 30 + 10;
+                this.opacity = 1;
+                
+                // 生成字符串
+                for (let i = 0; i < this.length; i++) {
+                    this.chars.push({
+                        char: matrixChars[Math.floor(Math.random() * matrixChars.length)],
+                        changeTime: Math.random() * 100
+                    });
+                }
+            }
+
+            update(speedMultiplier, colorTheme) {
+                this.y += this.speed * speedMultiplier;
+                
+                // 随机改变字符
+                this.chars.forEach(charObj => {
+                    charObj.changeTime -= 1;
+                    if (charObj.changeTime <= 0) {
+                        charObj.char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                        charObj.changeTime = Math.random() * 100 + 50;
+                    }
+                });
+
+                // 重置位置
+                if (this.y > canvas.height + this.length * this.fontSize) {
+                    this.y = Math.random() * -canvas.height;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+
+            draw(colorTheme) {
+                ctx.font = `${this.fontSize}px 'Courier New', monospace`;
+                
+                for (let i = 0; i < this.chars.length; i++) {
+                    const charY = this.y + i * this.fontSize;
+                    if (charY > 0 && charY < canvas.height) {
+                        // 计算透明度 - 头部最亮，尾部渐暗
+                        const alpha = 1 - (i / this.chars.length);
+                        
+                        // 根据颜色主题设置颜色
+                        let color;
+                        switch (colorTheme) {
+                            case 'green':
+                                color = `rgba(0, 255, 65, ${alpha})`;
+                                break;
+                            case 'blue':
+                                color = `rgba(0, 150, 255, ${alpha})`;
+                                break;
+                            case 'red':
+                                color = `rgba(255, 50, 50, ${alpha})`;
+                                break;
+                            case 'rainbow':
+                                const hue = (Date.now() * 0.01 + i * 10) % 360;
+                                color = `hsla(${hue}, 100%, 50%, ${alpha})`;
+                                break;
+                        }
+
+                        // 头部字符更亮
+                        if (i === 0) {
+                            ctx.shadowColor = color;
+                            ctx.shadowBlur = 10;
+                            ctx.fillStyle = color;
+                        } else {
+                            ctx.shadowBlur = 0;
+                            ctx.fillStyle = color;
+                        }
+                        
+                        ctx.fillText(this.chars[i].char, this.x, charY);
+                    }
+                }
+            }
+        }
+
+        // 初始化雨滴数组
+        let drops = [];
+        let fontSize = 20;
+        let dropSpacing = fontSize + 2;
+        
+        function initDrops() {
+            drops = [];
+            const cols = Math.floor(canvas.width / dropSpacing);
+            for (let i = 0; i < cols; i++) {
+                if (Math.random() < parseFloat(document.getElementById('density-slider').value)) {
+                    drops.push(new MatrixDrop(i * dropSpacing, fontSize));
+                }
+            }
+        }
+        initDrops();
+
+        // 动画循环
+        function animate(currentTime) {
+            if (isPaused) {
+                animationId = requestAnimationFrame(animate);
+                return;
+            }
+
+            // 计算FPS
+            if (currentTime - lastTime >= 1000) {
+                fps = Math.round(1000 / (currentTime - lastTime) * drops.length);
+                fpsDisplay.textContent = fps;
+                charCountDisplay.textContent = drops.length;
+                lastTime = currentTime;
+            }
+
+            // 清屏 - 使用半透明黑色创建拖尾效果
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 获取控制参数
+            const speedMultiplier = parseFloat(document.getElementById('speed-slider').value);
+            const colorTheme = document.getElementById('color-select').value;
+
+            // 更新和绘制雨滴
+            drops.forEach(drop => {
+                drop.update(speedMultiplier, colorTheme);
+                drop.draw(colorTheme);
+            });
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        // 控制函数
+        function togglePause() {
+            isPaused = !isPaused;
+        }
+
+        // 事件监听
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            initDrops();
+        });
+
+        // 鼠标移动效果
+        document.addEventListener('mousemove', (e) => {
+            cursorGlow.style.left = (e.clientX - 50) + 'px';
+            cursorGlow.style.top = (e.clientY - 50) + 'px';
+        });
+
+        // 点击隐藏标题
+        document.addEventListener('click', () => {
+            if (showTitle) {
+                title.classList.remove('show');
+                showTitle = false;
+                setTimeout(() => {
+                    title.style.display = 'none';
+                }, 500);
+            }
+        });
+
+        // 显示标题
+        setTimeout(() => {
+            title.classList.add('show');
+        }, 1000);
+
+        // 密度滑块事件
+        document.getElementById('density-slider').addEventListener('input', () => {
+            initDrops();
+        });
+
+        // 键盘控制
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case ' ':
+                    e.preventDefault();
+                    togglePause();
+                    break;
+                case 'r':
+                case 'R':
+                    initDrops();
+                    break;
+            }
+        });
+
+        // 启动动画
+        animate();
+
+        // 性能监控
+        setInterval(() => {
+            if (fps < 30 && drops.length > 50) {
+                // 自动降低密度以保持性能
+                drops = drops.slice(0, Math.floor(drops.length * 0.8));
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

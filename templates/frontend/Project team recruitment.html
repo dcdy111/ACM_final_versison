@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACM算法研究实验室</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Exo+2:wght@300;500&display=swap" rel="stylesheet">
+    
+    <!-- 引入外部资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/v4-shims.min.css">
+<link rel="stylesheet" href="/static/highlight.css">
+<script defer src="/static/highlight.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    
+    <!-- 配置Tailwind自定义主题 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'neon-pink': '#ff00ff',
+                        'neon-blue': '#00ffff',
+                        'neon-green': '#00ff00',
+                        'neon-yellow': '#ffff00',
+                        'dark-bg': '#0a0a16',
+                        'dark-card': '#121229'
+                    },
+                    fontFamily: {
+                        'orbitron': ['Orbitron', 'sans-serif'],
+                        'code': ['Consolas', 'Monaco', 'monospace']
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'scan': 'scan 4s linear infinite',
+                        'flow': 'flow 20s linear infinite',
+                        'fade-in': 'fadeIn 1.5s ease-out forwards',
+                        'slide-up': 'slideUp 1s ease-out forwards',
+                        'tech-float': 'techFloat 6s ease-in-out infinite',
+                        'progress': 'progress 1.5s ease-out forwards'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' }
+                        },
+                        techFloat: {
+                            '0%, 100%': { transform: 'translate(0, 0) rotate(0deg)' },
+                            '25%': { transform: 'translate(-10px, -5px) rotate(-2deg)' },
+                            '50%': { transform: 'translate(-5px, -10px) rotate(1deg)' },
+                            '75%': { transform: 'translate(5px, -5px) rotate(-1deg)' }
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px rgba(255, 0, 255, 0.7), 0 0 10px rgba(255, 0, 255, 0.5)' },
+                            '100%': { boxShadow: '0 0 10px rgba(255, 0, 255, 0.9), 0 0 20px rgba(255, 0, 255, 0.7), 0 0 30px rgba(255, 0, 255, 0.5)' }
+                        },
+                        scan: {
+                            '0%': { backgroundPosition: '0% 0%' },
+                            '100%': { backgroundPosition: '0% 100%' }
+                        },
+                        flow: {
+                            '0%': { backgroundPosition: '0 0' },
+                            '100%': { backgroundPosition: '-1000px 0' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(30px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        },
+                        progress: {
+                            '0%': { width: '0%' },
+                            '100%': { width: 'var(--progress-width, 0%)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --primary: #3a86ff;
+            --secondary: #00ffcc;
+            --accent: #ff2d75;
+            --accent2: #b967ff;
+            --dark-bg: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
+            --text-light: #e0e0ff;
+            --text: var(--text-light);
+            --glass: rgba(255, 255, 255, 0.05);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Exo 2', sans-serif;
+            color: var(--text-light);
+            background: var(--dark-bg);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* 粒子背景（展示相关，保留） */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        /* 导航栏（展示相关，保留） */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            backdrop-filter: blur(10px);
+            background: var(--glass);
+            border-bottom: 1px solid rgba(58, 134, 255, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo::before {
+            content: "";
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233a86ff"><path d="M12 2L1 12h3v9h6v-6h4v6h6v-9h3L12 2zm0 2.8L18 10v9h-2v-6H8v6H6v-9l6-7.2z"/></svg>') no-repeat center;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            white-space: nowrap;
+        }
+        
+        .nav-link {
+            position: relative;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 500;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover { color: var(--primary); }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after { width: 100%; }
+        
+        /* 下拉菜单（展示相关，保留） */
+        .dropdown { position: relative; }
+        
+        .dropdown-content {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            min-width: 220px;
+            background: rgba(10, 10, 26, 0.98);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(58, 134, 255, 0.25);
+            border-radius: 8px;
+            padding: 0.6rem 0;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(6px);
+            transition: all 0.22s ease;
+            z-index: 200;
+            white-space: nowrap;
+        }
+        
+        .dropdown:hover .dropdown-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-link {
+            display: block;
+            padding: 0.5rem 1.25rem;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.18s ease;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .dropdown-link:hover {
+            background: rgba(58, 134, 255, 0.12);
+            color: var(--primary);
+            padding-left: 1.5rem;
+        }
+        
+        /* 页脚（展示相关，保留） */
+        footer {
+            background: var(--dark-bg);
+            padding: 3rem 5%;
+            text-align: center;
+            margin-top: 0;
+            position: relative;
+            z-index: 20;
+        }
+        
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0.3;
+        }
+        
+        .footer-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-link { color: var(--text-light); text-decoration: none; transition: color 0.3s; }
+        .footer-link:hover { color: var(--primary); }
+        
+        .footer-social {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .social-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(0, 240, 255, 0.1);
+            color: var(--primary);
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            background-color: var(--primary);
+            color: var(--dark);
+            transform: translateY(-3px);
+        }
+        
+        .social-icon i {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .social-icon:hover i {
+            background: none;
+            -webkit-background-clip: initial;
+            background-clip: initial;
+            color: var(--dark);
+        }
+        
+        .copyright { font-size: 0.9rem; color: rgba(224, 224, 255, 0.6); }
+        
+        /* 必要动画（logo 脉冲） */
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+        
+        /* 项目组招生页面样式 */
+        .project-recruitment-content {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            background: var(--dark-bg);
+        }
+        
+        .text-shadow-neon-pink {
+            text-shadow: 0 0 5px rgba(255, 0, 255, 0.7), 0 0 10px rgba(255, 0, 255, 0.5);
+        }
+        .text-shadow-neon-blue {
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.7), 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        .border-glow-pink {
+            box-shadow: 0 0 5px rgba(255, 0, 255, 0.7), 0 0 10px rgba(255, 0, 255, 0.5);
+        }
+        .border-glow-blue {
+            box-shadow: 0 0 5px rgba(0, 255, 255, 0.7), 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        .hologram-pink {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(
+                to bottom,
+                rgba(255, 0, 255, 0.1),
+                rgba(255, 0, 255, 0.05)
+            );
+            border: 1px solid rgba(255, 0, 255, 0.3);
+        }
+        .hologram-pink::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 0, 255, 0.8),
+                transparent
+            );
+            animation: scan 4s linear infinite;
+            background-size: 200% 100%;
+        }
+        .grid-pattern-pink {
+            background-image: 
+                linear-gradient(rgba(255, 0, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 0, 255, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .circuit-bg-pink {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ff00ff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            animation: flow 20s linear infinite;
+        }
+        .tech-badge {
+            position: absolute;
+            color: rgba(255, 0, 255, 0.7);
+            font-weight: bold;
+            pointer-events: none;
+            border: 1px solid rgba(255, 0, 255, 0.3);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 5;
+        }
+        .progress-bar {
+            height: 6px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-value {
+            height: 100%;
+            background-color: rgba(255, 0, 255, 0.7);
+            border-radius: 3px;
+            animation: progress 1.5s ease-out forwards;
+        }
+        
+        @keyframes scan {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 0% 100%; }
+        }
+        
+        @keyframes flow {
+            0% { background-position: 0 0; }
+            100% { background-position: -1000px 0; }
+        }
+        
+        @keyframes techFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(-10px, -5px) rotate(-2deg); }
+            50% { transform: translate(-5px, -10px) rotate(1deg); }
+            75% { transform: translate(5px, -5px) rotate(-1deg); }
+        }
+        
+        .animate-tech-float {
+            animation: techFloat 6s ease-in-out infinite;
+        }
+        
+        .animate-pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        /* Tailwind兼容样式 */
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .font-code { font-family: 'Consolas', 'Monaco', monospace; }
+        .text-neon-pink { color: #ff00ff; }
+        .text-neon-blue { color: #00ffff; }
+        .bg-dark-bg { background-color: #0a0a16; }
+        .bg-dark-card { background-color: #121229; }
+        .border-neon-pink { border-color: #ff00ff; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .grid { display: grid; }
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-10 { gap: 2.5rem; }
+        .gap-8 { gap: 2rem; }
+        .gap-6 { gap: 1.5rem; }
+        .gap-4 { gap: 1rem; }
+        .gap-3 { gap: 0.75rem; }
+        .gap-2 { gap: 0.5rem; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .py-16 { padding-top: 4rem; padding-bottom: 4rem; }
+        .pt-32 { padding-top: 8rem; }
+        .pb-20 { padding-bottom: 5rem; }
+        .mb-16 { margin-bottom: 4rem; }
+        .mb-10 { margin-bottom: 2.5rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-3 { margin-bottom: 0.75rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-1 { margin-bottom: 0.25rem; }
+        .mt-6 { margin-top: 1.5rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-1 { margin-top: 0.25rem; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .text-center { text-align: center; }
+        .relative { position: relative; }
+        .absolute { position: absolute; }
+        .fixed { position: fixed; }
+        .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+        .z-0 { z-index: 0; }
+        .z-10 { z-index: 10; }
+        .w-full { width: 100%; }
+        .w-24 { width: 6rem; }
+        .w-14 { width: 3.5rem; }
+        .w-10 { width: 2.5rem; }
+        .w-8 { width: 2rem; }
+        .h-1 { height: 0.25rem; }
+        .h-64 { height: 16rem; }
+        .h-14 { height: 3.5rem; }
+        .h-10 { height: 2.5rem; }
+        .h-8 { height: 2rem; }
+        .h-full { height: 100%; }
+        .max-w-2xl { max-width: 42rem; }
+        .rounded-lg { border-radius: 0.5rem; }
+        .rounded-full { border-radius: 9999px; }
+        .border-4 { border-width: 4px; }
+        .border-2 { border-width: 2px; }
+        .border { border-width: 1px; }
+        .p-8 { padding: 2rem; }
+        .p-6 { padding: 1.5rem; }
+        .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+        .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+        .text-4xl { font-size: 2.25rem; }
+        .text-3xl { font-size: 1.875rem; }
+        .text-2xl { font-size: 1.5rem; }
+        .text-xl { font-size: 1.25rem; }
+        .text-lg { font-size: 1.125rem; }
+        .text-sm { font-size: 0.875rem; }
+        .text-xs { font-size: 0.75rem; }
+        .font-bold { font-weight: 700; }
+        .font-medium { font-weight: 500; }
+        .leading-tight { line-height: 1.25; }
+        .text-white { color: rgb(255 255 255); }
+        .text-gray-300 { color: rgb(209 213 219); }
+        .text-gray-400 { color: rgb(156 163 175); }
+        .bg-gradient-to-t { background-image: linear-gradient(to top, var(--tw-gradient-stops)); }
+        .bg-gradient-to-b { background-image: linear-gradient(to bottom, var(--tw-gradient-stops)); }
+        .from-dark-bg { --tw-gradient-from: #0a0a16; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(10, 10, 22, 0)); }
+        .via-dark-bg { --tw-gradient-via: #0a0a16; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to, rgba(10, 10, 22, 0)); }
+        .to-dark-bg { --tw-gradient-to: #0a0a16; }
+        .to-transparent { --tw-gradient-to: transparent; }
+        .opacity-50 { opacity: 0.5; }
+        .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+        .transition-transform { transition-property: transform; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+        .duration-500 { transition-duration: 500ms; }
+        .duration-700 { transition-duration: 700ms; }
+        .duration-300 { transition-duration: 300ms; }
+        .hover\:scale-110:hover { --tw-scale-x: 1.1; --tw-scale-y: 1.1; transform: scale(var(--tw-scale-x)) scale(var(--tw-scale-y)); }
+        .hover\:border-glow-pink:hover { box-shadow: 0 0 5px rgba(255, 0, 255, 0.7), 0 0 10px rgba(255, 0, 255, 0.5); }
+        .group:hover .group-hover\:scale-110 { --tw-scale-x: 1.1; --tw-scale-y: 1.1; transform: scale(var(--tw-scale-x)) scale(var(--tw-scale-y)); }
+        .overflow-hidden { overflow: hidden; }
+        .object-cover { object-fit: cover; }
+        .flex-col { flex-direction: column; }
+        .flex-wrap { flex-wrap: wrap; }
+        .items-start { align-items: flex-start; }
+        .justify-center { justify-content: center; }
+        .space-y-10 > :not([hidden]) ~ :not([hidden]) { margin-top: 2.5rem; }
+        .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 1.5rem; }
+        .border-l-2 { border-left-width: 2px; }
+        .pl-10 { padding-left: 2.5rem; }
+        .-left-\[41px\] { left: -41px; }
+        
+        /* 响应式样式 */
+        @media (min-width: 768px) {
+            .md\:flex-row { flex-direction: row; }
+            .md\:w-64 { width: 16rem; }
+            .md\:text-6xl { font-size: 3.75rem; }
+            .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        
+        @media (min-width: 1024px) {
+            .lg\:text-7xl { font-size: 4.5rem; }
+            .lg\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        
+        @media (min-width: 640px) {
+            .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .sm\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        
+        /* 额外的工具类 */
+        .bg-neon-pink\/20 { background-color: rgba(255, 0, 255, 0.2); }
+        .bg-neon-pink\/10 { background-color: rgba(255, 0, 255, 0.1); }
+        .border-neon-pink\/30 { border-color: rgba(255, 0, 255, 0.3); }
+        .border-neon-pink\/40 { border-color: rgba(255, 0, 255, 0.4); }
+        .border-neon-pink\/50 { border-color: rgba(255, 0, 255, 0.5); }
+        .text-5xl { font-size: 3rem; }
+        .inset-\[10\%\] { inset: 10%; }
+        .inset-\[20\%\] { inset: 20%; }
+        .inset-\[30\%\] { inset: 30%; }
+        .top-\[10\%\] { top: 10%; }
+        .top-\[25\%\] { top: 25%; }
+        .top-\[50\%\] { top: 50%; }
+        .top-\[70\%\] { top: 70%; }
+        .left-\[10\%\] { left: 10%; }
+        .left-\[15\%\] { left: 15%; }
+        .left-\[20\%\] { left: 20%; }
+        .right-\[10\%\] { right: 10%; }
+        .right-\[15\%\] { right: 15%; }
+        .right-\[20\%\] { right: 20%; }
+        .bottom-\[20\%\] { bottom: 20%; }
+        .bottom-\[30\%\] { bottom: 30%; }
+        .bg-dark-card\/50 { background-color: rgba(18, 18, 41, 0.5); }
+        .from-dark-bg\/80 { --tw-gradient-from: rgba(10, 10, 22, 0.8); }
+        .via-dark-bg\/50 { --tw-gradient-via: rgba(10, 10, 22, 0.5); }
+        .to-dark-bg\/90 { --tw-gradient-to: rgba(10, 10, 22, 0.9); }
+        .gap-16 { gap: 4rem; }
+        .space-y-10 > :not([hidden]) ~ :not([hidden]) { margin-top: 2.5rem; }
+        .mr-1 { margin-right: 0.25rem; }
+        .ml-1 { margin-left: 0.25rem; }
+        
+        /* 导航栏样式 */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(58, 134, 255, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #3a86ff, #00ffcc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo::before {
+            content: "";
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233a86ff"><path d="M12 2L1 12h3v9h6v-6h4v6h6v-9h3L12 2zm0 2.8L18 10v9h-2v-6H8v6H6v-9l6-7.2z"/></svg>') no-repeat center;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            white-space: nowrap;
+        }
+        
+        .nav-link {
+            position: relative;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 500;
+            color: #e0e0ff;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: #3a86ff;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: #3a86ff;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .dropdown {
+            position: relative;
+        }
+        
+        .dropdown-content {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            min-width: 220px;
+            background: rgba(10, 10, 26, 0.98);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(58, 134, 255, 0.25);
+            border-radius: 8px;
+            padding: 0.6rem 0;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(6px);
+            transition: all 0.22s ease;
+            z-index: 200;
+            white-space: nowrap;
+        }
+        
+        .dropdown:hover .dropdown-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-link {
+            display: block;
+            padding: 0.5rem 1.25rem;
+            color: #e0e0ff;
+            text-decoration: none;
+            transition: all 0.18s ease;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .dropdown-link:hover {
+            background: rgba(58, 134, 255, 0.12);
+            color: #3a86ff;
+            padding-left: 1.5rem;
+        }
+        
+        .menu-toggle {
+            display: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+        
+        .fullscreen-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(10, 10, 26, 0.95);
+            backdrop-filter: blur(15px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            transform: translateY(-100%);
+            transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0);
+        }
+        
+        .fullscreen-nav.active {
+            transform: translateY(0);
+        }
+        
+        .fullscreen-nav .close-btn {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #e0e0ff;
+            transition: color 0.3s;
+        }
+        
+        .fullscreen-nav .close-btn:hover {
+            color: #ff2d75;
+        }
+        
+        .fullscreen-nav-links {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .fullscreen-nav-link {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: #e0e0ff;
+            text-decoration: none;
+            position: relative;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s;
+        }
+        
+        .fullscreen-nav-link:hover {
+            color: #3a86ff;
+        }
+        
+        .fullscreen-nav-link::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: rgba(58, 134, 255, 0.1);
+            z-index: -1;
+            transition: width 0.3s;
+        }
+        
+        .fullscreen-nav-link:hover::before {
+            width: 100%;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        /* ========================= 统一滚动条美化样式 ========================= */
+        /* 全局滚动条 - 竖直方向 */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        
+        /* 滚动条轨道 */
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+        }
+        
+        /* 滚动条滑块 */
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #3a86ff 0%, #00ffcc 50%, #b967ff 100%);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(58, 134, 255, 0.2);
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #00ffcc 0%, #ff2d75 50%, #3a86ff 100%);
+            box-shadow: 0 4px 15px rgba(58, 134, 255, 0.4);
+            transform: scale(1.05);
+        }
+        
+        /* 滚动条箭头按钮 */
+        ::-webkit-scrollbar-button {
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(45deg, #3a86ff, #00ffcc);
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        /* 竖直滚动条上箭头 */
+        ::-webkit-scrollbar-button:vertical:start:decrement {
+            background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 14l5-5 5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 竖直滚动条下箭头 */
+        ::-webkit-scrollbar-button:vertical:end:increment {
+            background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 水平滚动条左箭头 */
+        ::-webkit-scrollbar-button:horizontal:start:decrement {
+            background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M14 7l-5 5 5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 水平滚动条右箭头 */
+        ::-webkit-scrollbar-button:horizontal:end:increment {
+            background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M10 7l5 5-5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 箭头按钮悬停效果 */
+        ::-webkit-scrollbar-button:hover {
+            background: linear-gradient(45deg, #ff2d75, #b967ff) !important;
+            box-shadow: 0 0 10px rgba(58, 134, 255, 0.6);
+            transform: scale(1.1);
+        }
+        
+        /* 箭头按钮点击效果 */
+        ::-webkit-scrollbar-button:active {
+            background: linear-gradient(45deg, #00ffcc, #3a86ff) !important;
+            transform: scale(0.95);
+        }
+        
+        /* 滚动条角落 */
+        ::-webkit-scrollbar-corner {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+        }
+        
+        /* Firefox滚动条样式 */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #3a86ff rgba(255, 255, 255, 0.08);
+        }
+        
+        /* 移动端滚动条优化 */
+        @media (max-width: 768px) {
+            ::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+        }
+        /* ========================= 滚动条样式结束 ========================= */
+    </style>
+</head>
+<body>
+    <!-- 粒子背景 -->
+    <div id="particles-js"></div>
+    
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <a href="/" class="logo">ACM LAB</a>
+        <div class="nav-links">
+            <div class="dropdown">
+                <a href="/introduction" class="nav-link">概况</a>
+            </div>
+            
+            <a href="/team" class="nav-link">团队</a>
+            
+            <div class="dropdown">
+                <a href="/algorithm" class="nav-link">成果</a>
+                <div class="dropdown-content">
+                        <a href="/algorithm" class="dropdown-link">算法</a>
+                        <a href="/paper" class="dropdown-link">论文</a>
+                        <a href="/innovation" class="dropdown-link">科创</a>
+                </div>
+            </div>
+            
+            <a href="/dynamic" class="nav-link">动态</a>
+            
+            <div class="dropdown">
+                <a href="/algorithm-recruitment" class="nav-link">加入我们</a>
+                <div class="dropdown-content">
+                    <a href="/algorithm-recruitment" class="dropdown-link">算法组招生</a>
+                        <a href="/project-recruitment" class="dropdown-link">项目组招生</a>
+                </div>
+            </div>
+            
+
+        </div>
+        <div class="menu-toggle">☰</div>
+        </nav>
+    
+    <!-- 项目组招生内容 -->
+    <div class="project-recruitment-content">
+        <!-- 动态背景 -->
+        <div class="absolute inset-0 grid-pattern-pink circuit-bg-pink opacity-50 z-0"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-dark-bg/80 via-dark-bg to-dark-bg/90 z-0"></div>
+        
+        <!-- 动态技术标签装饰 -->
+        <div class="tech-badge top-[10%] right-[15%] animate-tech-float" style="animation-delay: 0s">Python</div>
+        <div class="tech-badge top-[25%] left-[10%] animate-tech-float" style="animation-delay: 1s">TensorFlow</div>
+        <div class="tech-badge top-[30%] right-[10%] animate-tech-float" style="animation-delay: 2s">Kubernetes</div>
+        <div class="tech-badge top-[50%] left-[15%] animate-tech-float" style="animation-delay: 3s">Docker</div>
+        <div class="tech-badge top-[60%] left-[20%] animate-tech-float" style="animation-delay: 4s">PyTorch</div>
+        <div class="tech-badge top-[70%] right-[20%] animate-tech-float" style="animation-delay: 5s">Git</div>
+        
+        <!-- 页面标题区域 -->
+        <header class="pt-32 pb-20 relative z-10">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-10">
+                    <div class="max-w-2xl">
+                        <h1 class="text-4xl md:text-6xl lg:text-7xl font-orbitron font-bold leading-tight mb-6">
+                            <span class="block text-white">项目组</span>
+                            <span class="block text-neon-pink text-shadow-neon-pink mt-2">招生计划</span>
+                        </h1>
+                        <p class="text-xl text-gray-300">
+                            加入我们的项目团队，将算法理论转化为实际应用，参与真实项目开发，积累工程实践经验，打造你的技术作品集。
+                        </p>
+                    </div>
+                    
+                    <div class="w-full md:w-64 h-64 relative">
+                        <div class="absolute inset-0 rounded-full border-4 border-neon-pink/30 animate-pulse-slow"></div>
+                        <div class="absolute inset-[10%] rounded-full border-4 border-neon-pink/40 animate-pulse-slow" style="animation-delay: 0.5s"></div>
+                        <div class="absolute inset-[20%] rounded-full border-4 border-neon-pink/50 animate-pulse-slow" style="animation-delay: 1s"></div>
+                        <div class="absolute inset-[30%] flex items-center justify-center">
+                            <i class="fa fa-cogs text-5xl text-neon-pink text-shadow-neon-pink"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- 主要内容 -->
+        <main class="relative z-10 pb-20">
+            <!-- 项目方向 -->
+            <section class="py-16">
+                <div class="container mx-auto px-4">
+                    <div class="text-center mb-16">
+                        <h2 class="text-3xl md:text-4xl font-orbitron font-bold mb-4 text-white">
+                            我们的<span class="text-neon-pink text-shadow-neon-pink">项目方向</span>
+                        </h2>
+                        <div class="w-24 h-1 bg-neon-pink mx-auto"></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        <!-- 项目1 -->
+                        <div class="hologram-pink rounded-lg overflow-hidden group hover:border-glow-pink transition-all duration-500">
+                            <div class="h-64 overflow-hidden relative">
+                                <img src="https://picsum.photos/seed/project1/800/500" alt="智能推荐系统" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                                <div class="absolute inset-0 bg-gradient-to-t from-dark-bg via-dark-bg/50 to-transparent"></div>
+                                <div class="absolute bottom-6 left-6 right-6">
+                                    <span class="px-3 py-1 bg-neon-pink/20 text-neon-pink text-xs rounded-full">企业合作项目</span>
+                                    <h3 class="text-2xl font-orbitron font-bold mt-2 text-white">智能推荐系统</h3>
+                                </div>
+                            </div>
+                            <div class="p-8">
+                                <p class="text-gray-300 mb-6">
+                                    与大型电商平台合作开发的智能推荐系统，基于深度学习和强化学习算法，实现个性化商品推荐，提升用户体验和转化率。
+                                </p>
+                                
+                                <div class="mb-6">
+                                    <h4 class="text-lg font-orbitron font-bold mb-3 text-white">技术栈</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">Python</span>
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">PyTorch</span>
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">Spark</span>
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">Kafka</span>
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">Docker</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400 text-sm">
+                                        <i class="fa fa-users mr-1"></i> 团队规模: 6人
+                                    </span>
+                                    <span class="text-gray-400 text-sm">
+                                        <i class="fa fa-clock-o mr-1"></i> 进行中
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 项目2 -->
+                        <div class="hologram-pink rounded-lg overflow-hidden group hover:border-glow-pink transition-all duration-500">
+                            <div class="h-64 overflow-hidden relative">
+                                <img src="https://picsum.photos/seed/project2/800/500" alt="实时数据处理平台" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                                <div class="absolute inset-0 bg-gradient-to-t from-dark-bg via-dark-bg/50 to-transparent"></div>
+                                <div class="absolute bottom-6 left-6 right-6">
+                                    <span class="px-3 py-1 bg-neon-pink/20 text-neon-pink text-xs rounded-full">科研转化项目</span>
+                                    <h3 class="text-2xl font-orbitron font-bold mt-2 text-white">实时数据处理平台</h3>
+                                </div>
+                            </div>
+                            <div class="p-8">
+                                <p class="text-gray-300 mb-6">
+                                    基于实验室自研算法的实时数据处理平台，能够处理百万级/秒的数据流，应用于智能交通、工业监控等领域，提供实时分析和预警。
+                                </p>
+                                
+                                <div class="mb-6">
+                                    <h4 class="text-lg font-orbitron font-bold mb-3 text-white">技术栈</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">C++</span>
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">Rust</span>
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">Kafka</span>
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">Flink</span>
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">Redis</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400 text-sm">
+                                        <i class="fa fa-users mr-1"></i> 团队规模: 8人
+                                    </span>
+                                    <span class="text-gray-400 text-sm">
+                                        <i class="fa fa-clock-o mr-1"></i> 招募中
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 项目3 -->
+                        <div class="hologram-pink rounded-lg overflow-hidden group hover:border-glow-pink transition-all duration-500">
+                            <div class="h-64 overflow-hidden relative">
+                                <img src="https://picsum.photos/seed/project3/800/500" alt="联邦学习框架" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                                <div class="absolute inset-0 bg-gradient-to-t from-dark-bg via-dark-bg/50 to-transparent"></div>
+                                <div class="absolute bottom-6 left-6 right-6">
+                                    <span class="px-3 py-1 bg-neon-pink/20 text-neon-pink text-xs rounded-full">科研项目</span>
+                                    <h3 class="text-2xl font-orbitron font-bold mt-2 text-white">联邦学习框架</h3>
+                                </div>
+                            </div>
+                            <div class="p-8">
+                                <p class="text-gray-300 mb-6">
+                                    面向医疗、金融等敏感领域的联邦学习开源框架，在保护数据隐私的前提下实现多方协同建模，已应用于多家医疗机构的数据共享平台。
+                                </p>
+                                
+                                <div class="mb-6">
+                                    <h4 class="text-lg font-orbitron font-bold mb-3 text-white">技术栈</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">Python</span>
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">TensorFlow</span>
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">gRPC</span>
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">Docker</span>
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">Kubernetes</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400 text-sm">
+                                        <i class="fa fa-users mr-1"></i> 团队规模: 5人
+                                    </span>
+                                    <span class="text-gray-400 text-sm">
+                                        <i class="fa fa-clock-o mr-1"></i> 招募中
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 项目4 -->
+                        <div class="hologram-pink rounded-lg overflow-hidden group hover:border-glow-pink transition-all duration-500">
+                            <div class="h-64 overflow-hidden relative">
+                                <img src="https://picsum.photos/seed/project4/800/500" alt="算法可视化平台" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                                <div class="absolute inset-0 bg-gradient-to-t from-dark-bg via-dark-bg/50 to-transparent"></div>
+                                <div class="absolute bottom-6 left-6 right-6">
+                                    <span class="px-3 py-1 bg-neon-pink/20 text-neon-pink text-xs rounded-full">开源项目</span>
+                                    <h3 class="text-2xl font-orbitron font-bold mt-2 text-white">算法可视化平台</h3>
+                                </div>
+                            </div>
+                            <div class="p-8">
+                                <p class="text-gray-300 mb-6">
+                                    用于教学和演示的算法可视化开源平台，支持多种经典算法的动态可视化展示，帮助理解算法原理和执行过程，已获得10k+ GitHub星标。
+                                </p>
+                                
+                                <div class="mb-6">
+                                    <h4 class="text-lg font-orbitron font-bold mb-3 text-white">技术栈</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">TypeScript</span>
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">React</span>
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">D3.js</span>
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">WebAssembly</span>
+                                        <span class="px-3 py-1 bg-dark-bg border border-neon-pink/30 text-neon-pink text-xs rounded-full">CI/CD</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400 text-sm">
+                                        <i class="fa fa-users mr-1"></i> 团队规模: 4人
+                                    </span>
+                                    <span class="text-gray-400 text-sm">
+                                        <i class="fa fa-clock-o mr-1"></i> 长期招募
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 技术栈要求 -->
+            <section class="py-16 bg-dark-card/50">
+                <div class="container mx-auto px-4">
+                    <div class="text-center mb-16">
+                        <h2 class="text-3xl md:text-4xl font-orbitron font-bold mb-4 text-white">
+                            我们需要的<span class="text-neon-pink text-shadow-neon-pink">技术能力</span>
+                        </h2>
+                        <div class="w-24 h-1 bg-neon-pink mx-auto"></div>
+                        <p class="mt-6 text-gray-400 max-w-2xl mx-auto">
+                            项目组注重工程实践能力和团队协作精神，以下是我们期望你具备的技术栈和能力
+                        </p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <!-- 编程能力 -->
+                        <div class="hologram-pink rounded-lg p-8 hover:border-glow-pink transition-all duration-500">
+                            <div class="w-14 h-14 rounded-lg bg-neon-pink/10 border border-neon-pink flex items-center justify-center mb-6">
+                                <i class="fa fa-code text-neon-pink text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-orbitron font-bold mb-6 text-neon-pink">编程能力</h3>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-300 text-sm">Python</span>
+                                        <span class="text-neon-pink text-sm">熟练</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-value" style="--progress-width: 85%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-300 text-sm">C/C++</span>
+                                        <span class="text-neon-pink text-sm">良好</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-value" style="--progress-width: 70%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-300 text-sm">JavaScript/TypeScript</span>
+                                        <span class="text-neon-pink text-sm">基础</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-value" style="--progress-width: 50%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 框架与工具 -->
+                        <div class="hologram-pink rounded-lg p-8 hover:border-glow-pink transition-all duration-500">
+                            <div class="w-14 h-14 rounded-lg bg-neon-pink/10 border border-neon-pink flex items-center justify-center mb-6">
+                                <i class="fa fa-wrench text-neon-pink text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-orbitron font-bold mb-6 text-neon-pink">框架与工具</h3>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-300 text-sm">机器学习框架</span>
+                                        <span class="text-neon-pink text-sm">熟悉</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-value" style="--progress-width: 75%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-300 text-sm">容器化技术</span>
+                                        <span class="text-neon-pink text-sm">了解</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-value" style="--progress-width: 60%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-300 text-sm">版本控制</span>
+                                        <span class="text-neon-pink text-sm">熟练</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-value" style="--progress-width: 80%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 工程能力 -->
+                        <div class="hologram-pink rounded-lg p-8 hover:border-glow-pink transition-all duration-500">
+                            <div class="w-14 h-14 rounded-lg bg-neon-pink/10 border border-neon-pink flex items-center justify-center mb-6">
+                                <i class="fa fa-cogs text-neon-pink text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-orbitron font-bold mb-6 text-neon-pink">工程能力</h3>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-300 text-sm">系统设计</span>
+                                        <span class="text-neon-pink text-sm">良好</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-value" style="--progress-width: 70%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-300 text-sm">性能优化</span>
+                                        <span class="text-neon-pink text-sm">了解</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-value" style="--progress-width: 60%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-300 text-sm">团队协作</span>
+                                        <span class="text-neon-pink text-sm">熟练</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-value" style="--progress-width: 85%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-12 hologram-pink rounded-lg p-8">
+                        <h3 class="text-xl font-orbitron font-bold mb-6 text-neon-pink">加分项</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            <div class="flex items-start gap-3">
+                                <i class="fa fa-star text-neon-pink mt-1"></i>
+                                <span class="text-gray-300">有开源项目贡献经历</span>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <i class="fa fa-star text-neon-pink mt-1"></i>
+                                <span class="text-gray-300">参与过大型软件开发项目</span>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <i class="fa fa-star text-neon-pink mt-1"></i>
+                                <span class="text-gray-300">有技术博客或个人作品集</span>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <i class="fa fa-star text-neon-pink mt-1"></i>
+                                <span class="text-gray-300">熟悉CI/CD流程和自动化测试</span>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <i class="fa fa-star text-neon-pink mt-1"></i>
+                                <span class="text-gray-300">了解云原生技术和微服务架构</span>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <i class="fa fa-star text-neon-pink mt-1"></i>
+                                <span class="text-gray-300">有移动端开发经验</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 项目流程与收获 -->
+            <section class="py-16">
+                <div class="container mx-auto px-4">
+                    <div class="text-center mb-16">
+                        <h2 class="text-3xl md:text-4xl font-orbitron font-bold mb-4 text-white">
+                            项目开发<span class="text-neon-pink text-shadow-neon-pink">流程与收获</span>
+                        </h2>
+                        <div class="w-24 h-1 bg-neon-pink mx-auto"></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                        <!-- 项目流程 -->
+                        <div>
+                            <h3 class="text-2xl font-orbitron font-bold mb-10 text-neon-pink">项目开发流程</h3>
+                            
+                            <div class="relative pl-10 border-l-2 border-neon-pink/30 space-y-10">
+                                <!-- 步骤1 -->
+                                <div class="relative">
+                                    <div class="absolute -left-[41px] w-8 h-8 rounded-full bg-dark-bg border-2 border-neon-pink flex items-center justify-center z-10">
+                                        <span class="text-neon-pink font-bold">1</span>
+                                    </div>
+                                    <h4 class="text-xl font-orbitron font-bold mb-2 text-white">需求分析与设计</h4>
+                                    <p class="text-gray-300">
+                                        参与项目需求讨论，理解业务场景和技术要求，参与系统架构设计和技术方案制定。
+                                    </p>
+                                </div>
+                                
+                                <!-- 步骤2 -->
+                                <div class="relative">
+                                    <div class="absolute -left-[41px] w-8 h-8 rounded-full bg-dark-bg border-2 border-neon-pink flex items-center justify-center z-10">
+                                        <span class="text-neon-pink font-bold">2</span>
+                                    </div>
+                                    <h4 class="text-xl font-orbitron font-bold mb-2 text-white">任务分配与计划</h4>
+                                    <p class="text-gray-300">
+                                        根据个人兴趣和能力分配开发任务，制定详细的开发计划和时间节点，使用敏捷开发方法。
+                                    </p>
+                                </div>
+                                
+                                <!-- 步骤3 -->
+                                <div class="relative">
+                                    <div class="absolute -left-[41px] w-8 h-8 rounded-full bg-dark-bg border-2 border-neon-pink flex items-center justify-center z-10">
+                                        <span class="text-neon-pink font-bold">3</span>
+                                    </div>
+                                    <h4 class="text-xl font-orbitron font-bold mb-2 text-white">编码实现与测试</h4>
+                                    <p class="text-gray-300">
+                                        按照设计方案进行代码实现，编写单元测试和集成测试，参与代码审查，保证代码质量。
+                                    </p>
+                                </div>
+                                
+                                <!-- 步骤4 -->
+                                <div class="relative">
+                                    <div class="absolute -left-[41px] w-8 h-8 rounded-full bg-dark-bg border-2 border-neon-pink flex items-center justify-center z-10">
+                                        <span class="text-neon-pink font-bold">4</span>
+                                    </div>
+                                    <h4 class="text-xl font-orbitron font-bold mb-2 text-white">部署上线与迭代</h4>
+                                    <p class="text-gray-300">
+                                        参与项目部署和上线过程，收集用户反馈，进行系统优化和功能迭代，持续改进产品。
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 项目收获 -->
+                        <div>
+                            <h3 class="text-2xl font-orbitron font-bold mb-10 text-neon-pink">加入项目组你将获得</h3>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div class="hologram-pink rounded-lg p-6 hover:border-glow-pink transition-all duration-300">
+                                    <div class="w-10 h-10 rounded-full bg-neon-pink/10 border border-neon-pink flex items-center justify-center mb-4">
+                                        <i class="fa fa-certificate text-neon-pink"></i>
+                                    </div>
+                                    <h4 class="text-lg font-orbitron font-bold mb-2 text-white">项目经验</h4>
+                                    <p class="text-gray-400 text-sm">
+                                        参与真实项目开发，积累可写入简历的实战经验，提升就业竞争力。
+                                    </p>
+                                </div>
+                                
+                                <div class="hologram-pink rounded-lg p-6 hover:border-glow-pink transition-all duration-300">
+                                    <div class="w-10 h-10 rounded-full bg-neon-pink/10 border border-neon-pink flex items-center justify-center mb-4">
+                                        <i class="fa fa-trophy text-neon-pink"></i>
+                                    </div>
+                                    <h4 class="text-lg font-orbitron font-bold mb-2 text-white">技术成长</h4>
+                                    <p class="text-gray-400 text-sm">
+                                        在实践中提升技术能力，学习业界最佳实践，掌握前沿技术和工具。
+                                    </p>
+                                </div>
+                                
+                                <div class="hologram-pink rounded-lg p-6 hover:border-glow-pink transition-all duration-300">
+                                    <div class="w-10 h-10 rounded-full bg-neon-pink/10 border border-neon-pink flex items-center justify-center mb-4">
+                                        <i class="fa fa-users text-neon-pink"></i>
+                                    </div>
+                                    <h4 class="text-lg font-orbitron font-bold mb-2 text-white">团队协作</h4>
+                                    <p class="text-gray-400 text-sm">
+                                        学习团队协作和项目管理，提升沟通能力和解决问题的能力。
+                                    </p>
+                                </div>
+                                
+                                <div class="hologram-pink rounded-lg p-6 hover:border-glow-pink transition-all duration-300">
+                                    <div class="w-10 h-10 rounded-full bg-neon-pink/10 border border-neon-pink flex items-center justify-center mb-4">
+                                        <i class="fa fa-lightbulb-o text-neon-pink"></i>
+                                    </div>
+                                    <h4 class="text-lg font-orbitron font-bold mb-2 text-white">创新思维</h4>
+                                    <p class="text-gray-400 text-sm">
+                                        培养创新思维和产品意识，学会从用户角度思考问题和解决方案。
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+   <!-- 页脚 -->
+   <footer id="footer" class="footer">
+    <a href="/" class="footer-logo">ACM实验室</a>
+    
+    <div class="footer-links">
+        <a href="/introduction" class="footer-link">概况</a>
+        <a href="/team" class="footer-link">团队</a>
+        <a href="/algorithm" class="footer-link">算法</a>
+        <a href="/paper" class="footer-link">论文</a>
+        <a href="/innovation" class="footer-link">科创</a>
+        <a href="/dynamic" class="footer-link">动态</a>
+        <a href="/algorithm-recruitment" class="footer-link">算法组招生</a>
+        <a href="/project-recruitment" class="footer-link">项目组招生</a>
+    </div>
+    
+            <div class="footer-social">
+            <a href="#" class="social-icon" title="微信"><i class="fab fa-weixin"></i></a>
+            <a href="https://s1.imagehub.cc/images/2025/08/28/d80fe4abf0cd9a20fde76c7a3d5849a8.png" class="social-icon" title="微博"><i class="fab fa-weibo"></i></a>
+            <a href="https://s1.imagehub.cc/images/2025/08/28/4859e46f5945f5d8210456ecc89f7494.jpeg" class="social-icon" title="小红书"><i class="fas fa-book-open"></i></a>
+            <a href="#" class="social-icon" title="GitHub"><i class="fab fa-github"></i></a>
+        <a href="https://mp.weixin.qq.com/s/your-wechat-official-account" class="social-icon" title="微信公众号"><i class="fas fa-newspaper"></i></a>
+        <a href="https://space.bilibili.com/1599858052?spm_id_from=333.788.upinfo.head.click" class="social-icon" title="哔哩哔哩"><i class="fab fa-bilibili"></i></a>
+        <a href="#" class="social-icon" title="邮箱"><i class="fas fa-envelope"></i></a>
+    </div>
+    
+    <p class="copyright">© 2023 ACM算法与科研创新实验室. 保留所有权利.</p>
+</footer>
+    
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        // 粒子背景初始化（仅保留展示相关）
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 80, density: { enable: true, value_area: 800 } },
+                color: { value: '#3a86ff' },
+                shape: { type: 'circle', stroke: { width: 0, color: '#000000' }, polygon: { nb_sides: 5 } },
+                opacity: { value: 0.5 },
+                size: { value: 3, random: true },
+                line_linked: { enable: true, distance: 150, color: '#3a86ff', opacity: 0.4, width: 1 },
+                move: { enable: true, speed: 2, direction: 'none', random: false, straight: false, out_mode: 'out', bounce: false }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: { onhover: { enable: true, mode: 'grab' }, onclick: { enable: true, mode: 'push' }, resize: true },
+                modes: {
+                    grab: { distance: 140, line_linked: { opacity: 1 } },
+                    bubble: { distance: 400, size: 40, duration: 2, opacity: 8, speed: 3 },
+                    repulse: { distance: 200, duration: 0.4 },
+                    push: { particles_nb: 4 },
+                    remove: { particles_nb: 2 }
+                }
+            },
+            retina_detect: true
+        });
+        
+        // 初始化GSAP的ScrollTrigger插件
+        if (typeof gsap !== 'undefined') {
+            gsap.registerPlugin(ScrollTrigger);
+        }
+        
+        // 滚动动画
+        const animateOnScroll = () => {
+            if (typeof gsap !== 'undefined') {
+                const sections = document.querySelectorAll('section');
+                
+                sections.forEach(section => {
+                    gsap.from(section, {
+                        opacity: 0,
+                        y: 50,
+                        duration: 1,
+                        scrollTrigger: {
+                            trigger: section,
+                            start: 'top 85%',
+                            end: 'top 30%',
+                            toggleActions: 'play none none reverse'
+                        }
+                    });
+                });
+            }
+        };
+        
+        // 进度条动画
+        const animateProgressBars = () => {
+            const progressBars = document.querySelectorAll('.progress-value');
+            progressBars.forEach(bar => {
+                const progressWidth = bar.style.getPropertyValue('--progress-width') || '0%';
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = progressWidth;
+                }, 500);
+            });
+        };
+        
+        // 页面加载完成后执行动画
+        window.addEventListener('load', () => {
+            animateOnScroll();
+            setTimeout(animateProgressBars, 1000);
+        });
+        
+        // 添加交互效果
+        document.addEventListener('DOMContentLoaded', () => {
+            // 项目卡片悬停效果
+            const projectCards = document.querySelectorAll('.hologram-pink');
+            projectCards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'translateY(-5px)';
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0)';
+                });
+            });
+            
+            // 技术标签浮动效果
+            const techBadges = document.querySelectorAll('.tech-badge');
+            techBadges.forEach((badge, index) => {
+                badge.style.animationDelay = `${index * 0.5}s`;
+            });
+        });
+    </script>
+</body>
+</html>

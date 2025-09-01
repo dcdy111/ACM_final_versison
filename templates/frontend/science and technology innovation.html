@@ -1,0 +1,2672 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACM算法研究实验室</title>
+    
+    <!-- 性能优化加载器 -->
+    <script defer src="/static/js/performance-loader.js"></script>
+
+    <style>
+        :root {
+            --primary: #3a86ff;
+            --secondary: #00ffcc;
+            --accent: #ff2d75;
+            --accent2: #b967ff;
+            --accent-light: #8b5cf6;
+            --text-secondary: #94a3b8;
+            --dark-bg: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
+            --text-light: #e0e0ff;
+            --text: var(--text-light);
+            --glass: rgba(255, 255, 255, 0.05);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Exo 2', sans-serif;
+            color: var(--text-light);
+            background: var(--dark-bg);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* 粒子背景（展示相关，保留） */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        /* 导航栏（展示相关，保留） */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            backdrop-filter: blur(10px);
+            background: var(--glass);
+            border-bottom: 1px solid rgba(58, 134, 255, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo::before {
+            content: "";
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233a86ff"><path d="M12 2L1 12h3v9h6v-6h4v6h6v-9h3L12 2zm0 2.8L18 10v9h-2v-6H8v6H6v-9l6-7.2z"/></svg>') no-repeat center;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            white-space: nowrap;
+        }
+        
+        .nav-link {
+            position: relative;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 500;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover { color: var(--primary); }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after { width: 100%; }
+        
+        /* 下拉菜单（展示相关，保留） */
+        .dropdown { position: relative; }
+        
+        .dropdown-content {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            min-width: 220px;
+            background: rgba(10, 10, 26, 0.98);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(58, 134, 255, 0.25);
+            border-radius: 8px;
+            padding: 0.6rem 0;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(6px);
+            transition: all 0.22s ease;
+            z-index: 200;
+            white-space: nowrap;
+        }
+        
+        .dropdown:hover .dropdown-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-link {
+            display: block;
+            padding: 0.5rem 1.25rem;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.18s ease;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .dropdown-link:hover {
+            background: rgba(58, 134, 255, 0.12);
+            color: var(--primary);
+            padding-left: 1.5rem;
+        }
+        
+        .menu-toggle {
+            display: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+        
+        /* 全屏导航 */
+        .fullscreen-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(10, 10, 26, 0.95);
+            backdrop-filter: blur(15px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            transform: translateY(-100%);
+            transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0);
+        }
+        
+        .fullscreen-nav.active {
+            transform: translateY(0);
+        }
+        
+        .fullscreen-nav .close-btn {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--text-light);
+            transition: color 0.3s;
+        }
+        
+        .fullscreen-nav .close-btn:hover {
+            color: var(--accent);
+        }
+        
+        .fullscreen-nav-links {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .fullscreen-nav-link {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: var(--text-light);
+            text-decoration: none;
+            position: relative;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s;
+        }
+        
+        .fullscreen-nav-link:hover {
+            color: var(--primary);
+        }
+        
+        .fullscreen-nav-link::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: rgba(58, 134, 255, 0.1);
+            z-index: -1;
+            transition: width 0.3s;
+        }
+        
+        .fullscreen-nav-link:hover::before {
+            width: 100%;
+        }
+        
+        /* 页脚（展示相关，保留） */
+        footer {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 3rem 5%;
+            text-align: center;
+            margin-top: 5rem;
+            position: relative;
+        }
+        
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+        
+        .footer-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-link { color: var(--text-light); text-decoration: none; transition: color 0.3s; }
+        .footer-link:hover { color: var(--primary); }
+        
+        .footer-social {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .social-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(0, 240, 255, 0.1);
+            color: var(--primary);
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            background-color: var(--primary);
+            color: var(--dark);
+            transform: translateY(-3px);
+        }
+        
+        .social-icon i {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .social-icon:hover i {
+            background: none;
+            -webkit-background-clip: initial;
+            background-clip: initial;
+            color: var(--dark);
+        }
+        
+        .copyright { font-size: 0.9rem; color: rgba(224, 224, 255, 0.6); }
+        
+        /* 轮播图部分 */
+        .carousel {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            margin: 3rem 0;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            background: #1a1a2e;
+        }
+        
+        .carousel-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .carousel-item {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            background-color: #1a1a2e;
+            display: flex;
+            align-items: flex-end;
+            padding: 2rem;
+            z-index: 1;
+        }
+        
+        .carousel-item.active {
+            opacity: 1;
+            z-index: 2;
+        }
+        
+        /* 轮播图片容器样式 - 修改为cover模式 */
+        .carousel-image-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #1a1a2e;
+        }
+        
+        .carousel-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+        
+        .carousel-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .carousel-caption {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            width: 60%;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .carousel-caption h3 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .carousel-controls {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .carousel-control {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            cursor: pointer;
+            transition: background 0.3s, transform 0.3s;
+        }
+        
+        .carousel-control.active {
+            background: var(--accent-light);
+            transform: scale(1.2);
+        }
+
+        /* 必要动画（logo 脉冲） */
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+        
+        /* Tailwind 工具类定义 */
+        .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .py-16 { padding-top: 4rem; padding-bottom: 4rem; }
+        .pt-32 { padding-top: 8rem; }
+        .pb-20 { padding-bottom: 5rem; }
+        .pb-24 { padding-bottom: 6rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mb-12 { margin-bottom: 3rem; }
+        .text-center { text-align: center; }
+        .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+        .text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+        .text-5xl { font-size: 3rem; line-height: 1; }
+        .text-7xl { font-size: 4.5rem; line-height: 1; }
+        .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+        .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+        .font-bold { font-weight: 700; }
+        .font-semibold { font-weight: 600; }
+        .font-medium { font-weight: 500; }
+        .leading-tight { line-height: 1.25; }
+        .text-gray-300 { color: #d1d5db; }
+        .text-gray-400 { color: #9ca3af; }
+        .text-gray-500 { color: #6b7280; }
+        .text-accent { color: #ff2d75; }
+        .text-primary { color: #6C63FF; }
+        .text-secondary { color: #00F0FF; }
+        .text-white { color: #ffffff; }
+        .block { display: block; }
+        .flex { display: flex; }
+        .grid { display: grid; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-4 { gap: 1rem; }
+        .gap-6 { gap: 1.5rem; }
+        .gap-8 { gap: 2rem; }
+        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .bg-darker { background-color: #0A0A0A; }
+        .bg-dark { background-color: #121212; }
+        .bg-primary { background-color: #6C63FF; }
+        .bg-secondary { background-color: #00F0FF; }
+        .bg-accent { background-color: #ff2d75; }
+        .rounded-xl { border-radius: 0.75rem; }
+        .rounded-2xl { border-radius: 1rem; }
+        .rounded-lg { border-radius: 0.5rem; }
+        .rounded-full { border-radius: 9999px; }
+        .border { border-width: 1px; }
+        .border-primary\/20 { border-color: rgba(108, 99, 255, 0.2); }
+        .border-accent\/20 { border-color: rgba(255, 45, 117, 0.2); }
+        .p-6 { padding: 1.5rem; }
+        .p-8 { padding: 2rem; }
+        .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+        .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+        .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+        .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+        .overflow-hidden { overflow: hidden; }
+        .relative { position: relative; }
+        .absolute { position: absolute; }
+        .fixed { position: fixed; }
+        .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+        .top-0 { top: 0; }
+        .right-0 { right: 0; }
+        .w-full { width: 100%; }
+        .w-3 { width: 0.75rem; }
+        .w-12 { width: 3rem; }
+        .w-16 { width: 4rem; }
+        .w-32 { width: 8rem; }
+        .w-40 { width: 10rem; }
+        .w-60 { width: 15rem; }
+        .w-80 { width: 20rem; }
+        .h-2 { height: 0.5rem; }
+        .h-3 { height: 0.75rem; }
+        .h-12 { height: 3rem; }
+        .h-16 { height: 4rem; }
+        .h-32 { height: 8rem; }
+        .h-40 { height: 10rem; }
+        .h-48 { height: 12rem; }
+        .h-60 { height: 15rem; }
+        .h-96 { height: 24rem; }
+        .h-full { height: 100%; }
+        .max-w-3xl { max-width: 48rem; }
+        .max-w-5xl { max-width: 64rem; }
+        .max-w-6xl { max-width: 72rem; }
+        .flex-shrink-0 { flex-shrink: 0; }
+        .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+        .duration-300 { transition-duration: 300ms; }
+        .duration-500 { transition-duration: 500ms; }
+        .opacity-0 { opacity: 0; }
+        .opacity-30 { opacity: 0.3; }
+        .group:hover .group-hover\:opacity-100 { opacity: 1; }
+        .hover\:bg-primary\/90:hover { background-color: rgba(108, 99, 255, 0.9); }
+        .hover\:bg-secondary\/90:hover { background-color: rgba(0, 240, 255, 0.9); }
+        .hover\:bg-accent\/90:hover { background-color: rgba(255, 45, 117, 0.9); }
+        .hover\:bg-primary\/20:hover { background-color: rgba(108, 99, 255, 0.2); }
+        .z-0 { z-index: 0; }
+        .z-10 { z-index: 10; }
+        .-z-10 { z-index: -10; }
+        .blur-3xl { filter: blur(64px); }
+        .space-y-4 > * + * { margin-top: 1rem; }
+        .bg-gradient-to-b { background-image: linear-gradient(to bottom, var(--tw-gradient-stops)); }
+        .bg-gradient-to-br { background-image: linear-gradient(to bottom right, var(--tw-gradient-stops)); }
+        .from-accent\/20 { --tw-gradient-from: rgba(255, 45, 117, 0.2); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(255, 45, 117, 0)); }
+        .from-accent\/5 { --tw-gradient-from: rgba(255, 45, 117, 0.05); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(255, 45, 117, 0)); }
+        .to-transparent { --tw-gradient-to: transparent; }
+        .animate-pulse-slow { animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .text-glow { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor; }
+        .fa-spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .col-span-full { grid-column: 1 / -1; }
+        .line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+        .text-xs { font-size: 0.75rem; line-height: 1rem; }
+        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+        
+        /* 大学生创新创业训练计划轮播容器自适应高度 */
+        #projectCarousel {
+            transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 400px; /* 最小高度，确保基本显示 */
+            overflow: hidden; /* 确保内容不会溢出 */
+        }
+        
+        #carouselWrapper {
+            min-height: inherit;
+            transition: transform 0.5s ease-in-out;
+        }
+        
+        .project-slide {
+            min-height: inherit;
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        .project-slide .bg-darker {
+            height: auto; /* 移除固定高度，让内容决定高度 */
+            min-height: 400px; /* 设置最小高度确保美观 */
+            transition: all 0.3s ease-in-out;
+        }
+        
+        /* 响应式优化 */
+        @media (max-width: 768px) {
+            #projectCarousel {
+                min-height: 350px;
+            }
+            
+            .project-slide .bg-darker {
+                min-height: 350px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #projectCarousel {
+                min-height: 300px;
+            }
+            
+            .project-slide .bg-darker {
+                min-height: 300px;
+            }
+        }
+        
+        /* 加载动画样式 */
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            min-height: 200px;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(108, 99, 255, 0.1);
+            border-left-color: #6C63FF;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        
+        /* 分页控件样式 */
+        .pagination-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+            border: 1px solid rgba(58, 134, 255, 0.3);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            min-width: 100px;
+        }
+        
+        .pagination-btn:hover:not(:disabled) {
+            background: rgba(58, 134, 255, 0.2);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(58, 134, 255, 0.2);
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .pagination-btn:disabled:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(58, 134, 255, 0.3);
+            color: var(--text-light);
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .pagination-info {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(58, 134, 255, 0.2);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-light);
+            min-width: 80px;
+            justify-content: center;
+        }
+        
+        .pagination-info .current-page {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .pagination-info .total-pages {
+            color: var(--text-secondary);
+        }
+        
+        /* 分页容器过渡动画 */
+        .pagination-container {
+            transition: all 0.3s ease;
+        }
+        
+        .pagination-container.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .pagination-container.hide {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        
+        /* 卡片进入动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* 媒体查询 */
+        @media (min-width: 768px) {
+            .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .md\:text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+            .md\:text-7xl { font-size: 4.5rem; line-height: 1; }
+            .md\:p-8 { padding: 2rem; }
+        }
+        
+        /* 分页控件响应式优化 */
+        @media (max-width: 640px) {
+            .pagination-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+                min-width: 80px;
+            }
+            
+            .pagination-btn span {
+                display: none;
+            }
+            
+            .pagination-info {
+                padding: 8px 16px;
+                font-size: 12px;
+                min-width: 60px;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        
+        @media (min-width: 640px) {
+            .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        
+        @media (min-width: 1280px) {
+            .xl\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        }
+        
+        /* 自定义样式类 */
+            .content-auto { content-visibility: auto; }
+            .bg-grid { background-image: radial-gradient(rgba(108, 99, 255, 0.1) 1px, transparent 1px); background-size: 30px 30px; }
+            .project-card { transition: all 0.3s ease; }
+            .project-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(108, 99, 255, 0.1), 0 10px 10px -5px rgba(108, 99, 255, 0.04); }
+            .progress-ring-circle { transition: stroke-dashoffset 0.5s ease; transform: rotate(-90deg); transform-origin: 50% 50%; }
+            .timeline-dot::before { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%; background-color: #6C63FF; left: -10px; top: 50%; transform: translateY(-50%); z-index: 1; }
+            .timeline-line::before { content: ''; position: absolute; width: 2px; height: 100%; background-color: rgba(108, 99, 255, 0.3); left: 0; top: 0; }
+
+            /* ========================= 统一滚动条美化样式 ========================= */
+            /* 全局滚动条 - 竖直方向 */
+            ::-webkit-scrollbar {
+                width: 12px;
+                height: 12px;
+            }
+            
+            /* 滚动条轨道 */
+            ::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.08);
+                border-radius: 6px;
+                border: 1px solid rgba(58, 134, 255, 0.1);
+            }
+            
+            /* 滚动条滑块 */
+            ::-webkit-scrollbar-thumb {
+                background: linear-gradient(135deg, #3a86ff 0%, #00ffcc 50%, #b967ff 100%);
+                border-radius: 6px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                transition: all 0.3s ease;
+                box-shadow: 0 2px 8px rgba(58, 134, 255, 0.2);
+            }
+            
+            ::-webkit-scrollbar-thumb:hover {
+                background: linear-gradient(135deg, #00ffcc 0%, #ff2d75 50%, #3a86ff 100%);
+                box-shadow: 0 4px 15px rgba(58, 134, 255, 0.4);
+                transform: scale(1.05);
+            }
+            
+            /* 滚动条箭头按钮 */
+            ::-webkit-scrollbar-button {
+                width: 12px;
+                height: 12px;
+                background: linear-gradient(45deg, #3a86ff, #00ffcc);
+                border-radius: 50%;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                transition: all 0.3s ease;
+            }
+            
+            /* 竖直滚动条上箭头 */
+            ::-webkit-scrollbar-button:vertical:start:decrement {
+                background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                            url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 14l5-5 5 5z"/></svg>') center/60% no-repeat;
+            }
+            
+            /* 竖直滚动条下箭头 */
+            ::-webkit-scrollbar-button:vertical:end:increment {
+                background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                            url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>') center/60% no-repeat;
+            }
+            
+            /* 水平滚动条左箭头 */
+            ::-webkit-scrollbar-button:horizontal:start:decrement {
+                background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                            url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M14 7l-5 5 5 5z"/></svg>') center/60% no-repeat;
+            }
+            
+            /* 水平滚动条右箭头 */
+            ::-webkit-scrollbar-button:horizontal:end:increment {
+                background: linear-gradient(45deg, #3a86ff, #00ffcc),
+                            url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M10 7l5 5-5 5z"/></svg>') center/60% no-repeat;
+            }
+            
+            /* 箭头按钮悬停效果 */
+            ::-webkit-scrollbar-button:hover {
+                background: linear-gradient(45deg, #ff2d75, #b967ff) !important;
+                box-shadow: 0 0 10px rgba(58, 134, 255, 0.6);
+                transform: scale(1.1);
+            }
+            
+            /* 箭头按钮点击效果 */
+            ::-webkit-scrollbar-button:active {
+                background: linear-gradient(45deg, #00ffcc, #3a86ff) !important;
+                transform: scale(0.95);
+            }
+            
+            /* 滚动条角落 */
+            ::-webkit-scrollbar-corner {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 6px;
+                border: 1px solid rgba(58, 134, 255, 0.1);
+            }
+            
+            /* Firefox滚动条样式 */
+            * {
+                scrollbar-width: thin;
+                scrollbar-color: #3a86ff rgba(255, 255, 255, 0.08);
+            }
+            
+            /* 移动端滚动条优化 */
+            @media (max-width: 768px) {
+                ::-webkit-scrollbar {
+                    width: 6px;
+                    height: 6px;
+                }
+            }
+            /* ========================= 滚动条样式结束 ========================= */
+    </style>
+    
+    <!-- 关键资源 -->
+    <link rel="stylesheet" href="/static/highlight.css">
+    <script defer src="/static/highlight.js"></script>
+    
+    <!-- 引入通用JavaScript函数 -->
+    <script src="/static/js/common.js"></script>
+    
+    <!-- 延迟加载非关键资源 -->
+    <script>
+        // 延迟加载GSAP和其他非关键资源
+        setTimeout(() => {
+            // 加载GSAP
+            const gsapScript = document.createElement('script');
+            gsapScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js';
+            gsapScript.onload = () => {
+                const scrollTrigger = document.createElement('script');
+                scrollTrigger.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js';
+                document.head.appendChild(scrollTrigger);
+            };
+            document.head.appendChild(gsapScript);
+            
+            // 加载额外字体
+            const extraFonts = document.createElement('link');
+            extraFonts.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap';
+            extraFonts.rel = 'stylesheet';
+            document.head.appendChild(extraFonts);
+        }, 1000);
+    </script>
+</head>
+<body>
+    <!-- 粒子背景 -->
+    <div id="particles-js"></div>
+    
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <a href="/" class="logo">ACM LAB</a>
+        <div class="nav-links">
+            <div class="dropdown">
+                <a href="/introduction" class="nav-link">概况</a>
+            </div>
+            
+            <a href="/team" class="nav-link">团队</a>
+            
+            <div class="dropdown">
+                <a href="/algorithm" class="nav-link">成果</a>
+                <div class="dropdown-content">
+                        <a href="/algorithm" class="dropdown-link">算法</a>
+                        <a href="/paper" class="dropdown-link">论文</a>
+                        <a href="/innovation" class="dropdown-link">科创</a>
+                </div>
+            </div>
+            
+            <a href="/dynamic" class="nav-link">动态</a>
+            
+            <div class="dropdown">
+                <a href="/algorithm-recruitment" class="nav-link">加入我们</a>
+                <div class="dropdown-content">
+                    <a href="/algorithm-recruitment" class="dropdown-link">算法组招生</a>
+                        <a href="/project-recruitment" class="dropdown-link">项目组招生</a>
+                </div>
+            </div>
+            
+
+        </div>
+        <div class="menu-toggle">☰</div>
+        </nav>
+    
+    
+    
+    
+    <!-- 在此处插入 2/2.html 所选内容（动态背景 + 标题区 + 主要内容 + 模态框容器） -->
+    <!-- 动态背景（来自 2/2.html） -->
+    <div class="fixed inset-0 bg-grid opacity-30 z-0"></div>
+    <div class="fixed top-0 right-0 w-full h-96 bg-gradient-to-b from-accent/20 to-transparent blur-3xl -z-10"></div>
+
+    <!-- 页面标题（来自 2/2.html） -->
+    <header class="pt-32 pb-20 relative">
+        <div class="container mx-auto px-4">
+            <div class="max-w-3xl mx-auto text-center">
+                <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+                    <span class="block">科技</span>
+                    <span class="block text-accent text-glow">创新项目</span>
+                </h1>
+                <p class="text-xl text-gray-300">
+                    从创意到实践，推动技术创新与产业应用
+                </p>
+            </div>
+            
+            <!-- 装饰元素 -->
+            <div class="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-accent/10 blur-3xl animate-pulse-slow"></div>
+            <div class="absolute -bottom-20 -left-20 w-60 h-60 rounded-full bg-primary/10 blur-3xl animate-pulse-slow" style="animation-delay: 1s"></div>
+        </div>
+    </header>
+
+    <!-- 主要内容（来自 2/2.html） -->
+    <main class="relative z-10 pb-24">
+        <!-- 项目概览 -->
+        <section class="py-16">
+            <div class="container mx-auto px-4">
+                <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center">
+                    项目<span class="text-accent">概览</span>
+                </h2>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:[grid-template-columns:repeat(auto-fit,minmax(16rem,max-content))] justify-center gap-8 max-w-6xl mx-auto" id="projectStatsContainer">
+                    <!-- 动态加载项目统计 -->
+                    <div class="text-center text-gray-300">
+                        <i class="fa fa-spinner fa-spin text-2xl mb-2"></i>
+                        <p>加载中...</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+        
+        <!-- 大学生创新创业训练计划 -->
+        <section class="py-16 bg-darker/50">
+            <div class="container mx-auto px-4">
+                <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center">
+                    大学生<span class="text-primary">创新创业训练计划</span>
+                </h2>
+                
+                <div class="max-w-6xl mx-auto">
+                    <!-- 项目轮播容器 -->
+                    <div class="relative overflow-hidden" id="projectCarousel">
+                        <div class="carousel-wrapper flex transition-transform duration-500 ease-in-out" id="carouselWrapper">
+                            <!-- 动态加载的项目内容将在这里显示 -->
+                            <div class="project-slide w-full flex-shrink-0">
+                                <div class="bg-darker rounded-2xl border border-primary/20 overflow-hidden">
+                                    <div class="grid md:grid-cols-2">
+                                        <div class="relative overflow-hidden">
+                                            <div class="w-full h-full bg-gray-600 flex items-center justify-center">
+                                                <p class="text-gray-300">正在加载项目数据...</p>
+                                            </div>
+                                        </div>
+                                        <div class="p-8">
+                                            <h3 class="text-2xl font-bold mb-4">正在加载...</h3>
+                                            <p class="text-gray-300 mb-6">
+                                                项目数据正在从数据库加载中，请稍候...
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 轮播箭头 -->
+                        <button class="carousel-btn prev-btn absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-darker/80 border border-primary/30 rounded-full flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all duration-300 z-10">
+                            <i class="fa fa-angle-left text-xl"></i>
+                        </button>
+                        <button class="carousel-btn next-btn absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-darker/80 border border-primary/30 rounded-full flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all duration-300 z-10">
+                            <i class="fa fa-angle-right text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- 轮播指示器 -->
+                    <div class="flex justify-center mt-8 gap-2" id="carouselIndicators">
+                        <!-- 动态生成的轮播指示器将在这里显示 -->
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 项目列表（部分） -->
+        <section class="py-16">
+            <div class="container mx-auto px-4">
+                <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center">
+                    知识<span class="text-secondary">产权</span>
+                </h2>
+                
+                <!-- 动态加载的知识产权卡片容器 -->
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto" id="intellectualPropertiesContainer">
+                    <!-- 动态加载的知识产权数据将在这里显示 -->
+                    <div class="text-center text-gray-300 col-span-full">
+                        <i class="fa fa-spinner fa-spin text-2xl mb-2"></i>
+                        <p>加载中...</p>
+                    </div>
+                </div>
+                
+                <!-- 知识产权分页控件 -->
+                <div class="flex justify-center items-center mt-8 gap-4" id="intellectualPropertiesPagination" style="display: none;">
+                    <button class="pagination-btn prev-btn" disabled>
+                        <i class="fa fa-angle-left"></i>
+                        <span class="ml-1">上一页</span>
+                    </button>
+                    
+                    <div class="pagination-info">
+                        <span class="current-page">1</span>
+                        <span class="mx-2">/</span>
+                        <span class="total-pages">1</span>
+                    </div>
+                    
+                    <button class="pagination-btn next-btn">
+                        <span class="mr-1">下一页</span>
+                        <i class="fa fa-angle-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+          <!-- 校企合作项目展示 -->
+          <section class="py-16">
+            <div class="container mx-auto px-4">
+                <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center">
+                    校企<span class="text-secondary">合作</span>
+                </h2>
+                
+                <!-- 动态加载的校企合作卡片容器 -->
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto" id="enterpriseCooperationsContainer">
+                    <!-- 动态加载的校企合作数据将在这里显示 -->
+                    <div class="text-center text-gray-300 col-span-full">
+                        <i class="fa fa-spinner fa-spin text-2xl mb-2"></i>
+                        <p>加载中...</p>
+                    </div>
+                </div>
+                
+                <!-- 校企合作分页控件 -->
+                <div class="flex justify-center items-center mt-8 gap-4" id="enterpriseCooperationsPagination" style="display: none;">
+                    <button class="pagination-btn prev-btn" disabled>
+                        <i class="fa fa-angle-left"></i>
+                        <span class="ml-1">上一页</span>
+                    </button>
+                    
+                    <div class="pagination-info">
+                        <span class="current-page">1</span>
+                        <span class="mx-2">/</span>
+                        <span class="total-pages">1</span>
+                    </div>
+                    
+                    <button class="pagination-btn next-btn">
+                        <span class="mr-1">下一页</span>
+                        <i class="fa fa-angle-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 项目成果与荣誉（部分） -->
+        <section class="py-16">
+            <div class="container mx-auto px-4">
+                <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center">
+                    成果与<span class="text-primary">荣誉</span>
+                </h2>
+                
+                <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto" id="achievementsContainer">
+                    <!-- 动态加载成果与荣誉 -->
+                    <div class="text-center text-gray-300 col-span-full">
+                        <i class="fa fa-spinner fa-spin text-2xl mb-2"></i>
+                        <p>加载中...</p>
+                                </div>
+                    </div>
+                    
+                <!-- 轮播图展示 -->
+                <div class="mt-16 max-w-6xl mx-auto">
+                    <div class="carousel" id="innovationCarousel">
+                        <div class="carousel-inner" id="carouselInner">
+                            <!-- 动态加载轮播图 -->
+                            <div class="carousel-item active" style="display: flex; align-items: center; justify-content: center; background: rgba(26, 26, 46, 0.9);">
+                                <div class="text-center text-gray-300">
+                                    <i class="fa fa-spinner fa-spin text-3xl mb-4"></i>
+                                    <p>加载轮播图中...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="carousel-controls" id="carouselControls">
+                            <!-- 动态生成控制点 -->
+                        </div>
+                        <!-- 轮播图切换控制 -->
+                        <div id="carouselNavControls" style="position: absolute; top: 50%; left: 0; right: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; padding: 0 1.5rem; pointer-events: none;">
+                            <button id="prevSlideBtn" onclick="window.debugPrevSlide && window.debugPrevSlide()" 
+                                    style="pointer-events: all; width: 50px; height: 50px; border-radius: 50%; background: rgba(26, 26, 46, 0.9); backdrop-filter: blur(10px); border: 2px solid rgba(58, 134, 255, 0.3); color: #3a86ff; font-size: 20px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);"
+                                    onmouseover="this.style.background='rgba(58, 134, 255, 0.2)'; this.style.borderColor='#3a86ff'; this.style.transform='scale(1.1)'; this.style.boxShadow='0 6px 20px rgba(58, 134, 255, 0.3)';"
+                                    onmouseout="this.style.background='rgba(26, 26, 46, 0.9)'; this.style.borderColor='rgba(58, 134, 255, 0.3)'; this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(0, 0, 0, 0.2)';">
+                                ‹
+                            </button>
+                            
+                            <button id="nextSlideBtn" onclick="window.debugNextSlide && window.debugNextSlide()" 
+                                    style="pointer-events: all; width: 50px; height: 50px; border-radius: 50%; background: rgba(26, 26, 46, 0.9); backdrop-filter: blur(10px); border: 2px solid rgba(58, 134, 255, 0.3); color: #3a86ff; font-size: 20px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);"
+                                    onmouseover="this.style.background='rgba(58, 134, 255, 0.2)'; this.style.borderColor='#3a86ff'; this.style.transform='scale(1.1)'; this.style.boxShadow='0 6px 20px rgba(58, 134, 255, 0.3)';"
+                                    onmouseout="this.style.background='rgba(26, 26, 46, 0.9)'; this.style.borderColor='rgba(58, 134, 255, 0.3)'; this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(0, 0, 0, 0.2)';">
+                                ›
+                            </button>
+                        </div>
+                        
+                        <!-- 轮播图页面指示器 -->
+                        <div id="carouselPageIndicator" style="position: absolute; bottom: 20px; right: 20px; z-index: 100; background: rgba(26, 26, 46, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(58, 134, 255, 0.3); border-radius: 20px; padding: 8px 16px; color: rgba(255, 255, 255, 0.8); font-size: 14px; font-weight: 500; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
+                            <span id="currentSlideInfo">1/3</span>
+                        </div>
+                    </div>
+                </div>
+</div>    
+</div>
+        </section>
+    </main>
+  <!-- 页脚 -->
+  <footer id="footer" class="footer">
+    <a href="/" class="footer-logo">ACM实验室</a>
+    
+    <div class="footer-links">
+        <a href="/introduction" class="footer-link">概况</a>
+        <a href="/team" class="footer-link">团队</a>
+        <a href="/algorithm" class="footer-link">算法</a>
+        <a href="/paper" class="footer-link">论文</a>
+        <a href="/innovation" class="footer-link">科创</a>
+        <a href="/dynamic" class="footer-link">动态</a>
+        <a href="/algorithm-recruitment" class="footer-link">算法组招生</a>
+        <a href="/project-recruitment" class="footer-link">项目组招生</a>
+    </div>
+    
+            <div class="footer-social">
+            <a href="#" class="social-icon" title="微信"><i class="fab fa-weixin"></i></a>
+            <a href="https://s1.imagehub.cc/images/2025/08/28/d80fe4abf0cd9a20fde76c7a3d5849a8.png" class="social-icon" title="微博"><i class="fab fa-weibo"></i></a>
+            <a href="https://s1.imagehub.cc/images/2025/08/28/4859e46f5945f5d8210456ecc89f7494.jpeg" class="social-icon" title="小红书"><i class="fas fa-book-open"></i></a>
+            <a href="#" class="social-icon" title="GitHub"><i class="fab fa-github"></i></a>
+        <a href="https://mp.weixin.qq.com/s/your-wechat-official-account" class="social-icon" title="微信公众号"><i class="fas fa-newspaper"></i></a>
+        <a href="https://space.bilibili.com/1599858052?spm_id_from=333.788.upinfo.head.click" class="social-icon" title="哔哩哔哩"><i class="fab fa-bilibili"></i></a>
+        <a href="#" class="social-icon" title="邮箱"><i class="fas fa-envelope"></i></a>
+    </div>
+    
+    <p class="copyright">© 2023 ACM算法与科研创新实验室. 保留所有权利.</p>
+</footer>
+    
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        // 粒子背景初始化（仅保留展示相关）
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 80, density: { enable: true, value_area: 800 } },
+                color: { value: '#3a86ff' },
+                shape: { type: 'circle', stroke: { width: 0, color: '#000000' }, polygon: { nb_sides: 5 } },
+                opacity: { value: 0.5 },
+                size: { value: 3, random: true },
+                line_linked: { enable: true, distance: 150, color: '#3a86ff', opacity: 0.4, width: 1 },
+                move: { enable: true, speed: 2, direction: 'none', random: false, straight: false, out_mode: 'out', bounce: false }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: { onhover: { enable: true, mode: 'grab' }, onclick: { enable: true, mode: 'push' }, resize: true },
+                modes: {
+                    grab: { distance: 140, line_linked: { opacity: 1 } },
+                    bubble: { distance: 400, size: 40, duration: 2, opacity: 8, speed: 3 },
+                    repulse: { distance: 200, duration: 0.4 },
+                    push: { particles_nb: 4 },
+                    remove: { particles_nb: 2 }
+                }
+            },
+            retina_detect: true
+        });
+    </script>
+    <!-- 项目轮播和联系功能 -->
+    <script>
+        // 注册GSAP插件
+        if (window.gsap && window.ScrollTrigger) {
+            gsap.registerPlugin(ScrollTrigger);
+        }
+
+        // 大学生创新创业训练计划轮播器功能
+        class TrainingProjectCarousel {
+            constructor() {
+                this.carousel = null;
+                this.wrapper = null;
+                this.slides = [];
+                this.indicators = [];
+                this.prevBtn = null;
+                this.nextBtn = null;
+                
+                this.currentSlide = 0;
+                this.totalSlides = 0;
+                this.autoPlayInterval = null;
+                
+                // 延迟初始化，等待动态内容加载
+                this.initialized = false;
+            }
+            
+            init() {
+                // 重新获取DOM元素（在动态内容加载后）
+                this.carousel = document.getElementById('projectCarousel');
+                this.wrapper = document.getElementById('carouselWrapper');
+                this.slides = document.querySelectorAll('#projectCarousel .project-slide');
+                this.indicators = document.querySelectorAll('#carouselIndicators .carousel-indicator');
+                this.prevBtn = document.querySelector('#projectCarousel .prev-btn');
+                this.nextBtn = document.querySelector('#projectCarousel .next-btn');
+                
+                this.totalSlides = this.slides.length;
+                
+                if (!this.carousel || !this.wrapper || this.totalSlides === 0) {
+                    console.log('⚠️ 大学生创新创业训练计划轮播器初始化失败，等待数据加载');
+                    return false;
+                }
+                
+                console.log(`✅ 大学生创新创业训练计划轮播器初始化成功，共${this.totalSlides}个项目`);
+                
+                // 清除之前的事件监听器
+                if (this.initialized) {
+                    this.removeEventListeners();
+                }
+                
+                // 绑定事件
+                this.bindEventListeners();
+                
+                // 重置到第一张
+                this.currentSlide = 0;
+                this.updateCarousel();
+                
+                // 初始化时延迟调整高度，确保DOM已渲染
+                setTimeout(() => {
+                    this.adjustContainerHeight();
+                }, 100);
+                
+                // 启动自动播放
+                this.startAutoPlay();
+                
+                this.initialized = true;
+                return true;
+            }
+            
+            bindEventListeners() {
+                if (this.prevBtn) {
+                    this.prevBtn.addEventListener('click', this.previousSlide.bind(this));
+                }
+                if (this.nextBtn) {
+                    this.nextBtn.addEventListener('click', this.nextSlide.bind(this));
+                }
+                
+                // 指示器点击事件
+                this.indicators.forEach((indicator, index) => {
+                    indicator.addEventListener('click', () => this.goToSlide(index));
+                });
+                
+                // 鼠标悬停控制
+                if (this.carousel) {
+                    this.carousel.addEventListener('mouseenter', this.stopAutoPlay.bind(this));
+                    this.carousel.addEventListener('mouseleave', this.startAutoPlay.bind(this));
+                }
+                
+                // 窗口大小改变时重新调整高度
+                window.addEventListener('resize', this.debounce(() => {
+                    this.adjustContainerHeight();
+                }, 250));
+            }
+            
+            removeEventListeners() {
+                // 移除事件监听器防止重复绑定
+                if (this.prevBtn) {
+                    this.prevBtn.removeEventListener('click', this.previousSlide.bind(this));
+                }
+                if (this.nextBtn) {
+                    this.nextBtn.removeEventListener('click', this.nextSlide.bind(this));
+                }
+            }
+            
+            goToSlide(index) {
+                if (index >= 0 && index < this.totalSlides) {
+                    this.currentSlide = index;
+                    this.updateCarousel();
+                }
+            }
+            
+            nextSlide() {
+                this.currentSlide = (this.currentSlide + 1) % this.totalSlides;
+                this.updateCarousel();
+            }
+            
+            previousSlide() {
+                this.currentSlide = (this.currentSlide - 1 + this.totalSlides) % this.totalSlides;
+                this.updateCarousel();
+            }
+            
+            updateCarousel() {
+                if (!this.wrapper || this.totalSlides === 0) return;
+                
+                // 移动轮播容器
+                const translateX = -this.currentSlide * 100;
+                this.wrapper.style.transform = `translateX(${translateX}%)`;
+                
+                // 更新指示器
+                this.indicators.forEach((indicator, index) => {
+                    if (index === this.currentSlide) {
+                        indicator.classList.remove('bg-dark', 'border-primary/30');
+                        indicator.classList.add('bg-primary');
+                    } else {
+                        indicator.classList.remove('bg-primary');
+                        indicator.classList.add('bg-dark', 'border-primary/30');
+                    }
+                });
+                
+                // 计算并设置容器高度
+                this.adjustContainerHeight();
+            }
+            
+            // 动态调整容器高度的方法
+            adjustContainerHeight() {
+                if (!this.carousel || !this.slides || this.slides.length === 0) return;
+                
+                // 获取当前显示的卡片
+                const currentSlide = this.slides[this.currentSlide];
+                if (!currentSlide) return;
+                
+                // 使用requestAnimationFrame确保DOM已更新
+                requestAnimationFrame(() => {
+                    // 临时移除过渡效果，避免计算时的干扰
+                    const originalTransition = this.carousel.style.transition;
+                    this.carousel.style.transition = 'none';
+                    
+                    // 获取当前卡片内容的实际高度
+                    const slideContent = currentSlide.querySelector('.bg-darker');
+                    if (!slideContent) return;
+                    
+                    // 计算内容的自然高度
+                    const contentHeight = slideContent.scrollHeight;
+                    
+                    // 根据屏幕尺寸设置不同的最小和最大高度
+                    let minHeight = 400;
+                    let maxHeight = 800;
+                    
+                    if (window.innerWidth <= 480) {
+                        minHeight = 300;
+                        maxHeight = 600;
+                    } else if (window.innerWidth <= 768) {
+                        minHeight = 350;
+                        maxHeight = 700;
+                    }
+                    
+                    // 考虑padding和margin
+                    const targetHeight = Math.min(Math.max(contentHeight + 20, minHeight), maxHeight);
+                    
+                    console.log(`📏 调整容器高度: 卡片${this.currentSlide + 1} 内容高度=${contentHeight}px, 目标高度=${targetHeight}px (屏幕宽度=${window.innerWidth}px, 最小高度=${minHeight}px)`);
+                    
+                    // 延迟一帧恢复过渡效果并设置高度
+                    requestAnimationFrame(() => {
+                        this.carousel.style.transition = originalTransition || 'height 0.5s ease-in-out';
+                        this.carousel.style.height = `${targetHeight}px`;
+                    });
+                });
+            }
+            
+            // 防抖函数
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+            
+            startAutoPlay() {
+                this.stopAutoPlay();
+                if (this.totalSlides > 1) {
+                    this.autoPlayInterval = setInterval(() => {
+                        this.nextSlide();
+                    }, 5000); // 5秒自动切换
+                }
+            }
+            
+            stopAutoPlay() {
+                if (this.autoPlayInterval) {
+                    clearInterval(this.autoPlayInterval);
+                    this.autoPlayInterval = null;
+                }
+            }
+            
+            // 重新初始化（在数据加载后调用）
+            reinit() {
+                this.stopAutoPlay();
+                return this.init();
+            }
+            
+            // 调试功能：显示当前容器信息
+            debugContainerInfo() {
+                if (!this.carousel || !this.slides) return;
+                
+                const currentSlide = this.slides[this.currentSlide];
+                const slideContent = currentSlide?.querySelector('.bg-darker');
+                
+                console.log('🔍 轮播容器调试信息:', {
+                    当前卡片: this.currentSlide + 1,
+                    总卡片数: this.totalSlides,
+                    容器高度: this.carousel.style.height,
+                    内容高度: slideContent?.scrollHeight + 'px',
+                    屏幕宽度: window.innerWidth + 'px',
+                    容器类名: this.carousel.className
+                });
+            }
+        }
+        
+        // 联系项目负责人功能
+        function initContactFeature() {
+            document.querySelectorAll('.contact-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    
+                    // 获取联系信息
+                    const contactName = btn.getAttribute('data-contact-name');
+                    const contactEmail = btn.getAttribute('data-contact-email');
+                    const contactPhone = btn.getAttribute('data-contact-phone');
+                    const contactWechat = btn.getAttribute('data-contact-wechat');
+                    const projectTitle = btn.getAttribute('data-project-title');
+                    
+                    // 组装完整的联系信息
+                    const contactInfo = `ACM算法研究实验室项目负责人联系方式：
+
+项目名称：${projectTitle}
+负责人：${contactName}
+电子邮箱：${contactEmail}
+联系电话：${contactPhone}
+微信号：${contactWechat}
+办公地址：计算机学院实验楼A座
+办公时间：周一至周五 9:00-17:00
+
+咨询须知：
+- 请提前预约时间进行详细交流
+- 发送邮件时请注明项目咨询
+- 欢迎学生和企业合作伙伴咨询
+
+请通过以上任一方式联系项目负责人！`;
+
+                    try {
+                        // 复制联系信息到剪贴板
+                        await navigator.clipboard.writeText(contactInfo);
+                        
+                        // 显示成功提示
+                        showNotification('负责人联系方式已复制到剪贴板！', 'success');
+                        
+                        // 更新按钮状态
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<i class="fa fa-check mr-2"></i>联系方式已复制';
+                        btn.disabled = true;
+                        
+                        // 2秒后恢复原状
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                        }, 2000);
+                        
+                    } catch (err) {
+                        // 如果剪贴板API不可用，使用传统方法
+                        const textArea = document.createElement('textarea');
+                        textArea.value = contactInfo;
+                        textArea.style.position = 'fixed';
+                        textArea.style.opacity = '0';
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        
+                        try {
+                            document.execCommand('copy');
+                            showNotification('负责人联系方式已复制到剪贴板！', 'success');
+                        } catch (fallbackErr) {
+                            showNotification('复制失败，请手动保存联系方式', 'error');
+                            console.error('复制失败:', fallbackErr);
+                        }
+                        
+                        document.body.removeChild(textArea);
+                    }
+                });
+            });
+        }
+        
+        // 通知提示功能
+        function showNotification(message, type = 'info') {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 24px;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                z-index: 99999;
+                transition: all 0.3s ease;
+                transform: translateX(100%);
+                max-width: 400px;
+                word-wrap: break-word;
+                font-size: 14px;
+                font-weight: 500;
+            `;
+            
+            // 根据类型设置样式
+            if (type === 'success') {
+                notification.style.backgroundColor = '#10b981';
+                notification.style.color = '#ffffff';
+                notification.style.border = '1px solid #059669';
+                notification.innerHTML = `<i class="fa fa-check-circle" style="margin-right: 8px;"></i>${message}`;
+            } else if (type === 'error') {
+                notification.style.backgroundColor = '#ef4444';
+                notification.style.color = '#ffffff';
+                notification.style.border = '1px solid #dc2626';
+                notification.innerHTML = `<i class="fa fa-exclamation-circle" style="margin-right: 8px;"></i>${message}`;
+            } else {
+                notification.style.backgroundColor = '#3b82f6';
+                notification.style.color = '#ffffff';
+                notification.style.border = '1px solid #2563eb';
+                notification.innerHTML = `<i class="fa fa-info-circle" style="margin-right: 8px;"></i>${message}`;
+            }
+            
+            document.body.appendChild(notification);
+            
+            // 动画显示
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // 3秒后自动消失
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // 轮播图功能
+        function initCarousel() {
+            console.log('🔄 尝试初始化轮播图...');
+            
+            // 查找特定容器内的轮播图元素
+            const carouselContainer = document.getElementById('innovationCarousel');
+            if (!carouselContainer) {
+                console.log('❌ 轮播图容器未找到');
+                return;
+            }
+            
+            const carouselItems = carouselContainer.querySelectorAll('.carousel-item');
+            const carouselControls = carouselContainer.querySelectorAll('.carousel-control');
+            let currentIndex = 0;
+            let interval;
+            
+            console.log(`📊 找到轮播图元素: ${carouselItems.length} 个项目, ${carouselControls.length} 个控制点`);
+            
+            if (!carouselItems.length) {
+                console.log('⚠️ 没有轮播图项目，跳过初始化');
+                return;
+            }
+            
+            // 检查每个项目的初始状态
+            carouselItems.forEach((item, index) => {
+                const isActive = item.classList.contains('active');
+                const opacity = window.getComputedStyle(item).opacity;
+                console.log(`  项目 ${index + 1}: ${isActive ? '激活' : '未激活'}, 透明度: ${opacity}`);
+            });
+            
+            function showSlide(index) {
+                if (index >= carouselItems.length || index < 0) {
+                    console.log(`❌ 无效索引: ${index}`);
+                    return;
+                }
+                
+                console.log(`🎯 切换到第 ${index + 1} 张轮播图`);
+                
+                // 移除所有active类
+                carouselItems.forEach((item, i) => {
+                    const wasActive = item.classList.contains('active');
+                    item.classList.remove('active');
+                    if (wasActive) console.log(`  - 项目 ${i + 1}: 移除active状态`);
+                });
+                carouselControls.forEach((control, i) => {
+                    control.classList.remove('active');
+                });
+                
+                // 添加active类到当前项目
+                carouselItems[index].classList.add('active');
+                console.log(`  + 项目 ${index + 1}: 添加active状态`);
+                
+                if (carouselControls[index]) {
+                    carouselControls[index].classList.add('active');
+                }
+                currentIndex = index;
+                
+                // 立即更新页面指示器
+                updateSlideInfo();
+                
+                // 验证切换结果 - 等待CSS过渡完成
+                setTimeout(() => {
+                    const actualOpacity = window.getComputedStyle(carouselItems[index]).opacity;
+                    console.log(`  ✓ 验证: 项目 ${index + 1} 透明度为 ${actualOpacity} (过渡完成)`);
+                    updateSlideInfo();
+                }, 1100); // 等待1秒过渡动画完成后再验证
+            }
+            
+            function nextSlide() {
+                let nextIndex = (currentIndex + 1) % carouselItems.length;
+                console.log(`⏭️ 自动切换: ${currentIndex + 1} → ${nextIndex + 1}`);
+                showSlide(nextIndex);
+            }
+            
+            function startCarousel() {
+                clearInterval(interval);
+                interval = setInterval(nextSlide, 5000);
+                console.log('⏰ 自动播放已启动 (5秒间隔)');
+            }
+            
+            // 点击控制点切换
+            carouselControls.forEach((control, index) => {
+                control.addEventListener('click', function() {
+                    const targetIndex = parseInt(this.getAttribute('data-index'));
+                    if (!isNaN(targetIndex)) {
+                        console.log(`🖱️ 点击控制点 ${targetIndex + 1}`);
+                        clearInterval(interval);
+                        showSlide(targetIndex);
+                        startCarousel();
+                    }
+                });
+            });
+            
+            // 鼠标悬停暂停
+            carouselContainer.addEventListener('mouseenter', () => {
+                clearInterval(interval);
+                console.log('⏸️ 鼠标悬停，暂停自动播放');
+            });
+            carouselContainer.addEventListener('mouseleave', () => {
+                startCarousel();
+                console.log('▶️ 鼠标离开，恢复自动播放');
+            });
+            
+            // 初始化显示第一张
+            console.log('🎬 初始化显示第一张轮播图');
+            showSlide(0);
+            updateSlideInfo();
+            startCarousel();
+            
+            console.log('✅ 轮播图初始化完成');
+            
+            // 添加全局调试函数
+            window.debugCarousel = function() {
+                console.log('🔍 轮播图调试信息:');
+                carouselItems.forEach((item, index) => {
+                    const isActive = item.classList.contains('active');
+                    const style = window.getComputedStyle(item);
+                    console.log(`  项目 ${index + 1}:`, {
+                        active: isActive,
+                        opacity: style.opacity,
+                        zIndex: style.zIndex,
+                        position: style.position
+                    });
+                });
+            };
+            
+            // 添加手动切换函数
+            window.showSlideManual = function(index) {
+                console.log(`🖱️ 手动切换到第 ${index + 1} 张`);
+                showSlide(index);
+                updateSlideInfo();
+            };
+            
+            // 添加轮播图前后切换函数
+            window.debugPrevSlide = function() {
+                const prevIndex = (currentIndex - 1 + carouselItems.length) % carouselItems.length;
+                console.log(`🖱️ 切换到上一张 ${currentIndex + 1} → ${prevIndex + 1}`);
+                showSlide(prevIndex);
+                updateSlideInfo();
+            };
+            
+            window.debugNextSlide = function() {
+                const nextIndex = (currentIndex + 1) % carouselItems.length;
+                console.log(`🖱️ 切换到下一张 ${currentIndex + 1} → ${nextIndex + 1}`);
+                showSlide(nextIndex);
+                updateSlideInfo();
+            };
+            
+            // 更新页面指示器显示
+            function updateSlideInfo() {
+                const slideInfo = document.getElementById('currentSlideInfo');
+                if (slideInfo) {
+                    slideInfo.textContent = `${currentIndex + 1}/${carouselItems.length}`;
+                }
+            }
+        }
+        
+        // 加载状态管理
+        function showLoadingState() {
+            const containers = [
+                'projectStatsContainer',
+                'achievementsContainer'
+            ];
+            
+            containers.forEach(id => {
+                const container = document.getElementById(id);
+                if (container) {
+                    container.innerHTML = `
+                        <div class="loading-container">
+                            <div class="loading-spinner"></div>
+                            <p class="text-gray-300">正在加载数据...</p>
+                            <p class="text-gray-400 text-sm mt-1">请稍候</p>
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        function hideLoadingState() {
+            // 加载状态会在数据渲染时自动隐藏
+        }
+        
+        // 动态数据加载功能
+        async function loadInnovationData(forceRefresh = false) {
+            try {
+                console.log('🚀 开始加载科创页面数据...', forceRefresh ? '(强制刷新)' : '');
+                
+                // 显示加载状态
+                showLoadingState();
+                
+                // 添加时间戳参数避免缓存
+                const timestamp = forceRefresh ? `?t=${Date.now()}` : '';
+                
+                // 设置请求超时
+                const timeout = 10000; // 10秒超时
+                
+                // 创建带超时的fetch函数
+                const fetchWithTimeout = (url, options = {}) => {
+                    return Promise.race([
+                        fetch(url, options),
+                        new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error('请求超时')), timeout)
+                        )
+                    ]);
+                };
+                
+                // 并行加载所有数据
+                const [statsRes, achievementsRes, carouselRes, trainingProjectsRes, intellectualPropertiesRes, enterpriseCooperationsRes] = await Promise.all([
+                    fetchWithTimeout(`/api/innovation/frontend/stats${timestamp}`),
+                    fetchWithTimeout(`/api/innovation/frontend/achievements${timestamp}`),
+                    fetchWithTimeout(`/api/innovation/frontend/carousel${timestamp}`),
+                    fetchWithTimeout(`/api/innovation/frontend/training-projects${timestamp}`),
+                    fetchWithTimeout(`/api/innovation/frontend/intellectual-properties${timestamp}`),
+                    fetchWithTimeout(`/api/innovation/frontend/enterprise-cooperations${timestamp}`)
+                ]);
+
+                console.log('API响应状态:', {
+                    stats: statsRes.status,
+                    achievements: achievementsRes.status,
+                    carousel: carouselRes.status,
+                    trainingProjects: trainingProjectsRes.status,
+                    intellectualProperties: intellectualPropertiesRes.status,
+                    enterpriseCooperations: enterpriseCooperationsRes.status
+                });
+
+                // 加载项目统计
+                if (statsRes.ok) {
+                    const statsData = await statsRes.json();
+                    console.log('项目统计数据:', statsData);
+                    renderProjectStats(statsData);
+                } else {
+                    console.error('项目统计加载失败:', statsRes.status, await statsRes.text());
+                    document.getElementById('projectStatsContainer').innerHTML = `
+                        <div class="text-center text-gray-300">
+                            <i class="fa fa-exclamation-triangle text-2xl mb-2"></i>
+                            <p>项目统计数据加载失败</p>
+                            <button onclick="loadInnovationData(true)" class="mt-2 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors">
+                                重试
+                            </button>
+                        </div>
+                    `;
+                }
+
+
+
+                // 加载成果与荣誉
+                if (achievementsRes.ok) {
+                    const achievementsData = await achievementsRes.json();
+                    console.log('成果荣誉数据:', achievementsData);
+                    renderAchievements(achievementsData);
+                } else {
+                    console.error('成果荣誉加载失败:', achievementsRes.status, await achievementsRes.text());
+                    document.getElementById('achievementsContainer').innerHTML = `
+                        <div class="text-center text-gray-300 col-span-full">
+                            <i class="fa fa-exclamation-triangle text-2xl mb-2"></i>
+                            <p>成果荣誉数据加载失败</p>
+                            <button onclick="loadInnovationData(true)" class="mt-2 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors">
+                                重试
+                            </button>
+                        </div>
+                    `;
+                }
+
+                // 加载轮播图
+                if (carouselRes.ok) {
+                    const carouselData = await carouselRes.json();
+                    console.log('轮播图数据:', carouselData);
+                    renderCarousel(carouselData);
+                } else {
+                    console.error('轮播图加载失败:', carouselRes.status, await carouselRes.text());
+                    renderCarousel([]); // 渲染空轮播图
+                }
+
+                // 加载大学生创新创业训练计划
+                if (trainingProjectsRes.ok) {
+                    const trainingProjectsData = await trainingProjectsRes.json();
+                    console.log('大学生创新创业训练计划数据:', trainingProjectsData);
+                    renderTrainingProjects(trainingProjectsData);
+                } else {
+                    console.error('大学生创新创业训练计划加载失败:', trainingProjectsRes.status, await trainingProjectsRes.text());
+                    renderTrainingProjects([]); // 渲染空数据
+                }
+
+                // 加载知识产权
+                if (intellectualPropertiesRes.ok) {
+                    const intellectualPropertiesData = await intellectualPropertiesRes.json();
+                    console.log('知识产权数据:', intellectualPropertiesData);
+                    renderIntellectualProperties(intellectualPropertiesData);
+                } else {
+                    console.error('知识产权加载失败:', intellectualPropertiesRes.status, await intellectualPropertiesRes.text());
+                    renderIntellectualProperties([]); // 渲染空数据
+                }
+
+                // 加载校企合作
+                if (enterpriseCooperationsRes.ok) {
+                    const enterpriseCooperationsData = await enterpriseCooperationsRes.json();
+                    console.log('校企合作数据:', enterpriseCooperationsData);
+                    renderEnterpriseCooperations(enterpriseCooperationsData);
+                } else {
+                    console.error('校企合作加载失败:', enterpriseCooperationsRes.status, await enterpriseCooperationsRes.text());
+                    renderEnterpriseCooperations([]); // 渲染空数据
+                }
+                
+                // 数据加载完成，隐藏加载状态
+                hideLoadingState();
+                
+                // 显示成功通知
+                if (typeof showNotification === 'function') {
+                    showNotification('科创页面数据加载完成', 'success');
+                }
+                
+                console.log('✅ 科创页面数据加载完成');
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                
+                // 隐藏加载状态
+                hideLoadingState();
+                
+                // 显示错误状态
+                const errorMessage = error.message === '请求超时' ? '数据加载超时，请检查网络连接' : '数据加载失败，请刷新页面重试';
+                
+                document.getElementById('projectStatsContainer').innerHTML = `
+                    <div class="text-center text-gray-300">
+                        <i class="fa fa-exclamation-triangle text-2xl mb-2"></i>
+                        <p>${errorMessage}</p>
+                        <button onclick="loadInnovationData(true)" class="mt-2 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors">
+                            重试
+                        </button>
+                    </div>
+                `;
+
+                document.getElementById('achievementsContainer').innerHTML = `
+                    <div class="text-center text-gray-300 col-span-full">
+                        <i class="fa fa-exclamation-triangle text-2xl mb-2"></i>
+                        <p>${errorMessage}</p>
+                        <button onclick="loadInnovationData(true)" class="mt-2 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors">
+                            重试
+                        </button>
+                    </div>
+                `;
+                renderCarousel([]);
+                renderTrainingProjects([]);
+                renderIntellectualProperties([]);
+                renderEnterpriseCooperations([]);
+                
+                // 显示错误通知
+                if (typeof showNotification === 'function') {
+                    showNotification(errorMessage, 'error');
+                }
+            }
+        }
+
+        // 渲染项目统计
+        function renderProjectStats(data) {
+            const container = document.getElementById('projectStatsContainer');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-300">暂无统计数据</div>';
+                return;
+            }
+
+            container.innerHTML = data.map(item => `
+                <div class="bg-darker rounded-xl border border-accent/20 p-6 text-center relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div class="w-16 h-16 rounded-full bg-accent/10 border border-accent flex items-center justify-center mx-auto mb-4 relative z-10">
+                        <i class="fa ${item.icon || 'fa-lightbulb-o'} text-accent text-2xl"></i>
+                    </div>
+                    <h3 class="font-bold text-3xl mb-2 relative z-10">${item.value}</h3>
+                    <p class="text-gray-300 relative z-10">${item.name || item.description || '统计项目'}</p>
+                    ${item.description && item.name ? `<p class="text-gray-400 text-sm relative z-10 mt-1">${item.description}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+
+
+        // 渲染成果与荣誉
+        function renderAchievements(data) {
+            const container = document.getElementById('achievementsContainer');
+            if (!data || (!data.awards && !data.patents)) {
+                container.innerHTML = '<div class="text-center text-gray-300 col-span-full">暂无成果数据</div>';
+                return;
+            }
+
+            let html = '';
+
+            // 渲染项目获奖
+            if (data.awards && data.awards.length > 0) {
+                html += `
+                    <div class="bg-darker rounded-xl border border-primary/20 p-6">
+                        <h3 class="text-xl font-semibold mb-6 flex items-center">
+                            <i class="fa fa-trophy text-accent mr-2"></i> 项目获奖
+                        </h3>
+                        <ul class="space-y-4">
+                            ${data.awards.map(award => `
+                                <li class="flex gap-4">
+                                    <div class="w-12 h-12 rounded-lg bg-accent/10 border border-accent flex items-center justify-center flex-shrink-0">
+                                        <i class="fa ${award.icon || 'fa-star'} text-accent"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium">${award.title}</h4>
+                                        <p class="text-gray-400 text-sm">${award.description}</p>
+                                        ${award.date ? `<p class="text-xs text-gray-500 mt-1">${new Date(award.date).toLocaleDateString('zh-CN')}</p>` : ''}
+                                    </div>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // 渲染知识产权
+            if (data.patents && data.patents.length > 0) {
+                html += `
+                    <div class="bg-darker rounded-xl border border-primary/20 p-6">
+                        <h3 class="text-xl font-semibold mb-6 flex items-center">
+                            <i class="fa fa-lightbulb-o text-primary mr-2"></i> 知识产权
+                        </h3>
+                        <ul class="space-y-4">
+                            ${data.patents.map(patent => `
+                                <li class="flex gap-4">
+                                    <div class="w-12 h-12 rounded-lg bg-primary/10 border border-primary flex items-center justify-center flex-shrink-0">
+                                        <i class="fa ${patent.icon || 'fa-file-text-o'} text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium">${patent.title}</h4>
+                                        <p class="text-gray-400 text-sm">${patent.description}</p>
+                                        ${patent.extra_data && patent.extra_data.progress ? `
+                                            <div class="w-full bg-dark rounded-full h-1.5 mt-2">
+                                                <div class="bg-primary h-1.5 rounded-full" style="width: ${patent.extra_data.progress}%"></div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html || '<div class="text-center text-gray-300 col-span-full">暂无成果数据</div>';
+        }
+
+        // 渲染轮播图
+        function renderCarousel(data) {
+            const carouselInner = document.getElementById('carouselInner');
+            const carouselControls = document.getElementById('carouselControls');
+            
+            console.log('开始渲染轮播图，数据条数:', data ? data.length : 0);
+            console.log('轮播图数据详情:', data);
+            
+            if (!data || data.length === 0) {
+                carouselInner.innerHTML = `
+                    <div class="carousel-item active" style="display: flex; align-items: center; justify-content: center; background: rgba(26, 26, 46, 0.9);">
+                        <div class="text-center text-gray-300">
+                            <p class="text-xl">暂无轮播图数据</p>
+                            <p class="text-sm mt-2 opacity-75">请在管理后台添加轮播图内容</p>
+                        </div>
+                    </div>
+                `;
+                carouselControls.innerHTML = '';
+                console.log('轮播图数据为空，显示默认内容');
+                return;
+            }
+
+            // 渲染轮播图项
+            carouselInner.innerHTML = data.map((item, index) => {
+                const overlayOpacity = item.overlay_opacity || 0.3;
+                const imageUrl = item.image_display_url || item.image_url || 'https://picsum.photos/seed/carousel' + index + '/800/600';
+                
+                // 根据文字位置设置样式
+                let captionClass = 'carousel-caption';
+                let captionStyle = '';
+                
+                if (item.text_position === 'center') {
+                    captionClass += ' mx-auto text-center';
+                    captionStyle = 'width: 80%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10;';
+                } else if (item.text_position === 'bottom-right') {
+                    captionStyle = 'width: 60%; position: absolute; bottom: 2rem; right: 2rem; z-index: 10;';
+                } else {
+                    captionStyle = 'width: 60%; position: absolute; bottom: 2rem; left: 2rem; z-index: 10;';
+                }
+                
+                console.log(`渲染轮播图项 ${index + 1}:`, item.title, imageUrl);
+                
+                return `
+                    <div class="carousel-item ${index === 0 ? 'active' : ''}" data-index="${index}">
+                        <div class="carousel-image-container">
+                            <img src="${imageUrl}" alt="${item.title || '轮播图'}" class="carousel-image" 
+                                 onload="console.log('✅ 图片${index + 1}加载成功:', '${item.title}')"
+                                 onerror="console.log('❌ 图片${index + 1}加载失败:', '${item.title}'); this.style.display='none'; this.parentElement.style.background='#1a1a2e';">
+                        </div>
+                        <div class="carousel-overlay" style="background: linear-gradient(rgba(0,0,0,${overlayOpacity}), rgba(0,0,0,${overlayOpacity}));"></div>
+                        <div class="${captionClass}" style="${captionStyle}">
+                            <h3 style="margin-bottom: 0.5rem; font-size: 1.5rem; font-weight: bold; color: white;">${item.title || '未命名项目'}</h3>
+                            <p style="margin: 0; color: rgba(255,255,255,0.9); line-height: 1.5;">${item.description || '暂无描述'}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // 渲染控制点
+            carouselControls.innerHTML = data.map((_, index) => 
+                `<div class="carousel-control ${index === 0 ? 'active' : ''}" data-index="${index}"></div>`
+            ).join('');
+
+            console.log('轮播图渲染完成，项目数量:', data.length);
+
+            // 重新初始化轮播图功能
+            setTimeout(() => {
+                console.log('延迟初始化轮播图...');
+                initCarousel();
+            }, 200);
+        }
+
+        // 渲染大学生创新创业训练计划
+        function renderTrainingProjects(data) {
+            console.log('开始渲染大学生创新创业训练计划，数据条数:', data ? data.length : 0);
+            console.log('大学生创新创业训练计划数据详情:', data);
+            
+            // 找到轮播容器
+            const carouselWrapper = document.getElementById('carouselWrapper');
+            if (!carouselWrapper) {
+                console.error('❌ 未找到大学生创新创业训练计划轮播容器');
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                carouselWrapper.innerHTML = `
+                    <div class="project-slide w-full flex-shrink-0">
+                        <div class="bg-darker rounded-2xl border border-primary/20 overflow-hidden">
+                            <div class="grid md:grid-cols-2">
+                                <div class="relative overflow-hidden">
+                                    <div class="w-full h-full bg-gray-600 flex items-center justify-center">
+                                        <p class="text-gray-300">暂无项目图片</p>
+                                    </div>
+                                </div>
+                                <div class="p-8">
+                                    <h3 class="text-2xl font-bold mb-4">暂无项目数据</h3>
+                                    <p class="text-gray-300 mb-6">
+                                        当前没有大学生创新创业训练计划项目数据，请在管理后台添加项目信息。
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                console.log('大学生创新创业训练计划数据为空，显示默认内容');
+                return;
+            }
+
+            // 渲染项目轮播
+            carouselWrapper.innerHTML = data.map((project, index) => {
+                const imageUrl = project.image_display_url || project.image_url || `https://picsum.photos/seed/project${index + 1}/800/600`;
+                const progress = project.progress || 0;
+                const startDate = project.start_date ? new Date(project.start_date).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit' }) : '';
+                const endDate = project.end_date ? new Date(project.end_date).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit' }) : '';
+                const dateRange = startDate && endDate ? `${startDate} - ${endDate}` : '时间待定';
+                
+                // 根据类别设置不同的颜色
+                let categoryColor = 'bg-primary/90';
+                let progressColor = 'bg-primary';
+                let buttonClass = 'bg-primary';
+                
+                switch(project.category) {
+                    case '人工智能':
+                        categoryColor = 'bg-primary/90';
+                        progressColor = 'bg-primary';
+                        buttonClass = 'bg-primary';
+                        break;
+                    case '大数据':
+                        categoryColor = 'bg-secondary/90';
+                        progressColor = 'bg-secondary';
+                        buttonClass = 'bg-secondary text-darker';
+                        break;
+                    case '物联网':
+                        categoryColor = 'bg-accent/90';
+                        progressColor = 'bg-accent';
+                        buttonClass = 'bg-accent';
+                        break;
+                    case '区块链':
+                        categoryColor = 'bg-primary/90';
+                        progressColor = 'bg-primary';
+                        buttonClass = 'bg-primary';
+                        break;
+                    default:
+                        categoryColor = 'bg-primary/90';
+                        progressColor = 'bg-primary';
+                        buttonClass = 'bg-primary';
+                }
+
+                return `
+                    <div class="project-slide w-full flex-shrink-0">
+                        <div class="bg-darker rounded-2xl border border-primary/20 overflow-hidden">
+                            <div class="grid md:grid-cols-2">
+                                <div class="relative overflow-hidden">
+                                    <img src="${imageUrl}" alt="${project.title}" class="w-full h-full object-cover">
+                                    <div class="absolute inset-0 bg-gradient-to-r from-darker to-transparent md:bg-gradient-to-l"></div>
+                                    <div class="absolute top-6 left-6 md:left-auto md:right-6">
+                                        <span class="px-3 py-1 ${categoryColor} text-white text-xs font-bold rounded-full">
+                                            ${project.category || '未分类'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="p-8">
+                                    <h3 class="text-2xl font-bold mb-4">${project.title}</h3>
+                                    <p class="text-gray-300 mb-6">
+                                        ${project.description || '暂无项目描述'}
+                                    </p>
+                                    
+                                    <div class="space-y-4 mb-6">
+                                        <div>
+                                            <div class="flex justify-between mb-1">
+                                                <span class="text-sm">项目进度</span>
+                                                <span class="text-sm font-medium text-primary">${progress}%</span>
+                                            </div>
+                                            <div class="w-full bg-dark rounded-full h-2">
+                                                <div class="${progressColor} h-2 rounded-full" style="width: ${progress}%"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <span class="text-gray-400">起止时间</span>
+                                                <p>${dateRange}</p>
+                                            </div>
+                                            <div>
+                                                <span class="text-gray-400">项目经费</span>
+                                                <p>${project.budget || '待定'}</p>
+                                            </div>
+                                            <div>
+                                                <span class="text-gray-400">负责人</span>
+                                                <p>${project.leader || '待指定'}</p>
+                                            </div>
+                                            <div>
+                                                <span class="text-gray-400">参与人员</span>
+                                                <p>${project.members_count || 0}人</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button class="contact-btn px-6 py-3 ${buttonClass} text-white rounded-lg hover:bg-primary/90 transition-all duration-300 font-medium" 
+                                        data-contact-name="${project.leader || '项目负责人'}" 
+                                        data-contact-email="${project.contact_email || 'contact@acmlab.edu.cn'}" 
+                                        data-contact-phone="${project.contact_phone || '联系电话待更新'}"
+                                        data-contact-wechat="${project.contact_wechat || '微信号待更新'}"
+                                        data-project-title="${project.title}">
+                                        联系项目负责人
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // 更新轮播指示器
+            const carouselIndicators = document.getElementById('carouselIndicators');
+            if (carouselIndicators) {
+                carouselIndicators.innerHTML = data.map((_, index) => 
+                    `<button class="carousel-indicator w-3 h-3 rounded-full ${index === 0 ? 'bg-primary' : 'bg-dark border border-primary/30 hover:bg-primary/20'} transition-all duration-300" data-slide="${index}"></button>`
+                ).join('');
+            }
+
+            console.log('✅ 大学生创新创业训练计划渲染完成，项目数量:', data.length);
+            
+            // 重新初始化轮播器
+            setTimeout(() => {
+                if (window.trainingProjectCarousel) {
+                    window.trainingProjectCarousel.reinit();
+                    console.log('🔄 大学生创新创业训练计划轮播器已重新初始化');
+                }
+            }, 200);
+        }
+
+        // 分页管理器类
+        class PaginationManager {
+            constructor(containerId, paginationId, itemsPerPage = 6) {
+                this.containerId = containerId;
+                this.paginationId = paginationId;
+                this.itemsPerPage = itemsPerPage;
+                this.currentPage = 1;
+                this.totalPages = 1;
+                this.data = [];
+                this.renderFunction = null;
+                
+                this.initEventListeners();
+            }
+            
+            initEventListeners() {
+                // 获取分页控件元素
+                const pagination = document.getElementById(this.paginationId);
+                if (!pagination) return;
+                
+                const prevBtn = pagination.querySelector('.prev-btn');
+                const nextBtn = pagination.querySelector('.next-btn');
+                
+                if (prevBtn) {
+                    prevBtn.addEventListener('click', () => this.goToPage(this.currentPage - 1));
+                }
+                
+                if (nextBtn) {
+                    nextBtn.addEventListener('click', () => this.goToPage(this.currentPage + 1));
+                }
+            }
+            
+            setData(data, renderFunction) {
+                this.data = data || [];
+                this.renderFunction = renderFunction;
+                this.totalPages = Math.ceil(this.data.length / this.itemsPerPage);
+                this.currentPage = 1;
+                
+                this.updatePagination();
+                this.renderCurrentPage();
+            }
+            
+            goToPage(page) {
+                if (page < 1 || page > this.totalPages) return;
+                
+                this.currentPage = page;
+                this.updatePagination();
+                this.renderCurrentPage();
+                
+                // 滚动到容器顶部
+                const container = document.getElementById(this.containerId);
+                if (container) {
+                    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+            
+            updatePagination() {
+                const pagination = document.getElementById(this.paginationId);
+                if (!pagination) return;
+                
+                const prevBtn = pagination.querySelector('.prev-btn');
+                const nextBtn = pagination.querySelector('.next-btn');
+                const currentPageSpan = pagination.querySelector('.current-page');
+                const totalPagesSpan = pagination.querySelector('.total-pages');
+                
+                // 更新按钮状态
+                if (prevBtn) {
+                    prevBtn.disabled = this.currentPage <= 1;
+                }
+                
+                if (nextBtn) {
+                    nextBtn.disabled = this.currentPage >= this.totalPages;
+                }
+                
+                // 更新页码显示
+                if (currentPageSpan) {
+                    currentPageSpan.textContent = this.currentPage;
+                }
+                
+                if (totalPagesSpan) {
+                    totalPagesSpan.textContent = this.totalPages;
+                }
+                
+                // 显示或隐藏分页控件
+                if (this.totalPages <= 1) {
+                    pagination.style.display = 'none';
+                } else {
+                    pagination.style.display = 'flex';
+                }
+            }
+            
+            renderCurrentPage() {
+                if (!this.renderFunction || !this.data.length) return;
+                
+                const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+                const endIndex = startIndex + this.itemsPerPage;
+                const pageData = this.data.slice(startIndex, endIndex);
+                
+                console.log(`📄 渲染第${this.currentPage}页，显示第${startIndex + 1}-${Math.min(endIndex, this.data.length)}条，共${this.data.length}条数据`);
+                
+                this.renderFunction(pageData, this.currentPage, this.totalPages);
+            }
+        }
+        
+        // 创建分页管理器实例
+        const intellectualPropertiesPagination = new PaginationManager('intellectualPropertiesContainer', 'intellectualPropertiesPagination', 6);
+        const enterpriseCooperationsPagination = new PaginationManager('enterpriseCooperationsContainer', 'enterpriseCooperationsPagination', 6);
+        
+        // 渲染知识产权
+        function renderIntellectualProperties(data) {
+            console.log('开始渲染知识产权，数据条数:', data ? data.length : 0);
+            console.log('知识产权数据详情:', data);
+            
+            const targetContainer = document.getElementById('intellectualPropertiesContainer');
+            if (!targetContainer) {
+                console.error('❌ 未找到知识产权容器');
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                targetContainer.innerHTML = `
+                    <div class="text-center text-gray-300 col-span-full">
+                        <i class="fa fa-folder-open text-4xl mb-4 opacity-50"></i>
+                        <h3 class="text-xl font-bold mb-2">暂无知识产权数据</h3>
+                        <p class="text-gray-400">当前没有知识产权数据，请在管理后台添加相关信息。</p>
+                    </div>
+                `;
+                
+                // 隐藏分页控件
+                const pagination = document.getElementById('intellectualPropertiesPagination');
+                if (pagination) pagination.style.display = 'none';
+                
+                console.log('知识产权数据为空，显示默认内容');
+                return;
+            }
+
+            // 设置分页数据和渲染函数
+            intellectualPropertiesPagination.setData(data, renderIntellectualPropertiesPage);
+        }
+        
+        // 渲染知识产权页面数据
+        function renderIntellectualPropertiesPage(pageData, currentPage, totalPages) {
+            const targetContainer = document.getElementById('intellectualPropertiesContainer');
+            if (!targetContainer) return;
+            
+            targetContainer.innerHTML = pageData.map((property, index) => {
+                const globalIndex = (currentPage - 1) * 6 + index;
+                const imageUrl = property.image_display_url || property.image_url || `https://picsum.photos/seed/property${globalIndex + 1}/600/400`;
+                
+                // 根据类型设置不同的标签颜色
+                let typeColor = 'bg-secondary/90 text-darker';
+                let statusColor = 'bg-primary/20 text-primary';
+                let statusText = '进行中';
+                
+                switch(property.type) {
+                    case 'patent':
+                        typeColor = 'bg-secondary/90 text-darker';
+                        break;
+                    case 'copyright':
+                        typeColor = 'bg-accent/90 text-white';
+                        break;
+                    case 'trademark':
+                        typeColor = 'bg-primary/90 text-white';
+                        break;
+                }
+
+                if (property.status === 'completed') {
+                    statusColor = 'bg-secondary/20 text-secondary';
+                    statusText = '已完成';
+                } else if (property.status === 'granted') {
+                    statusColor = 'bg-secondary/20 text-secondary';
+                    statusText = '已授权';
+                }
+
+                const applicationDate = property.application_date ? new Date(property.application_date).toLocaleDateString('zh-CN') : '';
+                const grantDate = property.grant_date ? new Date(property.grant_date).toLocaleDateString('zh-CN') : '';
+                const dateRange = applicationDate && grantDate ? `${applicationDate} - ${grantDate}` : applicationDate || '申请时间待定';
+
+                return `
+                    <div class="project-card bg-darker rounded-xl border border-primary/20 overflow-hidden" style="animation: fadeInUp 0.3s ease ${index * 0.1}s both;">
+                        <div class="relative h-48">
+                            <img src="${imageUrl}" alt="${property.title}" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-gradient-to-t from-darker to-transparent"></div>
+                            <div class="absolute top-4 left-4 ${typeColor} text-xs font-bold px-3 py-1 rounded-full">
+                                ${property.type === 'patent' ? '专利' : property.type === 'copyright' ? '著作权' : property.type === 'trademark' ? '商标' : property.category || '其他'}
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-3">${property.title}</h3>
+                            <p class="text-gray-300 text-sm mb-4 line-clamp-3">
+                                ${property.description || '暂无描述'}
+                            </p>
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-1 text-xs text-gray-400">
+                                    <i class="fa fa-calendar"></i>
+                                    <span>${dateRange}</span>
+                                </div>
+                                <span class="text-xs px-2 py-1 ${statusColor} rounded-full">${statusText}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            console.log(`✅ 知识产权第${currentPage}页渲染完成，显示项目数量:`, pageData.length);
+        }
+
+        // 渲染校企合作
+        function renderEnterpriseCooperations(data) {
+            console.log('开始渲染校企合作，数据条数:', data ? data.length : 0);
+            console.log('校企合作数据详情:', data);
+            
+            const targetContainer = document.getElementById('enterpriseCooperationsContainer');
+            if (!targetContainer) {
+                console.error('❌ 未找到校企合作容器');
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                targetContainer.innerHTML = `
+                    <div class="text-center text-gray-300 col-span-full">
+                        <i class="fa fa-handshake-o text-4xl mb-4 opacity-50"></i>
+                        <h3 class="text-xl font-bold mb-2">暂无校企合作数据</h3>
+                        <p class="text-gray-400">当前没有校企合作项目数据，请在管理后台添加相关信息。</p>
+                    </div>
+                `;
+                
+                // 隐藏分页控件
+                const pagination = document.getElementById('enterpriseCooperationsPagination');
+                if (pagination) pagination.style.display = 'none';
+                
+                console.log('校企合作数据为空，显示默认内容');
+                return;
+            }
+
+            // 设置分页数据和渲染函数
+            enterpriseCooperationsPagination.setData(data, renderEnterpriseCooperationsPage);
+        }
+        
+        // 渲染校企合作页面数据
+        function renderEnterpriseCooperationsPage(pageData, currentPage, totalPages) {
+            const targetContainer = document.getElementById('enterpriseCooperationsContainer');
+            if (!targetContainer) return;
+            
+            targetContainer.innerHTML = pageData.map((cooperation, index) => {
+                const globalIndex = (currentPage - 1) * 6 + index;
+                const imageUrl = cooperation.image_display_url || cooperation.image_url || `https://picsum.photos/seed/cooperation${globalIndex + 1}/600/400`;
+                
+                // 根据合作企业设置不同的标签颜色
+                let enterpriseColor = 'bg-secondary/90 text-darker';
+                let statusColor = 'bg-primary/20 text-primary';
+                let statusText = '进行中';
+                
+                if (cooperation.enterprise_name) {
+                    if (cooperation.enterprise_name.includes('华为')) {
+                        enterpriseColor = 'bg-secondary/90 text-darker';
+                    } else if (cooperation.enterprise_name.includes('腾讯')) {
+                        enterpriseColor = 'bg-accent/90 text-white';
+                    } else if (cooperation.enterprise_name.includes('阿里')) {
+                        enterpriseColor = 'bg-primary/90 text-white';
+                    }
+                }
+
+                if (cooperation.status === 'completed') {
+                    statusColor = 'bg-secondary/20 text-secondary';
+                    statusText = '已结题';
+                }
+
+                const startDate = cooperation.start_date ? new Date(cooperation.start_date).toLocaleDateString('zh-CN') : '';
+                const endDate = cooperation.end_date ? new Date(cooperation.end_date).toLocaleDateString('zh-CN') : '';
+                const dateRange = startDate && endDate ? `${startDate} - ${endDate}` : startDate || '时间待定';
+
+                return `
+                    <div class="project-card bg-darker rounded-xl border border-primary/20 overflow-hidden" style="animation: fadeInUp 0.3s ease ${index * 0.1}s both;">
+                        <div class="relative h-48">
+                            <img src="${imageUrl}" alt="${cooperation.title}" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-gradient-to-t from-darker to-transparent"></div>
+                            <div class="absolute top-4 left-4 ${enterpriseColor} text-xs font-bold px-3 py-1 rounded-full">
+                                ${cooperation.enterprise_name || '合作企业'}
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-3">${cooperation.title}</h3>
+                            <p class="text-gray-300 text-sm mb-4 line-clamp-3">
+                                ${cooperation.description || '暂无项目描述'}
+                            </p>
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-1 text-xs text-gray-400">
+                                    <i class="fa fa-calendar"></i>
+                                    <span>${dateRange}</span>
+                                </div>
+                                <span class="text-xs px-2 py-1 ${statusColor} rounded-full">${statusText}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            console.log(`✅ 校企合作第${currentPage}页渲染完成，显示项目数量:`, pageData.length);
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 设置当前页面
+            if (typeof setCurrentPage === 'function') {
+                setCurrentPage('innovation');
+            } else {
+                console.warn('setCurrentPage函数未定义，跳过页面设置');
+            }
+            
+            // 初始化大学生创新创业训练计划轮播器
+            window.trainingProjectCarousel = new TrainingProjectCarousel();
+            
+            // 全局调试函数
+            window.debugTrainingCarousel = () => {
+                if (window.trainingProjectCarousel) {
+                    window.trainingProjectCarousel.debugContainerInfo();
+                    window.trainingProjectCarousel.adjustContainerHeight();
+                }
+            };
+            
+            initContactFeature();
+            
+            // 加载动态数据
+            loadInnovationData();
+            
+            // 确保轮播图导航控件可见
+            setTimeout(() => {
+                const navControls = document.getElementById('carouselNavControls');
+                const pageIndicator = document.getElementById('carouselPageIndicator');
+                if (navControls) {
+                    navControls.style.display = 'flex';
+                    console.log('✅ 轮播图导航控件已启用');
+                }
+                if (pageIndicator) {
+                    pageIndicator.style.display = 'block';
+                }
+                
+                // 更新页面指示器显示的轮播图总数
+                const carousel = document.getElementById('innovationCarousel');
+                if (carousel) {
+                    const items = carousel.querySelectorAll('.carousel-item');
+                    const slideInfo = document.getElementById('currentSlideInfo');
+                    if (slideInfo && items.length > 0) {
+                        slideInfo.textContent = `1/${items.length}`;
+                    }
+                }
+            }, 1000);
+            
+                            // 页面获得焦点时刷新数据（从后台切换回来时）
+                let lastActiveTime = Date.now();
+                document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden) {
+                        const now = Date.now();
+                        // 如果页面隐藏超过5分钟，强制刷新数据
+                        if (now - lastActiveTime > 5 * 60 * 1000) {
+                            console.log('页面长时间未激活，强制刷新数据');
+                            loadInnovationData(true);
+                        }
+                        lastActiveTime = now;
+                    }
+                });
+                
+                // 添加手动刷新按钮（已隐藏）
+                /*
+                const refreshBtn = document.createElement('button');
+                refreshBtn.innerHTML = '<i class="fa fa-refresh"></i> 刷新数据';
+                refreshBtn.style.cssText = `
+                    position: fixed;
+                    top: 100px;
+                    right: 20px;
+                    padding: 8px 16px;
+                    background: rgba(58, 134, 255, 0.8);
+                    color: white;
+                    border: none;
+                    border-radius: 20px;
+                    cursor: pointer;
+                    font-size: 12px;
+                    z-index: 1000;
+                    backdrop-filter: blur(10px);
+                    transition: all 0.3s ease;
+                `;
+                
+                refreshBtn.addEventListener('click', () => {
+                    loadInnovationData(true);
+                });
+                
+                refreshBtn.addEventListener('mouseenter', () => {
+                    refreshBtn.style.background = 'rgba(58, 134, 255, 1)';
+                    refreshBtn.style.transform = 'scale(1.05)';
+                });
+                
+                refreshBtn.addEventListener('mouseleave', () => {
+                    refreshBtn.style.background = 'rgba(58, 134, 255, 0.8)';
+                    refreshBtn.style.transform = 'scale(1)';
+                });
+                
+                document.body.appendChild(refreshBtn);
+                */
+            
+            // 定期刷新数据（每10分钟）
+            setInterval(() => {
+                console.log('定期刷新科创数据');
+                loadInnovationData(true);
+            }, 10 * 60 * 1000);
+            
+            // 监听存储变化事件（多标签页同步）
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'innovation_data_updated') {
+                    console.log('检测到其他标签页数据更新，刷新当前页面数据');
+                    loadInnovationData(true);
+                }
+            });
+            
+            // 监听来自后台管理页面的消息
+            window.addEventListener('message', (event) => {
+                console.log('收到后台消息:', event.data);
+                
+                if (event.data && event.data.type === 'INNOVATION_CAROUSEL_UPDATED') {
+                    console.log('轮播图数据已更新，刷新页面数据');
+                    loadInnovationData(true);
+                }
+            });
+            
+            // 监听Socket.IO实时更新
+            if (typeof socket !== 'undefined' && socket) {
+                socket.on('page_refresh', function(data) {
+                    console.log('收到Socket.IO页面刷新通知:', data);
+                    
+                    if (data.page === 'innovation' || data.page === 'all') {
+                        console.log('刷新科创页面数据...');
+                        loadInnovationData(true);
+                    }
+                });
+            }
+        });
+    </script>
+    
+    <!-- 访客统计追踪系统 -->
+    <!-- 访问统计系统已移除 -->
+</body>
+</html>

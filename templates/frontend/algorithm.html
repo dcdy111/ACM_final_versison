@@ -1,0 +1,5060 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACM算法研究实验室</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Exo+2:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/v4-shims.min.css">
+<link rel="stylesheet" href="/static/highlight.css">
+<script defer src="/static/highlight.js"></script>
+
+    <style>
+        :root {
+            --primary: #3a86ff;
+            --secondary: #00ffcc;
+            --accent: #ff2d75;
+            --accent2: #b967ff;
+            --dark-bg: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
+            --text-light: #e0e0ff;
+            --text: var(--text-light);
+            --glass: rgba(255, 255, 255, 0.05);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Exo 2', sans-serif;
+            color: var(--text-light);
+            background: var(--dark-bg);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* 粒子背景（展示相关，保留） */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        /* 导航栏（展示相关，保留） */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            backdrop-filter: blur(10px);
+            background: var(--glass);
+            border-bottom: 1px solid rgba(58, 134, 255, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo::before {
+            content: "";
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233a86ff"><path d="M12 2L1 12h3v9h6v-6h4v6h6v-9h3L12 2zm0 2.8L18 10v9h-2v-6H8v6H6v-9l6-7.2z"/></svg>') no-repeat center;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            white-space: nowrap;
+        }
+        
+        .nav-link {
+            position: relative;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 500;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover { color: var(--primary); }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after { width: 100%; }
+        
+        /* 下拉菜单（展示相关，保留） */
+        .dropdown { position: relative; }
+        
+        .dropdown-content {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            min-width: 220px;
+            background: rgba(10, 10, 26, 0.98);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(58, 134, 255, 0.25);
+            border-radius: 8px;
+            padding: 0.6rem 0;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(6px);
+            transition: all 0.22s ease;
+            z-index: 200;
+            white-space: nowrap;
+        }
+        
+        .dropdown:hover .dropdown-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-link {
+            display: block;
+            padding: 0.5rem 1.25rem;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.18s ease;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .dropdown-link:hover {
+            background: rgba(58, 134, 255, 0.12);
+            color: var(--primary);
+            padding-left: 1.5rem;
+        }
+        
+        .menu-toggle {
+            display: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+        
+        /* 全屏导航 */
+        .fullscreen-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(10, 10, 26, 0.95);
+            backdrop-filter: blur(15px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            transform: translateY(-100%);
+            transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0);
+        }
+        
+        .fullscreen-nav.active {
+            transform: translateY(0);
+        }
+        
+        .fullscreen-nav .close-btn {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--text-light);
+            transition: color 0.3s;
+        }
+        
+        .fullscreen-nav .close-btn:hover {
+            color: var(--accent);
+        }
+        
+        .fullscreen-nav-links {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .fullscreen-nav-link {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: var(--text-light);
+            text-decoration: none;
+            position: relative;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s;
+        }
+        
+        .fullscreen-nav-link:hover {
+            color: var(--primary);
+        }
+        
+        .fullscreen-nav-link::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: rgba(58, 134, 255, 0.1);
+            z-index: -1;
+            transition: width 0.3s;
+        }
+        
+        .fullscreen-nav-link:hover::before {
+            width: 100%;
+        }
+        
+        /* 页脚（展示相关，保留） */
+        footer {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 3rem 5%;
+            text-align: center;
+            margin-top: 5rem;
+            position: relative;
+        }
+        
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+        
+        .footer-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-link { color: var(--text-light); text-decoration: none; transition: color 0.3s; }
+        .footer-link:hover { color: var(--primary); }
+        
+        .footer-social {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .social-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(0, 240, 255, 0.1);
+            color: var(--primary);
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            background-color: var(--primary);
+            color: var(--dark);
+            transform: translateY(-3px);
+        }
+        
+        .social-icon i {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .social-icon:hover i {
+            background: none;
+            -webkit-background-clip: initial;
+            background-clip: initial;
+            color: var(--dark);
+        }
+        
+        .copyright { font-size: 0.9rem; color: rgba(224, 224, 255, 0.6); }
+        
+        /* 必要动画（logo 脉冲） */
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+        
+        /* 流光特效动画 */
+        @keyframes lightFlow {
+            0% {
+                background-position: -200% 0;
+                opacity: 0.8;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                background-position: 200% 0;
+                opacity: 0.8;
+            }
+        }
+        
+        @keyframes shimmer {
+            0% {
+                background-position: -100% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+        
+        /* 流光文字特效 */
+        .light-flow-text {
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(58, 134, 255, 0.3) 20%,
+                rgba(0, 255, 204, 0.6) 40%,
+                rgba(255, 45, 117, 0.8) 60%,
+                rgba(0, 255, 204, 0.6) 80%,
+                rgba(58, 134, 255, 0.3) 100%,
+                transparent 120%
+            );
+            background-size: 200% 100%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            animation: lightFlow 3s ease-in-out infinite;
+            position: relative;
+        }
+        
+        .light-flow-text::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(58, 134, 255, 0.1) 25%,
+                rgba(0, 255, 204, 0.2) 50%,
+                rgba(255, 45, 117, 0.1) 75%,
+                transparent 100%
+            );
+            background-size: 200% 100%;
+            animation: shimmer 2s ease-in-out infinite;
+            z-index: -1;
+            filter: blur(2px);
+        }
+        
+        /* 增强的渐变文字效果 */
+        .enhanced-gradient-text {
+            background: linear-gradient(
+                45deg,
+                #3a86ff 0%,
+                #00ffcc 25%,
+                #ff2d75 50%,
+                #b967ff 75%,
+                #3a86ff 100%
+            );
+            background-size: 300% 300%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            animation: lightFlow 4s ease-in-out infinite;
+            text-shadow: 0 0 20px rgba(58, 134, 255, 0.3);
+            position: relative;
+        }
+        
+        .enhanced-gradient-text::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(
+                45deg,
+                rgba(58, 134, 255, 0.2),
+                rgba(0, 255, 204, 0.2),
+                rgba(255, 45, 117, 0.2),
+                rgba(185, 103, 255, 0.2)
+            );
+            background-size: 300% 300%;
+            animation: shimmer 3s ease-in-out infinite;
+            z-index: -1;
+            filter: blur(4px);
+            border-radius: 4px;
+        }
+        
+        /* 流光装饰线样式 */
+        .light-flow-line {
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(58, 134, 255, 0.6) 25%,
+                rgba(0, 255, 204, 0.8) 50%,
+                rgba(255, 45, 117, 0.6) 75%,
+                transparent 100%
+            );
+            background-size: 200% 100%;
+            animation: shimmer 2s ease-in-out infinite;
+        }
+        
+        /* 增强的悬停效果 */
+        .light-flow-text:hover,
+        .enhanced-gradient-text:hover {
+            transform: scale(1.05);
+            filter: brightness(1.2);
+            text-shadow: 0 0 30px rgba(58, 134, 255, 0.5);
+        }
+        
+        /* 算法页面样式 */
+        .algorithms-hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 0 10%;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .algorithms-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(58, 134, 255, 0.1) 0%, transparent 50%);
+            z-index: -1;
+        }
+        
+        .algorithms-hero h1 {
+            font-size: 4.5rem;
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            line-height: 1.2;
+            position: relative;
+        }
+        
+        .algorithms-hero h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+        
+        .algorithms-hero p {
+            font-size: 1.5rem;
+            max-width: 800px;
+            margin-bottom: 2.5rem;
+            color: rgba(224, 224, 255, 0.8);
+        }
+        
+        .floating-code {
+            position: absolute;
+            font-family: 'Courier New', monospace;
+            color: rgba(58, 134, 255, 0.3);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            pointer-events: none;
+            z-index: -1;
+            animation: floatCode 15s linear infinite;
+        }
+        
+        @keyframes floatCode {
+            0% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
+            100% { transform: translateY(-100px) translateX(50px); opacity: 0; }
+        }
+        
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: #0a0a1a;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(58, 134, 255, 0.4);
+        }
+        
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, var(--secondary), var(--primary));
+            z-index: -1;
+            transition: opacity 0.4s ease;
+            opacity: 0;
+        }
+        
+        .cta-button:hover::before {
+            opacity: 1;
+        }
+        
+        .algorithms-section {
+            padding: 8rem 10%;
+            position: relative;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 5rem;
+        }
+        
+        .section-header h2 {
+            font-size: 2.8rem;
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .section-header p {
+            max-width: 700px;
+            margin: 0 auto;
+            font-size: 1.2rem;
+            color: rgba(224, 224, 255, 0.7);
+        }
+        
+        .algorithms-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+        
+        .algorithms-tab {
+            padding: 0.8rem 1.5rem;
+            background: rgba(18, 18, 48, 0.6);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(58, 134, 255, 0.2);
+        }
+        
+        .algorithms-tab.active {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: #0a0a1a;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(58, 134, 255, 0.3);
+        }
+        
+        .algorithms-tab:hover:not(.active) {
+            border-color: var(--primary);
+        }
+        
+        .algorithms-content {
+            display: none;
+        }
+        
+        .algorithms-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .algorithm-card {
+            background: rgba(18, 18, 48, 0.6);
+            border-radius: 15px;
+            padding: 3.5rem; /* 进一步增加内边距 */
+            margin-bottom: 2rem;
+            transition: all 0.4s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(58, 134, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            min-height: 700px; /* 进一步增加高度 */
+            max-width: 1200px; /* 增加最大宽度 */
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .algorithm-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary));
+            transition: all 0.4s ease;
+            pointer-events: none;
+        }
+        
+        .algorithm-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .algorithm-card:hover::before {
+            width: 100%;
+            opacity: 0.1;
+        }
+        
+        .algorithm-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            font-family: 'Orbitron', sans-serif;
+            position: relative;
+        }
+        
+        .algorithm-card h3::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 50px;
+            height: 2px;
+            background: var(--secondary);
+        }
+        
+        .algorithm-card .description {
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+        }
+        
+        .algorithm-card .complexity {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: rgba(224, 224, 255, 0.7);
+        }
+        
+        .algorithm-card .complexity-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .algorithm-card .complexity-item i {
+            margin-right: 0.5rem;
+            color: var(--primary);
+        }
+        
+        .algorithm-card .code-preview {
+            background: rgba(5, 5, 16, 0.5);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            border: 1px solid rgba(58, 134, 255, 0.2);
+        }
+        
+        .algorithm-card .links {
+            display: flex;
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .algorithm-card .link {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: rgba(58, 134, 255, 0.1);
+            border: 1px solid rgba(58, 134, 255, 0.3);
+            border-radius: 30px;
+            color: var(--primary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .algorithm-card .link:hover {
+            background: var(--primary);
+            color: #0a0a1a;
+            transform: translateY(-3px);
+        }
+        
+        .algorithm-cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4rem; /* 进一步增加卡片间距 */
+            margin-bottom: 3rem;
+            min-height: 500px; /* 增加容器最小高度 */
+            position: relative;
+            width: 100%;
+            max-width: 1400px; /* 增加容器最大宽度 */
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
+        }
+        
+        /* 让算法卡片的描述部分占据更多空间 */
+        .algorithm-card .description {
+            flex-grow: 1;
+        }
+        
+        /* 限制代码预览区域的最大高度 */
+        .algorithm-card .code-preview {
+            max-height: 400px; /* 增加代码预览区域高度 */
+            overflow-y: auto;
+            font-size: 1rem; /* 增加代码字体大小 */
+            line-height: 1.6; /* 增加代码行高 */
+        }
+        
+        /* 调整算法卡片标题样式 */
+        .algorithm-card h3 {
+            font-size: 2.2rem; /* 增加标题字体大小 */
+            margin-bottom: 2.5rem; /* 增加标题下方间距 */
+            line-height: 1.3; /* 增加标题行高 */
+        }
+        
+        /* 调整算法卡片描述文字样式 */
+        .algorithm-card .description p {
+            font-size: 1.2rem; /* 增加描述文字大小 */
+            line-height: 1.9; /* 增加描述行高 */
+            margin-bottom: 1.5rem; /* 增加段落间距 */
+        }
+        
+        /* 调整算法卡片复杂度信息样式 */
+        .algorithm-card .complexity {
+            background: rgba(58, 134, 255, 0.1);
+            border-radius: 12px; /* 增加圆角 */
+            padding: 2rem; /* 增加内边距 */
+            border: 1px solid rgba(58, 134, 255, 0.2);
+            margin-bottom: 2rem; /* 增加下方间距 */
+        }
+        
+        .algorithm-card .complexity-item {
+            font-size: 1.1rem; /* 增加复杂度信息字体大小 */
+            font-weight: 500;
+            margin-bottom: 0.5rem; /* 增加项目间距 */
+        }
+        
+        /* 调整算法卡片链接样式 */
+        .algorithm-card .links {
+            margin-top: auto; /* 将链接推到底部 */
+            padding-top: 2rem; /* 增加顶部间距 */
+        }
+        
+        .algorithm-card .link {
+            font-size: 1.1rem; /* 增加链接字体大小 */
+            font-weight: 500;
+            padding: 1rem 2.5rem; /* 增加链接内边距 */
+            border-radius: 35px; /* 增加圆角 */
+        }
+        
+        .algorithm-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary));
+            transition: all 0.4s ease;
+            pointer-events: none;
+        }
+        
+        .algorithm-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .algorithm-card:hover::before {
+            width: 100%;
+            opacity: 0.1;
+        }
+        
+        .algorithm-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            font-family: 'Orbitron', sans-serif;
+            position: relative;
+        }
+        
+        .algorithm-card h3::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 50px;
+            height: 2px;
+            background: var(--secondary);
+        }
+        
+        .algorithm-card .description {
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+        }
+        
+        .algorithm-card .complexity {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: rgba(224, 224, 255, 0.7);
+        }
+        
+        .algorithm-card .complexity-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .algorithm-card .complexity-item i {
+            margin-right: 0.5rem;
+            color: var(--primary);
+        }
+        
+        .algorithm-card .code-preview {
+            background: rgba(5, 5, 16, 0.5);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            border: 1px solid rgba(58, 134, 255, 0.2);
+        }
+        
+        .algorithm-card .links {
+            display: flex;
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .algorithm-card .link {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: rgba(58, 134, 255, 0.1);
+            border: 1px solid rgba(58, 134, 255, 0.3);
+            border-radius: 30px;
+            color: var(--primary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .algorithm-card .link:hover {
+            background: var(--primary);
+            color: #0a0a1a;
+            transform: translateY(-3px);
+        }
+        
+
+        
+        /* 算法翻页样式 */
+        .algorithm-pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .pagination-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            background: rgba(58, 134, 255, 0.1);
+            border: 1px solid rgba(58, 134, 255, 0.3);
+            border-radius: 25px;
+            color: var(--primary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .pagination-btn:hover {
+            background: var(--primary);
+            color: #0a0a1a;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(58, 134, 255, 0.3);
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .pagination-btn:disabled:hover {
+            background: rgba(58, 134, 255, 0.1);
+            color: var(--primary);
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .page-indicators {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .page-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(58, 134, 255, 0.2);
+            border: 1px solid rgba(58, 134, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .page-indicator.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            transform: scale(1.2);
+        }
+        
+        .page-indicator:hover {
+            background: rgba(58, 134, 255, 0.4);
+            transform: scale(1.1);
+        }
+        
+        /* 隐藏非当前页的算法卡片 */
+        .algorithm-cards-container .algorithm-card {
+            display: none;
+        }
+        
+        .algorithm-cards-container .algorithm-card.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        /* 确保算法卡片在单列布局中正确显示 */
+        .algorithm-card {
+            width: 100%;
+            max-width: 1200px; /* 增加最大宽度 */
+            margin: 0 auto;
+            display: none; /* 默认隐藏所有卡片 */
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            position: relative;
+            box-sizing: border-box;
+        }
+        
+        .algorithm-card.show {
+            display: block; /* 只显示有show类的卡片 */
+            animation: fadeIn 0.5s ease;
+            opacity: 1;
+            transform: translateY(0);
+            visibility: visible;
+            pointer-events: auto;
+        }
+        
+        /* 确保隐藏的卡片完全不可见 */
+        .algorithm-card:not(.show) {
+            display: none !important;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 992px) {
+            .algorithms-hero h1 {
+                font-size: 3.5rem;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .algorithms-hero h1 {
+                font-size: 2.8rem;
+            }
+            
+            .algorithms-hero p {
+                font-size: 1.2rem;
+            }
+            
+            .section-header h2 {
+                font-size: 2.2rem;
+            }
+            
+            .algorithm-card {
+                padding: 2.5rem; /* 移动端也增加内边距 */
+                max-width: 100%;
+                margin: 0 auto 1.5rem auto;
+                min-height: auto; /* 移动端自适应高度 */
+            }
+            
+            .algorithm-cards-container {
+                gap: 2rem;
+                padding: 0 1rem;
+            }
+            
+            .algorithm-pagination {
+                flex-direction: column;
+                gap: 1rem;
+                margin-top: 2rem;
+            }
+            
+            .pagination-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .page-indicators {
+                justify-content: center;
+            }
+            
+            /* 确保翻页按钮在移动端也能正常工作 */
+            .pagination-btn {
+                min-height: 44px; /* 确保触摸目标足够大 */
+                font-size: 1rem;
+            }
+            
+            .page-indicator {
+                min-width: 16px;
+                min-height: 16px;
+            }
+            
+            /* 移动端算法卡片样式调整 */
+            .algorithm-card h3 {
+                font-size: 1.6rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .algorithm-card .description p {
+                font-size: 1rem;
+                line-height: 1.6;
+            }
+            
+            .algorithm-card .code-preview {
+                max-height: 250px; /* 移动端也增加代码预览高度 */
+                font-size: 0.9rem; /* 移动端也增加代码字体大小 */
+                padding: 1.2rem; /* 移动端也增加代码内边距 */
+            }
+            
+            .algorithm-card .complexity {
+                padding: 1rem;
+            }
+            
+            .algorithm-card .complexity-item {
+                font-size: 0.9rem;
+            }
+            
+            .algorithm-card .link {
+                font-size: 0.9rem;
+                padding: 0.6rem 1.5rem;
+            }
+        }
+
+        /* ========================= 统一滚动条美化样式 ========================= */
+        /* 全局滚动条 - 竖直方向 */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        
+        /* 滚动条轨道 */
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+        }
+        
+        /* 滚动条滑块 */
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent2) 100%);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(58, 134, 255, 0.2);
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 50%, var(--primary) 100%);
+            box-shadow: 0 4px 15px rgba(58, 134, 255, 0.4);
+            transform: scale(1.05);
+        }
+        
+        /* 滚动条箭头按钮 */
+        ::-webkit-scrollbar-button {
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        /* 竖直滚动条上箭头 */
+        ::-webkit-scrollbar-button:vertical:start:decrement {
+            background: linear-gradient(45deg, var(--primary), var(--secondary)),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 14l5-5 5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 竖直滚动条下箭头 */
+        ::-webkit-scrollbar-button:vertical:end:increment {
+            background: linear-gradient(45deg, var(--primary), var(--secondary)),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 水平滚动条左箭头 */
+        ::-webkit-scrollbar-button:horizontal:start:decrement {
+            background: linear-gradient(45deg, var(--primary), var(--secondary)),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M14 7l-5 5 5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 水平滚动条右箭头 */
+        ::-webkit-scrollbar-button:horizontal:end:increment {
+            background: linear-gradient(45deg, var(--primary), var(--secondary)),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M10 7l5 5-5 5z"/></svg>') center/60% no-repeat;
+        }
+        
+        /* 箭头按钮悬停效果 */
+        ::-webkit-scrollbar-button:hover {
+            background: linear-gradient(45deg, var(--accent), var(--accent2)) !important;
+            box-shadow: 0 0 10px rgba(58, 134, 255, 0.6);
+            transform: scale(1.1);
+        }
+        
+        /* 箭头按钮点击效果 */
+        ::-webkit-scrollbar-button:active {
+            background: linear-gradient(45deg, var(--secondary), var(--primary)) !important;
+            transform: scale(0.95);
+        }
+        
+        /* 滚动条角落 */
+        ::-webkit-scrollbar-corner {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            border: 1px solid rgba(58, 134, 255, 0.1);
+        }
+        
+        /* 代码块滚动条样式 */
+        .code-block::-webkit-scrollbar,
+        .highlight::-webkit-scrollbar,
+        pre::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .code-block::-webkit-scrollbar-track,
+        .highlight::-webkit-scrollbar-track,
+        pre::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            border: 1px solid rgba(58, 134, 255, 0.2);
+        }
+        
+        .code-block::-webkit-scrollbar-thumb,
+        .highlight::-webkit-scrollbar-thumb,
+        pre::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .code-block::-webkit-scrollbar-thumb:hover,
+        .highlight::-webkit-scrollbar-thumb:hover,
+        pre::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, var(--accent), var(--accent2));
+            box-shadow: 0 0 8px rgba(185, 103, 255, 0.5);
+            transform: scale(1.05);
+        }
+        
+        /* 表格滚动条样式 */
+        table::-webkit-scrollbar,
+        .table-wrapper::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        table::-webkit-scrollbar-track,
+        .table-wrapper::-webkit-scrollbar-track {
+            background: rgba(58, 134, 255, 0.1);
+            border-radius: 3px;
+            border: 1px solid rgba(58, 134, 255, 0.2);
+        }
+        
+        table::-webkit-scrollbar-thumb,
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        table::-webkit-scrollbar-thumb:hover,
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(90deg, var(--secondary), var(--accent));
+            box-shadow: 0 0 6px rgba(0, 255, 204, 0.6);
+            transform: scale(1.1);
+        }
+        
+        /* Firefox滚动条样式 */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) rgba(255, 255, 255, 0.08);
+        }
+        
+        /* 移动端滚动条优化 */
+        @media (max-width: 768px) {
+            ::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+            
+            .code-block::-webkit-scrollbar,
+            .highlight::-webkit-scrollbar,
+            pre::-webkit-scrollbar {
+                width: 4px;
+                height: 4px;
+            }
+            
+            table::-webkit-scrollbar,
+            .table-wrapper::-webkit-scrollbar {
+                width: 3px;
+                height: 3px;
+            }
+        }
+        /* ========================= 滚动条样式结束 ========================= */
+        
+        /* ========================= 项目概览样式 ========================= */
+        /* Tailwind 工具类定义 */
+        .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .py-16 { padding-top: 4rem; padding-bottom: 4rem; }
+        .mb-12 { margin-bottom: 3rem; }
+        .text-center { text-align: center; }
+        .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+        .text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+        .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+        .font-bold { font-weight: 700; }
+        .text-gray-300 { color: #d1d5db; }
+        .text-accent { color: #ff2d75; }
+        .block { display: block; }
+        .flex { display: flex; }
+        .grid { display: grid; }
+        .gap-8 { gap: 2rem; }
+        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .bg-darker { background-color: #0A0A0A; }
+        .bg-dark { background-color: #121212; }
+        .bg-accent { background-color: #ff2d75; }
+        .rounded-xl { border-radius: 0.75rem; }
+        .border { border-width: 1px; }
+        .border-accent\/20 { border-color: rgba(255, 45, 117, 0.2); }
+        .p-6 { padding: 1.5rem; }
+        .overflow-hidden { overflow: hidden; }
+        .relative { position: relative; }
+        .absolute { position: absolute; }
+        .w-full { width: 100%; }
+        .w-16 { width: 4rem; }
+        .h-16 { height: 4rem; }
+        .max-w-6xl { max-width: 72rem; }
+        .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+        .duration-500 { transition-duration: 500ms; }
+        .opacity-0 { opacity: 0; }
+        .group:hover .group-hover\:opacity-100 { opacity: 1; }
+        .z-0 { z-index: 0; }
+        .z-10 { z-index: 10; }
+        .space-y-4 > * + * { margin-top: 1rem; }
+        .bg-gradient-to-br { background-image: linear-gradient(to bottom right, var(--tw-gradient-stops)); }
+        .from-accent\/5 { --tw-gradient-from: rgba(255, 45, 117, 0.05); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(255, 45, 117, 0)); }
+        .to-transparent { --tw-gradient-to: transparent; }
+        .text-glow { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor; }
+        .fa-spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        /* 项目概览渐变色样式 */
+        .backdrop-blur-sm { backdrop-filter: blur(4px); }
+        .group:hover .group-hover\:scale-110 { transform: scale(1.1); }
+        .group:hover .group-hover\:text-glow { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor; }
+        .group:hover .group-hover\:text-white { color: #ffffff; }
+        .group:hover .group-hover\:text-gray-300 { color: #d1d5db; }
+        .group:hover .group-hover\:w-1\/2 { width: 50%; }
+        .group:hover .group-hover\:opacity-100 { opacity: 1; }
+        
+        /* 渐变色主题变量 */
+        .from-primary\/20 { --tw-gradient-from: rgba(108, 99, 255, 0.2); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(108, 99, 255, 0)); }
+        .from-primary\/15 { --tw-gradient-from: rgba(108, 99, 255, 0.15); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(108, 99, 255, 0)); }
+        .from-primary\/10 { --tw-gradient-from: rgba(108, 99, 255, 0.1); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(108, 99, 255, 0)); }
+        .from-primary\/8 { --tw-gradient-from: rgba(108, 99, 255, 0.08); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(108, 99, 255, 0)); }
+        .from-secondary\/20 { --tw-gradient-from: rgba(0, 240, 255, 0.2); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 240, 255, 0)); }
+        .from-secondary\/10 { --tw-gradient-from: rgba(0, 240, 255, 0.1); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 240, 255, 0)); }
+        .from-secondary\/5 { --tw-gradient-from: rgba(0, 240, 255, 0.05); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0, 240, 255, 0)); }
+        .from-accent\/20 { --tw-gradient-from: rgba(255, 45, 117, 0.2); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(255, 45, 117, 0)); }
+        .from-accent\/15 { --tw-gradient-from: rgba(255, 45, 117, 0.15); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(255, 45, 117, 0)); }
+        .from-accent\/10 { --tw-gradient-from: rgba(255, 45, 117, 0.1); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(255, 45, 117, 0)); }
+        .from-accent\/5 { --tw-gradient-from: rgba(255, 45, 117, 0.05); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(255, 45, 117, 0)); }
+        .via-primary\/10 { --tw-gradient-stops: var(--tw-gradient-from), rgba(108, 99, 255, 0.1), var(--tw-gradient-to, rgba(108, 99, 255, 0)); }
+        .via-secondary\/10 { --tw-gradient-stops: var(--tw-gradient-from), rgba(0, 240, 255, 0.1), var(--tw-gradient-to, rgba(0, 240, 255, 0)); }
+        .via-secondary\/3 { --tw-gradient-stops: var(--tw-gradient-from), rgba(0, 240, 255, 0.03), var(--tw-gradient-to, rgba(0, 240, 255, 0)); }
+        .via-accent\/10 { --tw-gradient-stops: var(--tw-gradient-from), rgba(255, 45, 117, 0.1), var(--tw-gradient-to, rgba(255, 45, 117, 0)); }
+        .via-accent\/5 { --tw-gradient-stops: var(--tw-gradient-from), rgba(255, 45, 117, 0.05), var(--tw-gradient-to, rgba(255, 45, 117, 0)); }
+        .to-secondary\/20 { --tw-gradient-to: rgba(0, 240, 255, 0.2); }
+        .to-accent\/20 { --tw-gradient-to: rgba(255, 45, 117, 0.2); }
+        .to-primary\/20 { --tw-gradient-to: rgba(108, 99, 255, 0.2); }
+        .to-primary\/10 { --tw-gradient-to: rgba(108, 99, 255, 0.1); }
+        .to-accent\/15 { --tw-gradient-to: rgba(255, 45, 117, 0.15); }
+        .to-secondary\/15 { --tw-gradient-to: rgba(0, 240, 255, 0.15); }
+        .to-transparent { --tw-gradient-to: transparent; }
+        
+        /* 边框颜色 */
+        .border-primary\/30 { border-color: rgba(108, 99, 255, 0.3); }
+        .border-primary\/25 { border-color: rgba(108, 99, 255, 0.25); }
+        .border-primary\/35 { border-color: rgba(108, 99, 255, 0.35); }
+        .border-primary\/40 { border-color: rgba(108, 99, 255, 0.4); }
+        .border-secondary\/30 { border-color: rgba(0, 240, 255, 0.3); }
+        .border-secondary\/40 { border-color: rgba(0, 240, 255, 0.4); }
+        .border-accent\/30 { border-color: rgba(255, 45, 117, 0.3); }
+        .border-accent\/40 { border-color: rgba(255, 45, 117, 0.4); }
+        
+        /* 渐变色光晕效果 */
+        .via-primary { --tw-gradient-stops: var(--tw-gradient-from), #6C63FF, var(--tw-gradient-to, #6C63FF); }
+        .via-secondary { --tw-gradient-stops: var(--tw-gradient-from), #00F0FF, var(--tw-gradient-to, #00F0FF); }
+        .via-accent { --tw-gradient-stops: var(--tw-gradient-from), #ff2d75, var(--tw-gradient-to, #ff2d75); }
+        
+        /* 加载动画样式 */
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            min-height: 200px;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(108, 99, 255, 0.1);
+            border-left-color: #6C63FF;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        
+        /* 媒体查询 */
+        @media (min-width: 768px) {
+            .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+            .md\:text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+        }
+        
+        @media (min-width: 640px) {
+            .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        
+        /* 项目概览卡片响应式布局 */
+        @media (max-width: 1024px) {
+            .md\:grid-cols-3 {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .md\:grid-cols-3 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .md\:grid-cols-3 {
+                grid-template-columns: repeat(1, minmax(0, 1fr));
+            }
+        }
+        
+        /* 自定义样式类 */
+        .content-auto { content-visibility: auto; }
+        .bg-grid { background-image: radial-gradient(rgba(108, 99, 255, 0.1) 1px, transparent 1px); background-size: 30px 30px; }
+        .project-card { transition: all 0.3s ease; }
+        .project-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(108, 99, 255, 0.1), 0 10px 10px -5px rgba(108, 99, 255, 0.04); }
+        
+        /* 项目概览卡片统一样式 */
+        .project-stats-card {
+            height: 12rem; /* 固定高度确保卡片大小相同 */
+            min-height: 12rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 350px; /* 限制最大宽度确保一致性 */
+        }
+        
+        /* 项目概览卡片悬停效果 */
+        .project-stats-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(58, 134, 255, 0.2);
+        }
+        
+        /* 项目概览容器居中布局 */
+        #projectStatsContainer {
+            display: grid;
+            place-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        /* 确保每行最多3个卡片，不足时居中显示 */
+        @media (min-width: 768px) {
+            #projectStatsContainer {
+                grid-template-columns: repeat(3, 1fr);
+                max-width: 1200px;
+                gap: 2rem;
+            }
+        }
+        
+        /* 移动端响应式布局 */
+        @media (max-width: 767px) {
+            #projectStatsContainer {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #projectStatsContainer {
+                grid-template-columns: repeat(1, 1fr);
+                gap: 1rem;
+            }
+        }
+        
+        /* 按钮样式 */
+        .bg-primary { background-color: #6C63FF; }
+        .text-white { color: #ffffff; }
+        .rounded { border-radius: 0.25rem; }
+        .hover\:bg-primary\/90:hover { background-color: rgba(108, 99, 255, 0.9); }
+        .transition-colors { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+        .text-gray-400 { color: #9ca3af; }
+        .text-xs { font-size: 0.75rem; line-height: 1rem; }
+        /* ========================= 项目概览样式结束 ========================= */
+        
+        /* ========================= 竞赛获奖展示模块样式 ========================= */
+        .competition-awards-section {
+            padding: 3rem 10%;
+            background: linear-gradient(135deg, rgba(10, 10, 26, 0.8) 0%, rgba(26, 26, 58, 0.6) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .competition-awards-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 20%, rgba(58, 134, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 80%, rgba(0, 255, 204, 0.1) 0%, transparent 50%);
+            z-index: -1;
+        }
+        
+        .awards-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .awards-header h2 {
+            font-size: 2.2rem;
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .awards-header p {
+            max-width: 700px;
+            margin: 0 auto;
+            font-size: 1rem;
+            color: rgba(224, 224, 255, 0.7);
+        }
+        
+        .awards-container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .awards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr); /* 固定2行，每页显示6个卡片 */
+            gap: 2rem;
+            margin-bottom: 2rem; /* 减少底部边距，翻页器将单独设置 */
+            transition: transform 0.5s ease;
+            width: 100%;
+            max-width: 1200px; /* 限制最大宽度，确保居中 */
+            margin-left: auto;
+            margin-right: auto;
+            min-height: 1000px; /* 确保容器有足够高度 */
+            max-height: 1000px; /* 限制最大高度，确保每页显示固定行数 */
+            position: relative; /* 添加相对定位 */
+        }
+        
+        /* 翻页动画样式 - 由JavaScript动态控制 */
+        
+        /* 默认隐藏所有获奖卡片，通过JavaScript控制显示 */
+        .award-card {
+            display: flex; /* 改为flex，让所有卡片都占用网格空间 */
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            visibility: hidden; /* 使用visibility来隐藏，保持网格布局 */
+            pointer-events: none; /* 隐藏时禁用交互 */
+            grid-column: auto; /* 确保网格位置自动分配 */
+            grid-row: auto; /* 确保网格位置自动分配 */
+        }
+        
+        /* 显示当前页的卡片 */
+        .award-card.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            visibility: visible; /* 显示时恢复可见性 */
+            pointer-events: auto; /* 显示时恢复交互 */
+            animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* 卡片加载动画 */
+        @keyframes slideInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        /* 获奖卡片的基础样式 */
+        .awards-grid .award-card {
+            height: 100%;
+            min-height: 490px; /* 进一步增加最小高度确保内容完整显示 */
+            max-height: 490px; /* 进一步增加最大高度 */
+            flex-direction: column;
+            overflow: hidden; /* 防止内容溢出 */
+        }
+        
+        /* 翻页动画效果 */
+        .award-card[style*="visibility: hidden"] {
+            pointer-events: none;
+        }
+        
+        .award-card[style*="visibility: visible"] {
+            pointer-events: auto;
+        }
+        
+        /* 确保卡片内容合理分布 */
+        .award-card .award-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            overflow: visible; /* 确保内容不被截断 */
+        }
+        
+        .award-card .award-meta {
+            margin-top: auto;
+            flex-shrink: 0; /* 防止元数据被压缩 */
+        }
+        
+        /* 翻页控制样式 */
+        .awards-pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            margin-top: 3rem; /* 增加顶部边距，避免与第二行卡片重叠 */
+            margin-bottom: 2rem; /* 增加底部边距，与下一节的间距 */
+        }
+        
+        .pagination-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            background: rgba(58, 134, 255, 0.1);
+            border: 1px solid rgba(58, 134, 255, 0.3);
+            border-radius: 25px;
+            color: var(--primary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .pagination-btn:hover {
+            background: var(--primary);
+            color: #0a0a1a;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(58, 134, 255, 0.3);
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .pagination-btn:disabled:hover {
+            background: rgba(58, 134, 255, 0.1);
+            color: var(--primary);
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .page-indicators {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .page-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(58, 134, 255, 0.2);
+            border: 1px solid rgba(58, 134, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .page-indicator.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            transform: scale(1.2);
+        }
+        
+        .page-indicator:hover {
+            background: rgba(58, 134, 255, 0.4);
+            transform: scale(1.1);
+        }
+        
+        .award-card {
+            background: rgba(18, 18, 48, 0.8);
+            border-radius: 20px;
+            padding: 2rem; /* 增加内边距 */
+            transition: all 0.4s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(58, 134, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .award-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+        
+        .award-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(58, 134, 255, 0.4);
+        }
+        
+        .award-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .award-image-container {
+            width: 100%;
+            height: 160px; /* 增加图片容器高度 */
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 1.2rem; /* 增加底部边距 */
+            position: relative;
+            background: linear-gradient(135deg, rgba(58, 134, 255, 0.1), rgba(0, 255, 204, 0.1));
+            border: 2px solid rgba(58, 134, 255, 0.3);
+            transition: all 0.4s ease;
+        }
+        
+        .award-image-container:hover {
+            border-color: rgba(58, 134, 255, 0.6);
+            transform: scale(1.02);
+        }
+        
+        .award-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.4s ease;
+        }
+        
+        .award-card:hover .award-image {
+            transform: scale(1.05);
+        }
+        
+        .award-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(58, 134, 255, 0.2), rgba(0, 255, 204, 0.2));
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .award-card:hover .award-overlay {
+            opacity: 1;
+        }
+        
+        .award-overlay i {
+            font-size: 3rem;
+            color: white;
+            text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .award-info {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 100%;
+        }
+        
+        .award-title {
+            font-size: 1.1rem; /* 增加字体大小 */
+            font-weight: 600;
+            color: var(--text-light);
+            line-height: 1.4;
+            margin-bottom: 0.8rem; /* 增加底部边距 */
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        .award-details {
+            background: rgba(5, 5, 16, 0.5);
+            border-radius: 12px;
+            padding: 1.2rem; /* 增加内边距 */
+            margin-bottom: 1rem; /* 增加底部边距 */
+            border: 1px solid rgba(58, 134, 255, 0.2);
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            overflow: visible; /* 确保内容不被截断 */
+            min-height: 180px; /* 增加最小高度确保内容显示完整 */
+        }
+        
+        .award-details h4 {
+            font-size: 1rem; /* 增加字体大小 */
+            color: var(--primary);
+            margin-bottom: 0.8rem; /* 增加底部边距 */
+            font-weight: 600;
+        }
+        
+        .award-details p {
+            font-size: 0.85rem; /* 增加字体大小 */
+            line-height: 1.5;
+            color: rgba(224, 224, 255, 0.8);
+            margin-bottom: 0.4rem; /* 增加底部边距 */
+        }
+        
+        .award-meta {
+            display: flex;
+            gap: 0.8rem; /* 增加间距 */
+            margin-bottom: 0.8rem; /* 增加底部边距 */
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .award-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.75rem; /* 增加字体大小 */
+            color: rgba(224, 224, 255, 0.7);
+            padding: 0.2rem 0.6rem; /* 增加内边距 */
+            background: rgba(58, 134, 255, 0.1);
+            border-radius: 20px;
+            border: 1px solid rgba(58, 134, 255, 0.2);
+        }
+        
+        .award-meta-item i {
+            color: var(--primary);
+        }
+        
+        .award-links {
+            display: flex;
+            gap: 0.8rem; /* 增加间距 */
+            justify-content: center;
+        }
+        
+        .award-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.5rem 1rem; /* 增加内边距 */
+            background: rgba(58, 134, 255, 0.1);
+            border: 1px solid rgba(58, 134, 255, 0.3);
+            border-radius: 25px;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.75rem; /* 增加字体大小 */
+            transition: all 0.3s ease;
+        }
+        
+        .award-link:hover {
+            background: var(--primary);
+            color: #0a0a1a;
+            transform: translateY(-2px);
+        }
+        
+        .award-link.view {
+            background: rgba(0, 255, 204, 0.1);
+            border-color: rgba(0, 255, 204, 0.3);
+            color: var(--secondary);
+        }
+        
+        .award-link.view:hover {
+            background: var(--secondary);
+            color: #0a0a1a;
+        }
+        
+        .award-link.download {
+            background: rgba(255, 45, 117, 0.1);
+            border-color: rgba(255, 45, 117, 0.3);
+            color: var(--accent);
+        }
+        
+        .award-link.download:hover {
+            background: var(--accent);
+            color: #0a0a1a;
+        }
+        
+        .competition-awards-footer {
+            text-align: center;
+            margin-top: 1rem; /* 减少顶部边距 */
+        }
+        
+        .competition-awards-footer .cta-button {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: #0a0a1a;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .competition-awards-footer .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(58, 134, 255, 0.4);
+        }
+        
+        @media (max-width: 768px) {
+            .competition-awards-section {
+                padding: 2rem 5%;
+            }
+            
+            .awards-header {
+                margin-bottom: 1.5rem;
+            }
+            
+            .awards-header h2 {
+                font-size: 1.8rem;
+            }
+            
+            .awards-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+                min-height: auto;
+                max-height: none;
+                gap: 1.5rem;
+                margin-bottom: 1.5rem; /* 适当减少移动端底部边距 */
+            }
+            
+            .award-card {
+                padding: 1.5rem; /* 增加移动端内边距 */
+                min-height: 400px; /* 进一步增加移动端最小高度确保内容显示完整 */
+                max-height: none; /* 移动端不限制最大高度 */
+            }
+            
+            .award-image-container {
+                height: 120px; /* 增加移动端图片高度 */
+                margin-bottom: 1rem; /* 增加底部边距 */
+            }
+            
+            .award-title {
+                font-size: 1.1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .award-details {
+                padding: 1rem; /* 增加移动端内边距 */
+                margin-bottom: 1rem; /* 增加移动端底部边距 */
+            }
+            
+            .award-details h4 {
+                font-size: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .award-details p {
+                font-size: 0.9rem;
+                margin-bottom: 0.4rem;
+            }
+            
+            .award-meta {
+                flex-direction: column;
+                gap: 0.8rem;
+                margin-bottom: 1rem;
+            }
+            
+            .award-meta-item {
+                font-size: 0.8rem;
+                padding: 0.3rem 0.8rem;
+            }
+            
+            .award-links {
+                gap: 0.8rem;
+            }
+            
+            .award-link {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.8rem;
+            }
+            
+            .awards-pagination {
+                flex-direction: column;
+                gap: 1rem;
+                margin-top: 2rem; /* 增加移动端顶部边距，避免重叠 */
+                margin-bottom: 1.5rem; /* 增加移动端底部边距 */
+            }
+            
+            .pagination-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        /* ========================= 竞赛获奖展示模块样式结束 ========================= */
+    </style>
+</head>
+<body>
+    <!-- 粒子背景 -->
+    <div id="particles-js"></div>
+    
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <a href="/" class="logo">ACM LAB</a>
+        <div class="nav-links">
+            <div class="dropdown">
+                <a href="/introduction" class="nav-link">概况</a>
+            </div>
+            
+            <a href="/team" class="nav-link">团队</a>
+            
+            <div class="dropdown">
+                <a href="/algorithm" class="nav-link">成果</a>
+                <div class="dropdown-content">
+                        <a href="/algorithm" class="dropdown-link">算法</a>
+                        <a href="/paper" class="dropdown-link">论文</a>
+                        <a href="/innovation" class="dropdown-link">科创</a>
+                </div>
+            </div>
+            
+            <a href="/dynamic" class="nav-link">动态</a>
+            
+            <div class="dropdown">
+                <a href="/algorithm-recruitment" class="nav-link">加入我们</a>
+                <div class="dropdown-content">
+                    <a href="/algorithm-recruitment" class="dropdown-link">算法组招生</a>
+                        <a href="/project-recruitment" class="dropdown-link">项目组招生</a>
+                </div>
+            </div>
+            
+
+        </div>
+        <div class="menu-toggle">☰</div>
+        </nav>
+    
+    <!-- 英雄区域 -->
+    <section class="algorithms-hero">
+        <!-- 浮动代码元素 -->
+        <div class="floating-code" style="top: 20%; left: 10%;">
+            int dijkstra(int s, int t) {
+            &nbsp;&nbsp;priority_queue&lt;pair&lt;int,int&gt;&gt; pq;
+            &nbsp;&nbsp;vector&lt;int&gt; dist(n, INF);
+            &nbsp;&nbsp;dist[s] = 0;
+            &nbsp;&nbsp;pq.push({0, s});
+            &nbsp;&nbsp;while(!pq.empty()) {
+            &nbsp;&nbsp;&nbsp;&nbsp;auto [d, u] = pq.top(); pq.pop();
+            &nbsp;&nbsp;&nbsp;&nbsp;if(u == t) return d;
+            &nbsp;&nbsp;&nbsp;&nbsp;for(auto [v, w] : adj[u]) {
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(dist[v] > d + w) {
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dist[v] = d + w;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pq.push({dist[v], v});
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+            &nbsp;&nbsp;&nbsp;&nbsp;}
+            &nbsp;&nbsp;}
+            &nbsp;&nbsp;return -1;
+            }
+        </div>
+        
+        <div class="floating-code" style="top: 40%; right: 15%;">
+            def backpropagation(X, y, model, lr):
+            &nbsp;&nbsp;# 前向传播
+            &nbsp;&nbsp;y_pred = model.forward(X)
+            &nbsp;&nbsp;# 计算损失
+            &nbsp;&nbsp;loss = cross_entropy(y_pred, y)
+            &nbsp;&nbsp;# 反向传播
+            &nbsp;&nbsp;grads = model.backward(X, y)
+            &nbsp;&nbsp;# 更新参数
+            &nbsp;&nbsp;for layer in model.layers:
+            &nbsp;&nbsp;&nbsp;&nbsp;layer.W -= lr * grads[layer.name]['W']
+            &nbsp;&nbsp;&nbsp;&nbsp;layer.b -= lr * grads[layer.name]['b']
+            &nbsp;&nbsp;return loss
+        </div>
+        
+        <div class="floating-code" style="bottom: 20%; left: 20%;">
+            class SegmentTree:
+            &nbsp;&nbsp;def __init__(self, data):
+            &nbsp;&nbsp;&nbsp;&nbsp;self.n = len(data)
+            &nbsp;&nbsp;&nbsp;&nbsp;self.size = 1
+            &nbsp;&nbsp;&nbsp;&nbsp;while self.size < self.n:
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.size <<= 1
+            &nbsp;&nbsp;&nbsp;&nbsp;self.tree = [0] * (2 * self.size)
+            &nbsp;&nbsp;&nbsp;&nbsp;for i in range(self.n):
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.tree[self.size + i] = data[i]
+            &nbsp;&nbsp;&nbsp;&nbsp;for i in range(self.size-1, 0, -1):
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.tree[i] = self.tree[2*i] + self.tree[2*i+1]
+            &nbsp;&nbsp;...
+        </div>
+        
+        <h1>算法研究</h1>
+        <p>从竞赛算法到深度学习，探索计算问题的优雅解决方案</p>
+        <a href="#algorithms" class="cta-button">探索算法</a>
+    </section>
+    
+    <!-- 项目概览 -->
+    <section class="py-16 relative overflow-hidden">
+        <!-- 背景装饰 -->
+        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/3 to-accent/5"></div>
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div class="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-l from-accent/10 to-primary/10 rounded-full blur-3xl animate-pulse-slow" style="animation-delay: 1s"></div>
+        
+        <div class="container mx-auto px-4 relative z-10">
+            <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center relative">
+                <span class="relative z-10 light-flow-text hover:scale-105 transition-transform duration-300 cursor-default">项目</span>
+                <span class="relative z-10 enhanced-gradient-text hover:scale-105 transition-transform duration-300 cursor-default">概览</span>
+                <!-- 装饰性光晕 -->
+                <div class="absolute -top-2 -left-2 w-4 h-4 bg-gradient-to-r from-primary/30 to-secondary/30 rounded-full blur-sm animate-pulse"></div>
+                <div class="absolute -bottom-2 -right-2 w-3 h-3 bg-gradient-to-r from-accent/30 to-primary/30 rounded-full blur-sm animate-pulse" style="animation-delay: 0.5s"></div>
+                <!-- 流光装饰线 -->
+                <div class="absolute -top-4 left-1/4 w-1/2 h-1 light-flow-line" style="animation-delay: 1s"></div>
+                <div class="absolute -bottom-4 right-1/4 w-1/2 h-1 light-flow-line" style="animation-delay: 1.5s"></div>
+            </h2>
+            
+            <div class="flex justify-center">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 max-w-6xl" id="projectStatsContainer">
+                    <!-- 动态加载项目统计 -->
+                    <div class="text-center text-gray-300">
+                        <i class="fa fa-spinner fa-spin text-2xl mb-2"></i>
+                        <p>加载中...</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+    
+    <!-- 竞赛获奖展示模块 -->
+    <section class="competition-awards-section">
+        <div class="awards-header">
+            <h2>竞赛获奖</h2>
+            <p>实验室成员在各类算法竞赛中取得的优异成绩，展现算法实力与创新思维</p>
+        </div>
+        
+        <div class="awards-container">
+            <div class="awards-grid" id="awardsGrid">
+                <!-- 获奖展示卡片1 -->
+                <div class="award-card">
+                    <div class="award-image-container">
+                        <img src="/static/images/awards/acm_icpc_2024.jpg" alt="ACM-ICPC 2024 金奖证书" class="award-image">
+                        <div class="award-overlay">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="award-info">
+                        <h3 class="award-title">ACM-ICPC 国际大学生程序设计竞赛</h3>
+                        
+                        <div class="award-details">
+                            <h4>🏆 2024年ACM-ICPC亚洲区域赛金奖</h4>
+                            <p><strong>获奖者：</strong>张明轩 同学</p>
+                            <p><strong>获奖等级：</strong>金奖 (Gold Medal)</p>
+                            <p><strong>比赛时间：</strong>2024年11月</p>
+                            <p><strong>比赛地点：</strong>杭州赛区</p>
+                            <p><strong>团队成绩：</strong>解决8道题目，排名第3名</p>
+                        </div>
+                        
+                        <div class="award-meta">
+                            <div class="award-meta-item">
+                                <i class="fas fa-medal"></i>
+                                <span>金奖</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-users"></i>
+                                <span>团队竞赛</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-calendar"></i>
+                                <span>2024年</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 获奖展示卡片2 -->
+                <div class="award-card">
+                    <div class="award-image-container">
+                        <img src="/static/images/awards/pat_2024.jpg" alt="天梯赛 2024 一等奖证书" class="award-image">
+                        <div class="award-overlay">
+                            <i class="fas fa-award"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="award-info">
+                        <h3 class="award-title">团体程序设计天梯赛</h3>
+                        
+                        <div class="award-details">
+                            <h4>🥇 2024年团体程序设计天梯赛一等奖</h4>
+                            <p><strong>获奖者：</strong>李雨桐 同学</p>
+                            <p><strong>获奖等级：</strong>一等奖 (First Prize)</p>
+                            <p><strong>比赛时间：</strong>2024年4月</p>
+                            <p><strong>比赛地点：</strong>全国统一考试</p>
+                            <p><strong>个人成绩：</strong>总分280分，排名前5%</p>
+                        </div>
+                        
+                        <div class="award-meta">
+                            <div class="award-meta-item">
+                                <i class="fas fa-star"></i>
+                                <span>一等奖</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-user"></i>
+                                <span>个人竞赛</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-calendar"></i>
+                                <span>2024年</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 获奖展示卡片3 -->
+                <div class="award-card">
+                    <div class="award-image-container">
+                        <img src="/static/images/awards/lanqiao_2024.jpg" alt="蓝桥杯 2024 特等奖证书" class="award-image">
+                        <div class="award-overlay">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="award-info">
+                        <h3 class="award-title">蓝桥杯全国软件和信息技术专业人才大赛</h3>
+                        
+                        <div class="award-details">
+                            <h4>👑 2024年蓝桥杯C/C++程序设计特等奖</h4>
+                            <p><strong>获奖者：</strong>王浩然 同学</p>
+                            <p><strong>获奖等级：</strong>特等奖 (Special Prize)</p>
+                            <p><strong>比赛时间：</strong>2024年6月</p>
+                            <p><strong>比赛地点：</strong>全国总决赛</p>
+                            <p><strong>比赛成绩：</strong>满分100分，全国排名第1名</p>
+                        </div>
+                        
+                        <div class="award-meta">
+                            <div class="award-meta-item">
+                                <i class="fas fa-crown"></i>
+                                <span>特等奖</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-code"></i>
+                                <span>C/C++组</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-calendar"></i>
+                                <span>2024年</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 获奖展示卡片4 -->
+                <div class="award-card">
+                    <div class="award-image-container">
+                        <img src="/static/images/awards/ccpc_2024.jpg" alt="CCPC 2024 银奖证书" class="award-image">
+                        <div class="award-overlay">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="award-info">
+                        <h3 class="award-title">中国大学生程序设计竞赛</h3>
+                        
+                        <div class="award-details">
+                            <h4>🥈 2024年CCPC全国邀请赛银奖</h4>
+                            <p><strong>获奖者：</strong>陈志强 同学</p>
+                            <p><strong>获奖等级：</strong>银奖 (Silver Medal)</p>
+                            <p><strong>比赛时间：</strong>2024年9月</p>
+                            <p><strong>比赛地点：</strong>南京赛区</p>
+                            <p><strong>团队成绩：</strong>解决7道题目，排名第8名</p>
+                        </div>
+                        
+                        <div class="award-meta">
+                            <div class="award-meta-item">
+                                <i class="fas fa-medal"></i>
+                                <span>银奖</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-users"></i>
+                                <span>团队竞赛</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-calendar"></i>
+                                <span>2024年</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 获奖展示卡片5 -->
+                <div class="award-card">
+                    <div class="award-image-container">
+                        <img src="/static/images/awards/pat_2023.jpg" alt="天梯赛 2023 二等奖证书" class="award-image">
+                        <div class="award-overlay">
+                            <i class="fas fa-award"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="award-info">
+                        <h3 class="award-title">团体程序设计天梯赛</h3>
+                        
+                        <div class="award-details">
+                            <h4>🥉 2023年团体程序设计天梯赛二等奖</h4>
+                            <p><strong>获奖者：</strong>刘雅琪 同学</p>
+                            <p><strong>获奖等级：</strong>二等奖 (Second Prize)</p>
+                            <p><strong>比赛时间：</strong>2023年4月</p>
+                            <p><strong>比赛地点：</strong>全国统一考试</p>
+                            <p><strong>个人成绩：</strong>总分260分，排名前10%</p>
+                        </div>
+                        
+                        <div class="award-meta">
+                            <div class="award-meta-item">
+                                <i class="fas fa-award"></i>
+                                <span>二等奖</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-user"></i>
+                                <span>个人竞赛</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-calendar"></i>
+                                <span>2023年</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 获奖展示卡片6 -->
+                <div class="award-card">
+                    <div class="award-image-container">
+                        <img src="/static/images/awards/lanqiao_2023.jpg" alt="蓝桥杯 2023 一等奖证书" class="award-image">
+                        <div class="award-overlay">
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="award-info">
+                        <h3 class="award-title">蓝桥杯全国软件和信息技术专业人才大赛</h3>
+                        
+                        <div class="award-details">
+                            <h4>🥇 2023年蓝桥杯Java程序设计一等奖</h4>
+                            <p><strong>获奖者：</strong>赵思雨 同学</p>
+                            <p><strong>获奖等级：</strong>一等奖 (First Prize)</p>
+                            <p><strong>比赛时间：</strong>2023年6月</p>
+                            <p><strong>比赛地点：</strong>全国总决赛</p>
+                            <p><strong>比赛成绩：</strong>95分，全国排名前3%</p>
+                        </div>
+                        
+                        <div class="award-meta">
+                            <div class="award-meta-item">
+                                <i class="fas fa-star"></i>
+                                <span>一等奖</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-code"></i>
+                                <span>Java组</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-calendar"></i>
+                                <span>2023年</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 获奖展示卡片7 -->
+                <div class="award-card">
+                    <div class="award-image-container">
+                        <img src="/static/images/awards/default_award.jpg" alt="蓝桥杯 2023 省一等奖证书" class="award-image">
+                        <div class="award-overlay">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="award-info">
+                        <h3 class="award-title">蓝桥杯全国软件和信息技术专业人才大赛</h3>
+                        
+                        <div class="award-details">
+                            <h4>🥇 2023年蓝桥杯程序设计竞赛省一等奖</h4>
+                            <p><strong>获奖者：</strong>陈思雨 同学</p>
+                            <p><strong>获奖等级：</strong>省一等奖 (Provincial First Prize)</p>
+                            <p><strong>比赛时间：</strong>2023年4月</p>
+                            <p><strong>比赛地点：</strong>江苏省赛区</p>
+                            <p><strong>个人成绩：</strong>总分95分，排名前1%</p>
+                        </div>
+                        
+                        <div class="award-meta">
+                            <div class="award-meta-item">
+                                <i class="fas fa-medal"></i>
+                                <span>省一等奖</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-user"></i>
+                                <span>个人竞赛</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-calendar"></i>
+                                <span>2023年</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 获奖展示卡片8 -->
+                <div class="award-card">
+                    <div class="award-image-container">
+                        <img src="/static/images/awards/default_award.jpg" alt="CCCC竞赛 2023 银奖证书" class="award-image">
+                        <div class="award-overlay">
+                            <i class="fas fa-award"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="award-info">
+                        <h3 class="award-title">中国大学生计算机设计大赛</h3>
+                        
+                        <div class="award-details">
+                            <h4>🥈 2023年计算机设计大赛银奖</h4>
+                            <p><strong>获奖者：</strong>王志强 同学</p>
+                            <p><strong>获奖等级：</strong>银奖 (Silver Medal)</p>
+                            <p><strong>比赛时间：</strong>2023年8月</p>
+                            <p><strong>比赛地点：</strong>北京</p>
+                            <p><strong>项目成绩：</strong>智能推荐系统，综合评分88分</p>
+                        </div>
+                        
+                        <div class="award-meta">
+                            <div class="award-meta-item">
+                                <i class="fas fa-medal"></i>
+                                <span>银奖</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-users"></i>
+                                <span>团队竞赛</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-calendar"></i>
+                                <span>2023年</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 获奖展示卡片9 -->
+                <div class="award-card">
+                    <div class="award-image-container">
+                        <img src="/static/images/awards/default_award.jpg" alt="数学建模竞赛 2024 二等奖证书" class="award-image">
+                        <div class="award-overlay">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="award-info">
+                        <h3 class="award-title">全国大学生数学建模竞赛</h3>
+                        
+                        <div class="award-details">
+                            <h4>🥉 2024年数学建模竞赛二等奖</h4>
+                            <p><strong>获奖者：</strong>刘晓敏 同学</p>
+                            <p><strong>获奖等级：</strong>二等奖 (Second Prize)</p>
+                            <p><strong>比赛时间：</strong>2024年9月</p>
+                            <p><strong>比赛地点：</strong>全国统一竞赛</p>
+                            <p><strong>团队成绩：</strong>优化算法模型，排名前15%</p>
+                        </div>
+                        
+                        <div class="award-meta">
+                            <div class="award-meta-item">
+                                <i class="fas fa-medal"></i>
+                                <span>二等奖</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-users"></i>
+                                <span>团队竞赛</span>
+                            </div>
+                            <div class="award-meta-item">
+                                <i class="fas fa-calendar"></i>
+                                <span>2024年</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 翻页控制 -->
+            <div class="awards-pagination">
+                <button class="pagination-btn prev-btn" id="prevPage">
+                    <i class="fas fa-chevron-left"></i>
+                    <span>上一页</span>
+                </button>
+                
+                <div class="page-indicators" id="pageIndicators">
+                    <!-- 页码指示器将通过JavaScript动态生成 -->
+                </div>
+                
+                <button class="pagination-btn next-btn" id="nextPage">
+                    <span>下一页</span>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 算法分类部分 -->
+    <section class="algorithms-section" id="algorithms">
+        <div class="section-header">
+            <h2>算法研究</h2>
+            <p>从竞赛算法到前沿深度学习算法</p>
+        </div>
+        
+        <div class="algorithms-tabs">
+            <div class="algorithms-tab active" data-tab="competition">竞赛算法</div>
+            <div class="algorithms-tab" data-tab="deep-learning">深度学习</div>
+            <div class="algorithms-tab" data-tab="data-structures">数据结构</div>
+
+        </div>
+        
+        <div class="algorithms-content active" id="competition-content">
+            <div class="algorithm-cards-container">
+                <div class="algorithm-card">
+                    <h3>Dijkstra最短路径算法优化</h3>
+                    <div class="description">
+                        <p>我们提出了一种改进的Dijkstra算法实现，通过优化优先队列的数据结构和访问模式，在稠密图上实现了20-30%的性能提升。该算法特别适用于ICPC竞赛中的路径规划问题。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(E + V log V)</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(V)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// 优化版Dijkstra算法
+void dijkstra_optimized(int s, vector&lt;vector&lt;pair&lt;int,int&gt;&gt;&gt; &adj, vector&lt;int&gt; &dist) {
+    vector&lt;bool&gt; visited(adj.size(), false);
+    dist.assign(adj.size(), INF);
+    dist[s] = 0;
+    
+    // 使用自定义小顶堆
+    auto cmp = [](auto &a, auto &b) { return a.second > b.second; };
+    priority_queue&lt;pair&lt;int,int&gt;, vector&lt;pair&lt;int,int&gt;&gt;, decltype(cmp)&gt; pq(cmp);
+    pq.push({s, 0});
+    
+    while(!pq.empty()) {
+        auto [u, d] = pq.top(); pq.pop();
+        if(visited[u]) continue;
+        visited[u] = true;
+        
+        for(auto [v, w] : adj[u]) {
+            if(!visited[v] && dist[v] > d + w) {
+                dist[v] = d + w;
+                pq.push({v, dist[v]});
+            }
+        }
+    }
+}</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/dijkstra_optimized.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+                
+                <div class="algorithm-card">
+                    <h3>快速傅里叶变换(FFT)在竞赛中的应用</h3>
+                    <div class="description">
+                        <p>本文详细介绍了FFT算法在多项式乘法和大数乘法中的应用，提供了针对竞赛优化的实现版本，包括预处理旋转因子和迭代实现，相比递归实现有2-3倍的性能提升。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(n log n)</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(n)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// 迭代版FFT实现
+void fft(vector&lt;complex&lt;double&gt;&gt; &a, bool invert) {
+    int n = a.size();
+    for(int i=1, j=0; i<n; i++) {
+        int bit = n >> 1;
+        for(; j & bit; bit >>= 1) j ^= bit;
+        j ^= bit;
+        if(i < j) swap(a[i], a[j]);
+    }
+    
+    for(int len=2; len<=n; len<<=1) {
+        double ang = 2*PI/len * (invert ? -1 : 1);
+        complex&lt;double&gt; wlen(cos(ang), sin(ang));
+        for(int i=0; i<n; i+=len) {
+            complex&lt;double&gt; w(1);
+            for(int j=0; j<len/2; j++) {
+                complex&lt;double&gt; u = a[i+j], v = a[i+j+len/2]*w;
+                a[i+j] = u + v;
+                a[i+j+len/2] = u - v;
+                w *= wlen;
+            }
+        }
+    }
+    if(invert) for(auto &x : a) x /= n;
+}</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/fft_competition.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+                
+                <div class="algorithm-card">
+                    <h3>动态规划优化技巧</h3>
+                    <div class="description">
+                        <p>总结了竞赛中常用的动态规划优化技巧，包括状态压缩、滚动数组、单调队列优化等，通过实际案例展示了这些技巧在解决复杂问题时的应用。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(n²) → O(n)</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(n²) → O(n)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// 单调队列优化DP
+int solve_with_monotonic_queue(vector&lt;int&gt;& nums, int k) {
+    int n = nums.size();
+    deque&lt;int&gt; dq;
+    vector&lt;int&gt; dp(n);
+    
+    for(int i = 0; i < n; i++) {
+        // 移除过期元素
+        while(!dq.empty() && dq.front() < i - k) {
+            dq.pop_front();
+        }
+        
+        // 移除不优的元素
+        while(!dq.empty() && dp[dq.back()] <= dp[i-1]) {
+            dq.pop_back();
+        }
+        
+        dq.push_back(i-1);
+        dp[i] = nums[i] + (dq.empty() ? 0 : dp[dq.front()]);
+    }
+    
+    return dp[n-1];
+}</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/dp_optimization.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+                
+                <div class="algorithm-card">
+                    <h3>网络流算法实现</h3>
+                    <div class="description">
+                        <p>实现了Dinic算法和ISAP算法两种高效的最大流算法，通过分层图和当前弧优化技术，在处理大规模网络流问题时表现出色。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(V²E)</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(V+E)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// Dinic算法实现
+class Dinic {
+private:
+    struct Edge {
+        int to, rev, cap, flow;
+        Edge(int t, int r, int c) : to(t), rev(r), cap(c), flow(0) {}
+    };
+    
+    vector&lt;vector&lt;Edge&gt;&gt; adj;
+    vector&lt;int&gt; level, ptr;
+    int s, t;
+    
+    bool bfs() {
+        fill(level.begin(), level.end(), -1);
+        level[s] = 0;
+        queue&lt;int&gt; q; q.push(s);
+        
+        while(!q.empty()) {
+            int u = q.front(); q.pop();
+            for(auto& e : adj[u]) {
+                if(level[e.to] == -1 && e.cap > e.flow) {
+                    level[e.to] = level[u] + 1;
+                    q.push(e.to);
+                }
+            }
+        }
+        return level[t] != -1;
+    }
+    
+    int dfs(int u, int flow) {
+        if(u == t || flow == 0) return flow;
+        
+        for(int& i = ptr[u]; i < adj[u].size(); i++) {
+            auto& e = adj[u][i];
+            if(level[e.to] == level[u] + 1 && e.cap > e.flow) {
+                int pushed = dfs(e.to, min(flow, e.cap - e.flow));
+                if(pushed > 0) {
+                    e.flow += pushed;
+                    adj[e.to][e.rev].flow -= pushed;
+                    return pushed;
+                }
+            }
+        }
+        return 0;
+    }
+};</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/network_flow.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+                
+                <div class="algorithm-card">
+                    <h3>字符串匹配算法优化</h3>
+                    <div class="description">
+                        <p>实现了KMP、Z算法、Manacher算法等多种字符串匹配算法，通过预处理和优化技术，在处理大规模文本匹配问题时效率显著提升。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(n+m)</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(n)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// KMP算法优化实现
+vector&lt;int&gt; kmp_search(const string& text, const string& pattern) {
+    int n = text.length(), m = pattern.length();
+    vector&lt;int&gt; lps(m, 0);
+    vector&lt;int&gt; result;
+    
+    // 计算LPS数组
+    int len = 0;
+    for(int i = 1; i < m; i++) {
+        while(len > 0 && pattern[i] != pattern[len]) {
+            len = lps[len-1];
+        }
+        if(pattern[i] == pattern[len]) {
+            len++;
+        }
+        lps[i] = len;
+    }
+    
+    // 搜索匹配
+    int j = 0;
+    for(int i = 0; i < n; i++) {
+        while(j > 0 && text[i] != pattern[j]) {
+            j = lps[j-1];
+        }
+        if(text[i] == pattern[j]) {
+            j++;
+        }
+        if(j == m) {
+            result.push_back(i - m + 1);
+            j = lps[j-1];
+        }
+    }
+    
+    return result;
+}</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/string_matching.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+                
+                <div class="algorithm-card">
+                    <h3>几何算法实现</h3>
+                    <div class="description">
+                        <p>实现了凸包、最近点对、旋转卡壳等经典几何算法，通过分治和扫描线技术，高效解决各种几何计算问题。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(n log n)</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(n)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// Graham扫描法求凸包
+vector&lt;Point&gt; graham_scan(vector&lt;Point&gt;& points) {
+    int n = points.size();
+    if(n < 3) return points;
+    
+    // 找到最下方的点
+    int bottom = 0;
+    for(int i = 1; i < n; i++) {
+        if(points[i].y < points[bottom].y || 
+           (points[i].y == points[bottom].y && points[i].x < points[bottom].x)) {
+            bottom = i;
+        }
+    }
+    swap(points[0], points[bottom]);
+    
+    // 按极角排序
+    sort(points.begin() + 1, points.end(), 
+         [&](const Point& a, const Point& b) {
+             double angle_a = atan2(a.y - points[0].y, a.x - points[0].x);
+             double angle_b = atan2(b.y - points[0].y, b.x - points[0].x);
+             return angle_a < angle_b;
+         });
+    
+    // Graham扫描
+    vector&lt;Point&gt; hull;
+    hull.push_back(points[0]);
+    hull.push_back(points[1]);
+    
+    for(int i = 2; i < n; i++) {
+        while(hull.size() > 1 && 
+              cross(hull[hull.size()-2], hull.back(), points[i]) <= 0) {
+            hull.pop_back();
+        }
+        hull.push_back(points[i]);
+    }
+    
+    return hull;
+}</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/geometry_algorithms.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="algorithm-pagination">
+                <button class="pagination-btn prev-btn" id="competition-prev">
+                    <i class="fas fa-chevron-left"></i>
+                    <span>上一页</span>
+                </button>
+                
+                <div class="page-indicators" id="competition-indicators">
+                    <!-- 页码指示器将通过JavaScript动态生成 -->
+                </div>
+                
+                <button class="pagination-btn next-btn" id="competition-next">
+                    <span>下一页</span>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="algorithms-content" id="deep-learning-content">
+            <div class="algorithm-cards-container">
+                <div class="algorithm-card">
+                    <h3>卷积神经网络(CNN)优化实现</h3>
+                    <div class="description">
+                        <p>我们提出了一种高效的卷积神经网络实现，通过优化卷积操作的内存访问模式和并行计算策略，在图像分类任务上实现了15-25%的训练速度提升。该实现特别适用于计算机视觉任务。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(N × C × H × W × K²)</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(N × C × H × W)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// 优化版卷积层实现
+class OptimizedConv2D:
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1):
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.weights = torch.randn(out_channels, in_channels, kernel_size, kernel_size)
+        self.bias = torch.zeros(out_channels)
+    
+    def forward(self, x):
+        N, C, H, W = x.shape
+        out_h = (H - self.kernel_size) // self.stride + 1
+        out_w = (W - self.kernel_size) // self.stride + 1
+        
+        # 使用im2col优化卷积计算
+        x_col = self.im2col(x, self.kernel_size, self.stride)
+        w_row = self.weights.view(self.out_channels, -1)
+        
+        out = torch.mm(w_row, x_col) + self.bias.view(-1, 1)
+        return out.view(N, self.out_channels, out_h, out_w)</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/cnn_optimized.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+                
+                <div class="algorithm-card">
+                    <h3>注意力机制(Attention)高效实现</h3>
+                    <div class="description">
+                        <p>基于Transformer架构的注意力机制优化实现，通过Flash Attention技术和内存高效的计算策略，显著降低了长序列处理的内存占用，在自然语言处理任务中取得了优异的性能表现。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(N × L²)</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(N × L)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// Flash Attention核心实现
+def flash_attention(q, k, v, mask=None, dropout=0.0):
+    """
+    q, k, v: [batch_size, seq_len, d_model]
+    """
+    batch_size, seq_len, d_model = q.shape
+    scale = d_model ** -0.5
+    
+    # 分块计算以减少内存使用
+    block_size = min(seq_len, 512)
+    output = torch.zeros_like(q)
+    
+    for i in range(0, seq_len, block_size):
+        end_i = min(i + block_size, seq_len)
+        q_block = q[:, i:end_i, :]
+        
+        # 计算注意力分数
+        scores = torch.matmul(q_block, k.transpose(-2, -1)) * scale
+        if mask is not None:
+            scores = scores.masked_fill(mask[:, i:end_i, :] == 0, -1e9)
+        
+        # 应用softmax并计算输出
+        attn_weights = F.softmax(scores, dim=-1)
+        if dropout > 0:
+            attn_weights = F.dropout(attn_weights, p=dropout)
+        
+        output[:, i:end_i, :] = torch.matmul(attn_weights, v)
+    
+    return output</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/flash_attention.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+                
+                <div class="algorithm-card">
+                    <h3>生成对抗网络(GAN)训练优化</h3>
+                    <div class="description">
+                        <p>提出了一种改进的GAN训练策略，通过梯度惩罚和谱归一化技术，有效解决了模式崩塌和训练不稳定的问题，在图像生成任务中取得了更好的效果。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(N × D²)</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(N × D)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// WGAN-GP实现
+class WGAN_GP:
+    def __init__(self, generator, discriminator, lambda_gp=10):
+        self.generator = generator
+        self.discriminator = discriminator
+        self.lambda_gp = lambda_gp
+    
+    def gradient_penalty(self, real_samples, fake_samples):
+        batch_size = real_samples.size(0)
+        alpha = torch.rand(batch_size, 1, 1, 1).to(real_samples.device)
+        
+        # 插值样本
+        interpolates = (alpha * real_samples + (1 - alpha) * fake_samples).requires_grad_(True)
+        
+        # 计算判别器输出
+        d_interpolates = self.discriminator(interpolates)
+        
+        # 计算梯度
+        fake = torch.ones(d_interpolates.size()).to(real_samples.device)
+        gradients = torch.autograd.grad(
+            outputs=d_interpolates,
+            inputs=interpolates,
+            grad_outputs=fake,
+            create_graph=True,
+            retain_graph=True,
+            only_inputs=True,
+        )[0]
+        
+        # 计算梯度惩罚
+        gradients = gradients.view(gradients.size(0), -1)
+        gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
+        
+        return gradient_penalty
+    
+    def train_step(self, real_samples):
+        batch_size = real_samples.size(0)
+        
+        # 训练判别器
+        for _ in range(5):
+            noise = torch.randn(batch_size, 100).to(real_samples.device)
+            fake_samples = self.generator(noise)
+            
+            real_validity = self.discriminator(real_samples)
+            fake_validity = self.discriminator(fake_samples)
+            
+            # 梯度惩罚
+            gp = self.gradient_penalty(real_samples, fake_samples)
+            
+            d_loss = -torch.mean(real_validity) + torch.mean(fake_validity) + self.lambda_gp * gp
+            d_loss.backward()
+            self.d_optimizer.step()
+            self.d_optimizer.zero_grad()</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/gan_optimization.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+                
+                <div class="algorithm-card">
+                    <h3>强化学习算法实现</h3>
+                    <div class="description">
+                        <p>实现了DQN、A3C、PPO等主流强化学习算法，通过经验回放、多进程训练等技术优化，在游戏AI和机器人控制任务中表现优异。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(|S| × |A|)</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(|S| × |A|)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// PPO算法核心实现
+class PPO:
+    def __init__(self, policy_net, value_net, lr=3e-4, clip_ratio=0.2):
+        self.policy_net = policy_net
+        self.value_net = value_net
+        self.optimizer = torch.optim.Adam([
+            {'params': policy_net.parameters(), 'lr': lr},
+            {'params': value_net.parameters(), 'lr': lr}
+        ])
+        self.clip_ratio = clip_ratio
+    
+    def compute_loss(self, states, actions, old_log_probs, advantages, returns):
+        # 计算新的动作概率
+        dist = self.policy_net(states)
+        new_log_probs = dist.log_prob(actions)
+        
+        # 计算比率
+        ratio = torch.exp(new_log_probs - old_log_probs)
+        
+        # PPO裁剪目标
+        surr1 = ratio * advantages
+        surr2 = torch.clamp(ratio, 1 - self.clip_ratio, 1 + self.clip_ratio) * advantages
+        
+        # 策略损失
+        policy_loss = -torch.min(surr1, surr2).mean()
+        
+        # 价值损失
+        value_pred = self.value_net(states)
+        value_loss = F.mse_loss(value_pred, returns)
+        
+        # 熵正则化
+        entropy = dist.entropy().mean()
+        
+        return policy_loss + 0.5 * value_loss - 0.01 * entropy
+    
+    def update(self, states, actions, old_log_probs, advantages, returns):
+        loss = self.compute_loss(states, actions, old_log_probs, advantages, returns)
+        
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+        
+        return loss.item()</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/reinforcement_learning.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+                
+                <div class="algorithm-card">
+                    <h3>图神经网络(GNN)优化</h3>
+                    <div class="description">
+                        <p>实现了GCN、GAT、GraphSAGE等图神经网络模型，通过邻居采样和注意力机制优化，在处理大规模图数据时显著提升了训练效率。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(|E| × F)</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(|V| × F)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// Graph Attention Network实现
+class GATLayer(nn.Module):
+    def __init__(self, in_features, out_features, n_heads, dropout=0.6, alpha=0.2):
+        super(GATLayer, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.n_heads = n_heads
+        self.dropout = dropout
+        
+        # 线性变换
+        self.W = nn.Linear(in_features, out_features * n_heads, bias=False)
+        
+        # 注意力机制
+        self.attention = nn.Parameter(torch.Tensor(1, n_heads, out_features * 2))
+        nn.init.xavier_uniform_(self.attention.data)
+        
+        self.leakyrelu = nn.LeakyReLU(alpha)
+    
+    def forward(self, x, adj):
+        batch_size, n_nodes, in_features = x.size()
+        
+        # 线性变换
+        x = self.W(x)  # [batch_size, n_nodes, n_heads * out_features]
+        x = x.view(batch_size, n_nodes, self.n_heads, -1)
+        x = x.transpose(1, 2)  # [batch_size, n_heads, n_nodes, out_features]
+        
+        # 计算注意力分数
+        x_i = x.unsqueeze(3)  # [batch_size, n_heads, n_nodes, 1, out_features]
+        x_j = x.unsqueeze(2)  # [batch_size, n_heads, 1, n_nodes, out_features]
+        
+        alpha_input = torch.cat([x_i, x_j], dim=-1)
+        e = self.leakyrelu(torch.sum(alpha_input * self.attention, dim=-1))
+        
+        # 应用邻接矩阵掩码
+        zero_vec = -9e15 * torch.ones_like(e)
+        attention = torch.where(adj.unsqueeze(1) > 0, e, zero_vec)
+        attention = F.softmax(attention, dim=-1)
+        attention = F.dropout(attention, self.dropout, training=self.training)
+        
+        # 应用注意力权重
+        h_prime = torch.matmul(attention, x)
+        h_prime = h_prime.transpose(1, 2).contiguous()
+        h_prime = h_prime.view(batch_size, n_nodes, -1)
+        
+        return h_prime</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/gnn_optimization.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+                
+                <div class="algorithm-card">
+                    <h3>自监督学习算法</h3>
+                    <div class="description">
+                        <p>实现了对比学习、掩码自编码器等自监督学习算法，通过数据增强和预训练任务设计，在无标签数据上学习有效的特征表示。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(N × D)</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(N × D)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// SimCLR对比学习实现
+class SimCLR(nn.Module):
+    def __init__(self, encoder, projection_dim=128, temperature=0.07):
+        super(SimCLR, self).__init__()
+        self.encoder = encoder
+        self.projection = nn.Sequential(
+            nn.Linear(encoder.output_dim, 512),
+            nn.ReLU(),
+            nn.Linear(512, projection_dim)
+        )
+        self.temperature = temperature
+    
+    def forward(self, x1, x2):
+        # 编码
+        h1 = self.encoder(x1)
+        h2 = self.encoder(x2)
+        
+        # 投影
+        z1 = F.normalize(self.projection(h1), dim=1)
+        z2 = F.normalize(self.projection(h2), dim=1)
+        
+        # 计算对比损失
+        representations = torch.cat([z1, z2], dim=0)
+        similarity_matrix = F.cosine_similarity(
+            representations.unsqueeze(1), 
+            representations.unsqueeze(0), 
+            dim=2
+        )
+        
+        # 创建标签（对角线上的为正样本）
+        batch_size = z1.size(0)
+        labels = torch.arange(2 * batch_size).to(z1.device)
+        mask = torch.eye(2 * batch_size).to(z1.device)
+        
+        # 计算InfoNCE损失
+        exp_sim = torch.exp(similarity_matrix / self.temperature)
+        log_prob = similarity_matrix / self.temperature - torch.log(
+            exp_sim.sum(1, keepdim=True)
+        )
+        
+        mean_log_prob = (mask * log_prob).sum(1) / mask.sum(1)
+        loss = -mean_log_prob.mean()
+        
+        return loss</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/self_supervised.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="algorithm-pagination">
+                <button class="pagination-btn prev-btn" id="deep-learning-prev">
+                    <i class="fas fa-chevron-left"></i>
+                    <span>上一页</span>
+                </button>
+                
+                <div class="page-indicators" id="deep-learning-indicators">
+                    <!-- 页码指示器将通过JavaScript动态生成 -->
+                </div>
+                
+                <button class="pagination-btn next-btn" id="deep-learning-next">
+                    <span>下一页</span>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="algorithms-content" id="data-structures-content">
+            <div class="algorithm-cards-container">
+                <div class="algorithm-card">
+                    <h3>线段树(Segment Tree)高级应用</h3>
+                    <div class="description">
+                        <p>实现了支持区间更新和区间查询的懒惰传播线段树，通过延迟标记技术优化批量更新操作。该数据结构在处理大规模区间操作问题时表现优异，广泛应用于竞赛和实际项目中。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(log N)</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(4N)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// 懒惰传播线段树实现
+class LazySegmentTree {
+private:
+    vector&lt;long long&gt; tree, lazy;
+    int n;
+    
+    void push(int node, int start, int end) {
+        if(lazy[node] != 0) {
+            tree[node] += (end - start + 1) * lazy[node];
+            if(start != end) {
+                lazy[2*node] += lazy[node];
+                lazy[2*node+1] += lazy[node];
+            }
+            lazy[node] = 0;
+        }
+    }
+    
+    void updateRange(int node, int start, int end, int l, int r, long long val) {
+        push(node, start, end);
+        if(start > r || end < l) return;
+        if(start >= l && end <= r) {
+            lazy[node] += val;
+            push(node, start, end);
+            return;
+        }
+        int mid = (start + end) / 2;
+        updateRange(2*node, start, mid, l, r, val);
+        updateRange(2*node+1, mid+1, end, l, r, val);
+        push(2*node, start, mid);
+        push(2*node+1, mid+1, end);
+        tree[node] = tree[2*node] + tree[2*node+1];
+    }
+    
+public:
+    LazySegmentTree(vector&lt;int&gt;& arr) {
+        n = arr.size();
+        tree.assign(4*n, 0);
+        lazy.assign(4*n, 0);
+        build(arr, 1, 0, n-1);
+    }
+}</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/lazy_segment_tree.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+                
+                <div class="algorithm-card">
+                    <h3>树状数组(Fenwick Tree)优化实现</h3>
+                    <div class="description">
+                        <p>基于树状数组的高效实现，支持单点更新和前缀查询操作。通过位运算优化lowbit操作，实现了极致的性能表现。该数据结构在处理动态前缀和问题时具有代码简洁、常数小的优势。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(log N)</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(N)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// 优化版树状数组实现
+class FenwickTree {
+private:
+    vector&lt;long long&gt; tree;
+    int n;
+    
+    inline int lowbit(int x) { return x & (-x); }
+    
+public:
+    FenwickTree(int size) : n(size) {
+        tree.assign(n + 1, 0);
+    }
+    
+    void update(int idx, long long delta) {
+        for(int i = idx; i <= n; i += lowbit(i)) {
+            tree[i] += delta;
+        }
+    }
+    
+    long long query(int idx) {
+        long long sum = 0;
+        for(int i = idx; i > 0; i -= lowbit(i)) {
+            sum += tree[i];
+        }
+        return sum;
+    }
+    
+    long long rangeQuery(int l, int r) {
+        return query(r) - query(l - 1);
+    }
+    
+    // 二分查找第k小元素
+    int kth(long long k) {
+        int pos = 0;
+        for(int i = __lg(n); i >= 0; i--) {
+            if(pos + (1 << i) <= n && tree[pos + (1 << i)] < k) {
+                k -= tree[pos + (1 << i)];
+                pos += (1 << i);
+            }
+        }
+        return pos + 1;
+    }
+};</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/fenwick_tree.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+                
+                <div class="algorithm-card">
+                    <h3>平衡二叉搜索树(Treap)实现</h3>
+                    <div class="description">
+                        <p>结合了二叉搜索树和堆的特性，通过随机优先级保持树的平衡性。支持插入、删除、查询、分裂、合并等操作，在处理动态有序数据时表现出色，是竞赛编程中的重要工具。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(log N) 期望</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(N)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// Treap平衡树实现
+struct TreapNode {
+    int val, priority, size;
+    TreapNode* left, *right;
+    TreapNode(int v) : val(v), priority(rand()), size(1), left(nullptr), right(nullptr) {}
+};
+
+class Treap {
+private:
+    TreapNode* root;
+    
+    void updateSize(TreapNode* node) {
+        if(node) {
+            node->size = 1 + getSize(node->left) + getSize(node->right);
+        }
+    }
+    
+    int getSize(TreapNode* node) { return node ? node->size : 0; }
+    
+    TreapNode* rotateRight(TreapNode* root) {
+        TreapNode* newRoot = root->left;
+        root->left = newRoot->right;
+        newRoot->right = root;
+        updateSize(root);
+        updateSize(newRoot);
+        return newRoot;
+    }
+    
+    TreapNode* rotateLeft(TreapNode* root) {
+        TreapNode* newRoot = root->right;
+        root->right = newRoot->left;
+        newRoot->left = root;
+        updateSize(root);
+        updateSize(newRoot);
+        return newRoot;
+    }
+    
+    TreapNode* insert(TreapNode* root, int val) {
+        if(!root) return new TreapNode(val);
+        
+        if(val <= root->val) {
+            root->left = insert(root->left, val);
+            if(root->left->priority > root->priority)
+                root = rotateRight(root);
+        } else {
+            root->right = insert(root->right, val);
+            if(root->right->priority > root->priority)
+                root = rotateLeft(root);
+        }
+        updateSize(root);
+        return root;
+    }
+};</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/treap.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+                
+                <div class="algorithm-card">
+                    <h3>并查集(Union-Find)优化</h3>
+                    <div class="description">
+                        <p>实现了路径压缩和按秩合并的并查集优化算法，通过这两种优化技术，将并查集的时间复杂度从O(n)降低到接近O(1)，在处理连通性问题时效率极高。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(α(n))</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(n)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// 优化版并查集实现
+class UnionFind {
+private:
+    vector&lt;int&gt; parent, rank;
+    int count;
+    
+public:
+    UnionFind(int n) : count(n) {
+        parent.resize(n);
+        rank.resize(n, 0);
+        for(int i = 0; i < n; i++) {
+            parent[i] = i;
+        }
+    }
+    
+    // 路径压缩优化
+    int find(int x) {
+        if(parent[x] != x) {
+            parent[x] = find(parent[x]); // 路径压缩
+        }
+        return parent[x];
+    }
+    
+    // 按秩合并优化
+    void unite(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+        
+        if(rootX == rootY) return;
+        
+        if(rank[rootX] < rank[rootY]) {
+            parent[rootX] = rootY;
+        } else if(rank[rootX] > rank[rootY]) {
+            parent[rootY] = rootX;
+        } else {
+            parent[rootY] = rootX;
+            rank[rootX]++;
+        }
+        count--;
+    }
+    
+    bool connected(int x, int y) {
+        return find(x) == find(y);
+    }
+    
+    int getCount() {
+        return count;
+    }
+    
+    // 获取连通分量大小
+    int getSize(int x) {
+        int root = find(x);
+        int size = 0;
+        for(int i = 0; i < parent.size(); i++) {
+            if(find(i) == root) size++;
+        }
+        return size;
+    }
+};</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/union_find.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+                
+                <div class="algorithm-card">
+                    <h3>跳表(Skip List)实现</h3>
+                    <div class="description">
+                        <p>实现了跳表数据结构，通过多层链表结构模拟平衡树的功能，支持高效的插入、删除、查找操作，实现简单且性能优异。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(log N) 期望</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(N)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// 跳表实现
+struct SkipNode {
+    int val;
+    vector&lt;SkipNode*&gt; next;
+    SkipNode(int v, int level) : val(v), next(level, nullptr) {}
+};
+
+class SkipList {
+private:
+    SkipNode* head;
+    int maxLevel;
+    int currentLevel;
+    const double P = 0.25; // 概率因子
+    
+    int randomLevel() {
+        int level = 1;
+        while((double)rand() / RAND_MAX < P && level < maxLevel) {
+            level++;
+        }
+        return level;
+    }
+    
+public:
+    SkipList(int maxL = 16) : maxLevel(maxL), currentLevel(1) {
+        head = new SkipNode(INT_MIN, maxLevel);
+    }
+    
+    bool search(int target) {
+        SkipNode* current = head;
+        
+        // 从最高层开始搜索
+        for(int i = currentLevel - 1; i >= 0; i--) {
+            while(current->next[i] && current->next[i]->val < target) {
+                current = current->next[i];
+            }
+        }
+        
+        current = current->next[0];
+        return current && current->val == target;
+    }
+    
+    void add(int num) {
+        vector&lt;SkipNode*&gt; update(maxLevel, nullptr);
+        SkipNode* current = head;
+        
+        // 找到插入位置
+        for(int i = currentLevel - 1; i >= 0; i--) {
+            while(current->next[i] && current->next[i]->val < num) {
+                current = current->next[i];
+            }
+            update[i] = current;
+        }
+        
+        int newLevel = randomLevel();
+        if(newLevel > currentLevel) {
+            for(int i = currentLevel; i < newLevel; i++) {
+                update[i] = head;
+            }
+            currentLevel = newLevel;
+        }
+        
+        SkipNode* newNode = new SkipNode(num, newLevel);
+        for(int i = 0; i < newLevel; i++) {
+            newNode->next[i] = update[i]->next[i];
+            update[i]->next[i] = newNode;
+        }
+    }
+    
+    bool erase(int num) {
+        vector&lt;SkipNode*&gt; update(maxLevel, nullptr);
+        SkipNode* current = head;
+        
+        for(int i = currentLevel - 1; i >= 0; i--) {
+            while(current->next[i] && current->next[i]->val < num) {
+                current = current->next[i];
+            }
+            update[i] = current;
+        }
+        
+        current = current->next[0];
+        if(!current || current->val != num) {
+            return false;
+        }
+        
+        for(int i = 0; i < currentLevel; i++) {
+            if(update[i]->next[i] != current) {
+                break;
+            }
+            update[i]->next[i] = current->next[i];
+        }
+        
+        while(currentLevel > 1 && head->next[currentLevel - 1] == nullptr) {
+            currentLevel--;
+        }
+        
+        delete current;
+        return true;
+    }
+};</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/skip_list.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+                
+                <div class="algorithm-card">
+                    <h3>红黑树(Red-Black Tree)实现</h3>
+                    <div class="description">
+                        <p>实现了红黑树自平衡二叉搜索树，通过颜色标记和旋转操作维护树的平衡性，在STL的map和set中有广泛应用。</p>
+                    </div>
+                    <div class="complexity">
+                        <div class="complexity-item">
+                            <i class="fas fa-clock"></i>
+                            <span>时间复杂度: O(log N)</span>
+                        </div>
+                        <div class="complexity-item">
+                            <i class="fas fa-memory"></i>
+                            <span>空间复杂度: O(N)</span>
+                        </div>
+                    </div>
+                    <div class="code-preview">
+                        <pre>// 红黑树节点
+enum Color { RED, BLACK };
+
+struct RBNode {
+    int val;
+    Color color;
+    RBNode *left, *right, *parent;
+    
+    RBNode(int v) : val(v), color(RED), left(nullptr), right(nullptr), parent(nullptr) {}
+};
+
+class RedBlackTree {
+private:
+    RBNode* root;
+    RBNode* nil; // 哨兵节点
+    
+    void leftRotate(RBNode* x) {
+        RBNode* y = x->right;
+        x->right = y->left;
+        
+        if(y->left != nil) {
+            y->left->parent = x;
+        }
+        
+        y->parent = x->parent;
+        if(x->parent == nullptr) {
+            root = y;
+        } else if(x == x->parent->left) {
+            x->parent->left = y;
+        } else {
+            x->parent->right = y;
+        }
+        
+        y->left = x;
+        x->parent = y;
+    }
+    
+    void rightRotate(RBNode* y) {
+        RBNode* x = y->left;
+        y->left = x->right;
+        
+        if(x->right != nil) {
+            x->right->parent = y;
+        }
+        
+        x->parent = y->parent;
+        if(y->parent == nullptr) {
+            root = x;
+        } else if(y == y->parent->left) {
+            y->parent->left = x;
+        } else {
+            y->parent->right = x;
+        }
+        
+        x->right = y;
+        y->parent = x;
+    }
+    
+    void insertFixup(RBNode* k) {
+        RBNode* u;
+        while(k->parent && k->parent->color == RED) {
+            if(k->parent == k->parent->parent->right) {
+                u = k->parent->parent->left;
+                if(u && u->color == RED) {
+                    u->color = BLACK;
+                    k->parent->color = BLACK;
+                    k->parent->parent->color = RED;
+                    k = k->parent->parent;
+                } else {
+                    if(k == k->parent->left) {
+                        k = k->parent;
+                        rightRotate(k);
+                    }
+                    k->parent->color = BLACK;
+                    k->parent->parent->color = RED;
+                    leftRotate(k->parent->parent);
+                }
+            } else {
+                u = k->parent->parent->right;
+                if(u && u->color == RED) {
+                    u->color = BLACK;
+                    k->parent->color = BLACK;
+                    k->parent->parent->color = RED;
+                    k = k->parent->parent;
+                } else {
+                    if(k == k->parent->right) {
+                        k = k->parent;
+                        leftRotate(k);
+                    }
+                    k->parent->color = BLACK;
+                    k->parent->parent->color = RED;
+                    rightRotate(k->parent->parent);
+                }
+            }
+            if(k == root) break;
+        }
+        root->color = BLACK;
+    }
+    
+public:
+    RedBlackTree() {
+        nil = new RBNode(0);
+        nil->color = BLACK;
+        root = nil;
+    }
+    
+    void insert(int val) {
+        RBNode* z = new RBNode(val);
+        RBNode* y = nullptr;
+        RBNode* x = root;
+        
+        while(x != nil) {
+            y = x;
+            if(z->val < x->val) {
+                x = x->left;
+            } else {
+                x = x->right;
+            }
+        }
+        
+        z->parent = y;
+        if(y == nullptr) {
+            root = z;
+        } else if(z->val < y->val) {
+            y->left = z;
+        } else {
+            y->right = z;
+        }
+        
+        z->left = nil;
+        z->right = nil;
+        z->color = RED;
+        
+        insertFixup(z);
+    }
+};</pre>
+                    </div>
+                    <div class="links">
+                        <a href="/static/pdfs/red_black_tree.pdf" class="link" download><i class="fas fa-file-pdf"></i> 详细分析</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="algorithm-pagination">
+                <button class="pagination-btn prev-btn" id="data-structures-prev">
+                    <i class="fas fa-chevron-left"></i>
+                    <span>上一页</span>
+                </button>
+                
+                <div class="page-indicators" id="data-structures-indicators">
+                    <!-- 页码指示器将通过JavaScript动态生成 -->
+                </div>
+                
+                <button class="pagination-btn next-btn" id="data-structures-next">
+                    <span>下一页</span>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 页脚 -->
+    <footer id="footer" class="footer">
+        <a href="/" class="footer-logo">ACM实验室</a>
+        
+        <div class="footer-links">
+            <a href="/introduction" class="footer-link">概况</a>
+            <a href="/team" class="footer-link">团队</a>
+            <a href="/algorithm" class="footer-link">算法</a>
+            <a href="/paper" class="footer-link">论文</a>
+            <a href="/innovation" class="footer-link">科创</a>
+            <a href="/dynamic" class="footer-link">动态</a>
+            <a href="/algorithm-recruitment" class="footer-link">算法组招生</a>
+            <a href="/project-recruitment" class="footer-link">项目组招生</a>
+        </div>
+        
+        <div class="footer-social">
+            <a href="#" class="social-icon" title="微信"><i class="fab fa-weixin"></i></a>
+            <a href="https://s1.imagehub.cc/images/2025/08/28/d80fe4abf0cd9a20fde76c7a3d5849a8.png" class="social-icon" title="微博"><i class="fab fa-weibo"></i></a>
+            <a href="https://s1.imagehub.cc/images/2025/08/28/4859e46f5945f5d8210456ecc89f7494.jpeg" class="social-icon" title="小红书"><i class="fas fa-book-open"></i></a>
+            <a href="#" class="social-icon" title="GitHub"><i class="fab fa-github"></i></a>
+            <a href="https://mp.weixin.qq.com/s/your-wechat-official-account" class="social-icon" title="微信公众号"><i class="fas fa-newspaper"></i></a>
+            <a href="https://space.bilibili.com/1599858052?spm_id_from=333.788.upinfo.head.click" class="social-icon" title="哔哩哔哩"><i class="fab fa-bilibili"></i></a>
+            <a href="#" class="social-icon" title="邮箱"><i class="fas fa-envelope"></i></a>
+        </div>
+        
+        <p class="copyright">© 2023 ACM算法与科研创新实验室. 保留所有权利.</p>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        // 粒子背景初始化（仅保留展示相关）
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 80, density: { enable: true, value_area: 800 } },
+                color: { value: '#3a86ff' },
+                shape: { type: 'circle', stroke: { width: 0, color: '#000000' }, polygon: { nb_sides: 5 } },
+                opacity: { value: 0.5 },
+                size: { value: 3, random: true },
+                line_linked: { enable: true, distance: 150, color: '#3a86ff', opacity: 0.4, width: 1 },
+                move: { enable: true, speed: 2, direction: 'none', random: false, straight: false, out_mode: 'out', bounce: false }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: { onhover: { enable: true, mode: 'grab' }, onclick: { enable: true, mode: 'push' }, resize: true },
+                modes: {
+                    grab: { distance: 140, line_linked: { opacity: 1 } },
+                    bubble: { distance: 400, size: 40, duration: 2, opacity: 8, speed: 3 },
+                    repulse: { distance: 200, duration: 0.4 },
+                    push: { particles_nb: 4 },
+                    remove: { particles_nb: 2 }
+                }
+            },
+            retina_detect: true
+        });
+
+        // 算法翻页功能类
+        class AlgorithmPagination {
+            constructor(category) {
+                this.category = category;
+                this.currentPage = 1;
+                this.cardsPerPage = 3; // 每页显示3个算法
+                this.totalCards = 0;
+                this.totalPages = 0;
+                
+                this.init();
+            }
+            
+            init() {
+                this.container = document.querySelector(`#${this.category}-content .algorithm-cards-container`);
+                this.prevBtn = document.getElementById(`${this.category}-prev`);
+                this.nextBtn = document.getElementById(`${this.category}-next`);
+                this.indicators = document.getElementById(`${this.category}-indicators`);
+                
+                console.log(`初始化${this.category}分类翻页:`, {
+                    container: !!this.container,
+                    prevBtn: !!this.prevBtn,
+                    nextBtn: !!this.nextBtn,
+                    indicators: !!this.indicators
+                });
+                
+                if (!this.container) {
+                    console.error(`未找到${this.category}分类的容器`);
+                    return;
+                }
+                
+                this.cards = this.container.querySelectorAll('.algorithm-card');
+                this.totalCards = this.cards.length;
+                this.totalPages = Math.ceil(this.totalCards / this.cardsPerPage);
+                
+                console.log(`${this.category}分类统计: 总卡片数${this.totalCards}, 每页${this.cardsPerPage}个, 总页数${this.totalPages}`);
+                
+                this.setupEventListeners();
+                this.createPageIndicators();
+                this.updatePagination();
+            }
+            
+            setupEventListeners() {
+                if (this.prevBtn) {
+                    this.prevBtn.addEventListener('click', () => this.prevPage());
+                }
+                
+                if (this.nextBtn) {
+                    this.nextBtn.addEventListener('click', () => this.nextPage());
+                }
+            }
+            
+            createPageIndicators() {
+                if (!this.indicators) return;
+                
+                this.indicators.innerHTML = '';
+                
+                for (let i = 1; i <= this.totalPages; i++) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'page-indicator';
+                    indicator.addEventListener('click', () => this.goToPage(i));
+                    this.indicators.appendChild(indicator);
+                }
+            }
+            
+            updatePagination() {
+                try {
+                    console.log(`更新${this.category}分类翻页: 当前页${this.currentPage}, 总页数${this.totalPages}, 总卡片数${this.totalCards}`);
+                    
+                    if (!this.cards || this.cards.length === 0) {
+                        console.warn(`${this.category}分类没有找到算法卡片`);
+                        return;
+                    }
+                    
+                    // 隐藏所有卡片
+                    this.cards.forEach(card => {
+                        card.classList.remove('show');
+                    });
+                    
+                    // 显示当前页的卡片
+                    const startIndex = (this.currentPage - 1) * this.cardsPerPage;
+                    const endIndex = Math.min(startIndex + this.cardsPerPage, this.totalCards);
+                    
+                    console.log(`显示卡片范围: ${startIndex} - ${endIndex}`);
+                    
+                    for (let i = startIndex; i < endIndex; i++) {
+                        if (this.cards[i]) {
+                            this.cards[i].classList.add('show');
+                            console.log(`显示卡片 ${i}: ${this.cards[i].querySelector('h3')?.textContent}`);
+                        }
+                    }
+                    
+                    // 更新按钮状态
+                    if (this.prevBtn) {
+                        this.prevBtn.disabled = this.currentPage === 1;
+                    }
+                    
+                    if (this.nextBtn) {
+                        this.nextBtn.disabled = this.currentPage === this.totalPages;
+                    }
+                    
+                    // 更新页码指示器
+                    const indicators = this.indicators?.querySelectorAll('.page-indicator');
+                    if (indicators) {
+                        indicators.forEach((indicator, index) => {
+                            indicator.classList.toggle('active', index + 1 === this.currentPage);
+                        });
+                    }
+                } catch (error) {
+                    console.error(`更新${this.category}分类翻页时出错:`, error);
+                }
+            }
+            
+            prevPage() {
+                if (this.currentPage > 1) {
+                    this.currentPage--;
+                    this.updatePagination();
+                }
+            }
+            
+            nextPage() {
+                if (this.currentPage < this.totalPages) {
+                    this.currentPage++;
+                    this.updatePagination();
+                }
+            }
+            
+            goToPage(page) {
+                if (page >= 1 && page <= this.totalPages) {
+                    this.currentPage = page;
+                    this.updatePagination();
+                }
+            }
+        }
+
+        // 标签切换功能
+        const tabs = document.querySelectorAll('.algorithms-tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // 移除所有active类
+                document.querySelectorAll('.algorithms-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.algorithms-content').forEach(c => c.classList.remove('active'));
+                
+                // 添加active类到当前标签
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(`${tabId}-content`).classList.add('active');
+                
+                console.log(`切换到${tabId}分类`);
+                
+                // 重置当前分类的翻页到第一页
+                if (window.algorithmPagination && window.algorithmPagination[tabId]) {
+                    window.algorithmPagination[tabId].currentPage = 1;
+                    window.algorithmPagination[tabId].updatePagination();
+                } else {
+                    console.warn(`未找到${tabId}分类的翻页实例`);
+                }
+            });
+        });
+
+        // 创建更多浮动代码
+        const heroSection = document.querySelector('.algorithms-hero');
+        if (heroSection) {
+            const codeSnippets = [
+                "int lis(vector<int>& nums) {\n  vector<int> dp;\n  for(int x : nums) {\n    auto it = lower_bound(dp.begin(), dp.end(), x);\n    if(it == dp.end()) dp.push_back(x);\n    else *it = x;\n  }\n  return dp.size();\n}",
+                "def knapsack(W, wt, val, n):\n    dp = [[0]*(W+1) for _ in range(n+1)]\n    for i in range(1, n+1):\n        for w in range(1, W+1):\n            if wt[i-1] <= w:\n                dp[i][w] = max(val[i-1]+dp[i-1][w-wt[i-1]], dp[i-1][w])\n            else:\n                dp[i][w] = dp[i-1][w]\n    return dp[n][W]",
+                "class UnionFind {\n  constructor(size) {\n    this.parent = Array(size).fill().map((_,i)=>i);\n  }\n  find(x) {\n    if(this.parent[x] !== x) \n      this.parent[x] = this.find(this.parent[x]);\n    return this.parent[x];\n  }\n  union(x,y) {\n    this.parent[this.find(x)] = this.find(y);\n  }\n}"
+            ];
+
+            for(let i=0; i<6; i++) {
+                const code = document.createElement('div');
+                code.className = 'floating-code';
+                code.style.top = `${Math.random() * 80 + 10}%`;
+                code.style.left = `${Math.random() * 80 + 10}%`;
+                code.style.animationDelay = `${Math.random() * 10}s`;
+                code.textContent = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
+                heroSection.appendChild(code);
+            }
+        }
+
+        // 算法卡片悬停效果
+        const algorithmCards = document.querySelectorAll('.algorithm-card');
+        algorithmCards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+
+        // 项目概览数据加载功能
+        async function loadProjectStats(forceRefresh = false) {
+            try {
+                console.log('🚀 开始加载项目统计数据...', forceRefresh ? '(强制刷新)' : '');
+                
+                // 显示加载状态
+                const container = document.getElementById('projectStatsContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="loading-container">
+                            <div class="loading-spinner"></div>
+                            <p class="text-gray-300">正在加载项目统计...</p>
+                            <p class="text-gray-400 text-sm mt-1">请稍候</p>
+                        </div>
+                    `;
+                }
+                
+                // 添加时间戳参数避免缓存
+                const timestamp = forceRefresh ? `?t=${Date.now()}` : '';
+                
+                // 设置请求超时
+                const timeout = 10000; // 10秒超时
+                
+                // 创建带超时的fetch函数
+                const fetchWithTimeout = (url, options = {}) => {
+                    return Promise.race([
+                        fetch(url, options),
+                        new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error('请求超时')), timeout)
+                        )
+                    ]);
+                };
+                
+                // 使用算法管理模块的项目概览API
+                let statsRes;
+                try {
+                    statsRes = await fetchWithTimeout(`/api/frontend/project-overview${timestamp}`);
+                    console.log('项目概览API响应状态:', statsRes.status);
+                    
+                    if (statsRes.ok) {
+                        const statsData = await statsRes.json();
+                        console.log('项目概览数据:', statsData);
+                        
+                        // 验证数据格式
+                        if (Array.isArray(statsData) && statsData.length > 0) {
+                            renderProjectStats(statsData);
+                            return;
+                        } else {
+                            console.warn('项目概览API返回空数据或格式不正确');
+                        }
+                    } else {
+                        console.warn('项目概览API响应失败:', statsRes.status);
+                    }
+                } catch (error) {
+                    console.log('项目概览API失败，尝试使用原有API:', error);
+                }
+                
+                // 如果新API失败，回退到原有API
+                try {
+                    statsRes = await fetchWithTimeout(`/api/innovation/frontend/stats${timestamp}`);
+                    console.log('原有项目统计API响应状态:', statsRes.status);
+
+                    if (statsRes.ok) {
+                        const statsData = await statsRes.json();
+                        console.log('项目统计数据:', statsData);
+                        
+                        // 转换数据格式以适配前端显示
+                        if (Array.isArray(statsData)) {
+                            const convertedData = statsData.map(item => ({
+                                name: item.name || item.description || '统计项目',
+                                value: item.value || 0,
+                                icon: item.icon || 'fa-chart-bar',
+                                description: item.description || ''
+                            }));
+                            renderProjectStats(convertedData);
+                            return;
+                        }
+                    } else {
+                        console.error('原有项目统计API响应失败:', statsRes.status);
+                    }
+                } catch (error) {
+                    console.error('原有项目统计API也失败:', error);
+                }
+                
+                // 如果所有API都失败，显示错误信息
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center text-gray-300">
+                            <i class="fa fa-exclamation-triangle text-2xl mb-2"></i>
+                            <p>项目统计数据加载失败</p>
+                            <button onclick="loadProjectStats(true)" class="mt-2 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors">
+                                重试
+                            </button>
+                        </div>
+                    `;
+                }
+                
+                console.log('✅ 项目统计数据加载完成');
+            } catch (error) {
+                console.error('加载项目统计数据失败:', error);
+                
+                const container = document.getElementById('projectStatsContainer');
+                if (container) {
+                    const errorMessage = error.message === '请求超时' ? '数据加载超时，请检查网络连接' : '数据加载失败，请刷新页面重试';
+                    
+                    container.innerHTML = `
+                        <div class="text-center text-gray-300">
+                            <i class="fa fa-exclamation-triangle text-2xl mb-2"></i>
+                            <p>${errorMessage}</p>
+                            <button onclick="loadProjectStats(true)" class="mt-2 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors">
+                                重试
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // 渲染项目统计
+        function renderProjectStats(data) {
+            const container = document.getElementById('projectStatsContainer');
+            if (!container) return;
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-300">暂无统计数据</div>';
+                return;
+            }
+
+            console.log('🎨 开始渲染项目统计数据，总数:', data.length);
+
+            // 定义渐变色主题
+            const gradientThemes = [
+                {
+                    bg: 'bg-gradient-to-br from-primary/20 via-primary/10 to-secondary/20',
+                    border: 'border-primary/30',
+                    iconBg: 'bg-gradient-to-br from-primary/20 to-secondary/20',
+                    iconBorder: 'border-primary/40',
+                    iconColor: 'text-primary',
+                    hoverBg: 'from-primary/10 via-secondary/5 to-accent/10',
+                    glowColor: 'primary'
+                },
+                {
+                    bg: 'bg-gradient-to-br from-secondary/20 via-secondary/10 to-accent/20',
+                    border: 'border-secondary/30',
+                    iconBg: 'bg-gradient-to-br from-secondary/20 to-accent/20',
+                    iconBorder: 'border-secondary/40',
+                    iconColor: 'text-secondary',
+                    hoverBg: 'from-secondary/10 via-accent/5 to-primary/10',
+                    glowColor: 'secondary'
+                },
+                {
+                    bg: 'bg-gradient-to-br from-accent/20 via-accent/10 to-primary/20',
+                    border: 'border-accent/30',
+                    iconBg: 'bg-gradient-to-br from-accent/20 to-primary/20',
+                    iconBorder: 'border-accent/40',
+                    iconColor: 'text-accent',
+                    hoverBg: 'from-accent/10 via-primary/5 to-secondary/10',
+                    glowColor: 'accent'
+                },
+                {
+                    bg: 'bg-gradient-to-br from-primary/15 via-accent/10 to-secondary/15',
+                    border: 'border-primary/25',
+                    iconBg: 'bg-gradient-to-br from-primary/15 to-accent/15',
+                    iconBorder: 'border-primary/35',
+                    iconColor: 'text-primary',
+                    hoverBg: 'from-primary/8 via-accent/5 to-secondary/8',
+                    glowColor: 'primary'
+                }
+            ];
+
+            // 计算需要填充的空卡片数量，确保每行3个
+            const totalCards = data.length;
+            const cardsPerRow = 3;
+            const rowsNeeded = Math.ceil(totalCards / cardsPerRow);
+            const totalSlots = rowsNeeded * cardsPerRow;
+            const emptySlots = totalSlots - totalCards;
+            
+            console.log(`布局计算: 总卡片数=${totalCards}, 每行${cardsPerRow}个, 需要${rowsNeeded}行, 总槽位${totalSlots}, 空槽位${emptySlots}`);
+
+            let html = '';
+            
+            // 渲染数据卡片
+            data.forEach((item, index) => {
+                const theme = gradientThemes[index % gradientThemes.length];
+                
+                // 安全地处理数据，防止XSS
+                const name = (item.name || item.description || '统计项目').replace(/[<>]/g, '');
+                const value = (item.value || 0).toString().replace(/[<>]/g, '');
+                const icon = (item.icon || 'fa-chart-bar').replace(/[<>]/g, '');
+                const description = (item.description || '').replace(/[<>]/g, '');
+                
+                html += `
+                    <div class="project-stats-card ${theme.bg} rounded-xl border ${theme.border} p-6 text-center relative overflow-hidden group backdrop-blur-sm">
+                        <!-- 悬停渐变效果 -->
+                        <div class="absolute inset-0 bg-gradient-to-br ${theme.hoverBg} opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+                        
+                        <!-- 装饰性光晕 -->
+                        <div class="absolute -top-10 -right-10 w-20 h-20 bg-gradient-to-br from-${theme.glowColor}/20 to-transparent rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                        
+                        <!-- 图标容器 -->
+                        <div class="w-16 h-16 rounded-full ${theme.iconBg} border ${theme.iconBorder} flex items-center justify-center mx-auto mb-4 relative z-10 group-hover:scale-110 transition-transform duration-300">
+                            <i class="fa ${icon} ${theme.iconColor} text-2xl group-hover:scale-110 transition-transform duration-300"></i>
+                        </div>
+                        
+                        <!-- 数值 -->
+                        <h3 class="font-bold text-3xl mb-2 relative z-10 text-white group-hover:text-glow transition-all duration-300">${value}</h3>
+                        
+                        <!-- 标题 -->
+                        <p class="text-gray-200 relative z-10 font-medium group-hover:text-white transition-colors duration-300">${name}</p>
+                        
+                        <!-- 描述 -->
+                        ${description && name !== description ? `<p class="text-gray-400 text-sm relative z-10 mt-1 group-hover:text-gray-300 transition-colors duration-300">${description}</p>` : ''}
+                        
+                        <!-- 底部装饰线 -->
+                        <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-transparent via-${theme.glowColor} to-transparent group-hover:w-1/2 transition-all duration-500"></div>
+                    </div>
+                `;
+            });
+
+            // 添加空卡片以保持布局居中
+            for (let i = 0; i < emptySlots; i++) {
+                html += '<div class="project-stats-card opacity-0"></div>'; // 占位符，保持高度一致但不显示内容
+            }
+
+            container.innerHTML = html;
+            
+            // 如果卡片数量不足3个，添加居中样式
+            if (totalCards < 3) {
+                container.style.justifyItems = 'center';
+                container.style.justifyContent = 'center';
+            } else {
+                container.style.justifyItems = 'stretch';
+                container.style.justifyContent = 'start';
+            }
+            
+            console.log('✅ 项目统计数据渲染完成');
+        }
+
+        // 竞赛获奖翻页功能
+        class AwardsPagination {
+            constructor() {
+                this.currentPage = 1;
+                this.cardsPerPage = 6; // 每页6个卡片（2行3列）
+                this.totalCards = 0;
+                this.totalPages = 0;
+                
+                this.init();
+            }
+            
+            init() {
+                this.awardsGrid = document.getElementById('awardsGrid');
+                this.prevBtn = document.getElementById('prevPage');
+                this.nextBtn = document.getElementById('nextPage');
+                this.pageIndicators = document.getElementById('pageIndicators');
+                
+                if (!this.awardsGrid) {
+                    console.warn('未找到awardsGrid元素');
+                    return;
+                }
+                
+                // 重新计算总卡片数和总页数
+                this.totalCards = this.awardsGrid.children.length;
+                this.totalPages = Math.ceil(this.totalCards / this.cardsPerPage);
+                
+                console.log(`AwardsPagination初始化: 总卡片数=${this.totalCards}, 每页${this.cardsPerPage}个, 总页数=${this.totalPages}`);
+                
+                this.setupEventListeners();
+                this.createPageIndicators();
+                
+                // 延迟执行，确保DOM完全准备好，第一页也使用动画效果
+                setTimeout(() => {
+                    this.updatePagination();
+                }, 50);
+            }
+            
+            setupEventListeners() {
+                if (this.prevBtn) {
+                    this.prevBtn.addEventListener('click', () => this.prevPage());
+                }
+                
+                if (this.nextBtn) {
+                    this.nextBtn.addEventListener('click', () => this.nextPage());
+                }
+                
+                // 监听窗口大小改变
+                window.addEventListener('resize', () => {
+                    this.updatePagination();
+                });
+            }
+            
+            createPageIndicators() {
+                if (!this.pageIndicators) return;
+                
+                this.pageIndicators.innerHTML = '';
+                
+                for (let i = 1; i <= this.totalPages; i++) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'page-indicator';
+                    indicator.addEventListener('click', () => this.goToPage(i));
+                    this.pageIndicators.appendChild(indicator);
+                }
+            }
+            
+            updatePagination() {
+                console.log(`更新竞赛获奖翻页: 当前页=${this.currentPage}, 总页数=${this.totalPages}, 总卡片数=${this.totalCards}`);
+                
+                // 获取所有卡片
+                const cards = this.awardsGrid.querySelectorAll('.award-card');
+                console.log(`找到${cards.length}个获奖卡片`);
+                
+                if (cards.length === 0) {
+                    console.warn('没有找到获奖卡片，跳过翻页更新');
+                    return;
+                }
+                
+                // 重新计算总卡片数和总页数（以防数据变化）
+                this.totalCards = cards.length;
+                this.totalPages = Math.ceil(this.totalCards / this.cardsPerPage);
+                
+                // 如果页数变化，重新创建页码指示器
+                const currentIndicators = this.pageIndicators?.querySelectorAll('.page-indicator');
+                if (!currentIndicators || currentIndicators.length !== this.totalPages) {
+                    this.createPageIndicators();
+                }
+                
+                // 保持原有的CSS网格布局设置
+                this.awardsGrid.style.display = 'grid';
+                this.awardsGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+                this.awardsGrid.style.gridTemplateRows = 'repeat(2, 1fr)';
+                
+                // 隐藏所有卡片
+                cards.forEach((card, index) => {
+                    card.classList.remove('show');
+                    card.style.visibility = 'hidden';
+                    card.style.pointerEvents = 'none';
+                    console.log(`隐藏卡片 ${index}: ${card.querySelector('.award-title')?.textContent || '无标题'}`);
+                });
+                
+                // 显示当前页的卡片（带动画效果）
+                const startIndex = (this.currentPage - 1) * this.cardsPerPage;
+                const endIndex = Math.min(startIndex + this.cardsPerPage, this.totalCards);
+                
+                console.log(`显示卡片范围: ${startIndex} - ${endIndex}`);
+                console.log(`当前页: ${this.currentPage}, 每页卡片数: ${this.cardsPerPage}`);
+                
+                // 按行逐个显示卡片（一行3个，从左到右）
+                this.showCardsWithAnimation(cards, startIndex, endIndex);
+                
+                // 更新按钮状态
+                if (this.prevBtn) {
+                    this.prevBtn.disabled = this.currentPage === 1;
+                }
+                
+                if (this.nextBtn) {
+                    this.nextBtn.disabled = this.currentPage === this.totalPages;
+                }
+                
+                // 更新页码指示器
+                const indicators = this.pageIndicators?.querySelectorAll('.page-indicator');
+                if (indicators) {
+                    indicators.forEach((indicator, index) => {
+                        indicator.classList.toggle('active', index + 1 === this.currentPage);
+                    });
+                }
+                
+                // 添加调试信息
+                const visibleCards = this.awardsGrid.querySelectorAll('.award-card.show');
+                console.log(`当前页可见卡片数量: ${visibleCards.length}`);
+                
+                // 检查网格布局
+                const gridStyle = window.getComputedStyle(this.awardsGrid);
+                console.log(`网格布局: ${gridStyle.gridTemplateColumns}, ${gridStyle.gridTemplateRows}`);
+                
+                // 检查每个卡片的可见性状态
+                cards.forEach((card, index) => {
+                    const isVisible = card.classList.contains('show');
+                    const visibility = card.style.visibility;
+                    const display = window.getComputedStyle(card).display;
+                    console.log(`卡片 ${index}: 可见=${isVisible}, visibility=${visibility}, display=${display}`);
+                });
+            }
+            
+            prevPage() {
+                if (this.currentPage > 1) {
+                    this.currentPage--;
+                    this.updatePagination();
+                }
+            }
+            
+            nextPage() {
+                if (this.currentPage < this.totalPages) {
+                    this.currentPage++;
+                    this.updatePagination();
+                }
+            }
+            
+            goToPage(page) {
+                if (page >= 1 && page <= this.totalPages) {
+                    this.currentPage = page;
+                    this.updatePagination();
+                }
+            }
+            
+            // 简化的显示卡片方法 - 确保每页都从左上角开始
+            showCardsWithAnimation(cards, startIndex, endIndex) {
+                console.log(`显示卡片: ${startIndex} - ${endIndex - 1}`);
+                
+                // 先隐藏所有卡片
+                cards.forEach(card => {
+                    card.classList.remove('show');
+                    card.style.visibility = 'hidden';
+                    card.style.pointerEvents = 'none';
+                    // 重置网格位置，确保从左上角开始
+                    card.style.gridColumn = 'auto';
+                    card.style.gridRow = 'auto';
+                });
+                
+                // 显示当前页的卡片（从左上角开始，按顺序填充）
+                for (let i = startIndex; i < endIndex; i++) {
+                    if (cards[i]) {
+                        // 计算在当前页中的位置（0-5）
+                        const pagePosition = i - startIndex;
+                        const row = Math.floor(pagePosition / 3) + 1; // 第1行或第2行
+                        const col = (pagePosition % 3) + 1; // 第1、2或3列
+                        
+                        // 设置网格位置
+                        cards[i].style.gridRow = row;
+                        cards[i].style.gridColumn = col;
+                        
+                        // 显示卡片
+                        cards[i].classList.add('show');
+                        cards[i].style.visibility = 'visible';
+                        cards[i].style.pointerEvents = 'auto';
+                        
+                        console.log(`显示卡片 ${i} 在位置 (${row}, ${col}): ${cards[i].querySelector('.award-title')?.textContent || '无标题'}`);
+                    }
+                }
+            }
+            
+            // 重新初始化方法，用于数据更新后调用
+            reinit() {
+                console.log('重新初始化AwardsPagination...');
+                this.currentPage = 1; // 重置到第一页
+                this.init();
+            }
+            
+            destroy() {
+                // 清理事件监听器
+                if (this.prevBtn) {
+                    this.prevBtn.removeEventListener('click', this.prevPage);
+                }
+                if (this.nextBtn) {
+                    this.nextBtn.removeEventListener('click', this.nextPage);
+                }
+                window.removeEventListener('resize', this.updatePagination);
+            }
+        }
+
+        // 加载算法数据
+        async function loadAlgorithmData() {
+            try {
+                console.log('🚀 开始加载算法数据...');
+                
+                // 添加时间戳参数避免缓存
+                const timestamp = `?t=${Date.now()}`;
+                
+                // 设置请求超时
+                const timeout = 10000; // 10秒超时
+                
+                // 创建带超时的fetch函数
+                const fetchWithTimeout = (url, options = {}) => {
+                    return Promise.race([
+                        fetch(url, options),
+                        new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error('请求超时')), timeout)
+                        )
+                    ]);
+                };
+                
+                const response = await fetchWithTimeout(`/api/frontend/algorithms${timestamp}`);
+                console.log('算法API响应状态:', response.status);
+                
+                if (response.ok) {
+                    const algorithms = await response.json();
+                    console.log('算法数据:', algorithms);
+                    
+                    if (Array.isArray(algorithms) && algorithms.length > 0) {
+                        renderAlgorithmData(algorithms);
+                        console.log(`✅ 成功加载 ${algorithms.length} 个算法`);
+                    } else {
+                        console.log('没有算法数据，保持静态内容');
+                    }
+                } else {
+                    console.error('加载算法数据失败:', response.status);
+                    // 如果API失败，保持原有的静态内容
+                }
+            } catch (error) {
+                console.error('加载算法数据出错:', error);
+                // 如果API失败，保持原有的静态内容
+            }
+        }
+
+        // 渲染算法数据
+        function renderAlgorithmData(algorithms) {
+            if (!algorithms || algorithms.length === 0) {
+                console.log('没有算法数据，保持静态内容');
+                return;
+            }
+
+            console.log('🎨 开始渲染算法数据，总数:', algorithms.length);
+
+            // 按分类组织算法数据
+            const algorithmsByCategory = {
+                'competition': [],
+                'deep-learning': [],
+                'data-structures': []
+            };
+
+            // 将算法按分类分组
+            algorithms.forEach(algorithm => {
+                const category = algorithm.category;
+                const frontendCategory = algorithm.frontend_category; // 使用后端返回的前端分类
+                
+                console.log(`算法分类: ${category} -> 前端分类: ${frontendCategory}`);
+                
+                if (frontendCategory && algorithmsByCategory[frontendCategory]) {
+                    algorithmsByCategory[frontendCategory].push(algorithm);
+                } else if (category === '基础算法' || category === '图论' || category === '数学' || category === '字符串' || category === '动态规划') {
+                    algorithmsByCategory['competition'].push(algorithm);
+                } else if (category === '深度学习' || category === '机器学习') {
+                    algorithmsByCategory['deep-learning'].push(algorithm);
+                } else if (category === '数据结构') {
+                    algorithmsByCategory['data-structures'].push(algorithm);
+                } else {
+                    // 默认放入竞赛算法分类
+                    algorithmsByCategory['competition'].push(algorithm);
+                }
+            });
+
+            console.log('算法分类统计:', {
+                competition: algorithmsByCategory['competition'].length,
+                'deep-learning': algorithmsByCategory['deep-learning'].length,
+                'data-structures': algorithmsByCategory['data-structures'].length
+            });
+
+            // 渲染每个分类的算法
+            Object.keys(algorithmsByCategory).forEach(category => {
+                const container = document.querySelector(`#${category}-content .algorithm-cards-container`);
+                if (container && algorithmsByCategory[category].length > 0) {
+                    console.log(`渲染${category}分类，共${algorithmsByCategory[category].length}个算法`);
+                    
+                    container.innerHTML = algorithmsByCategory[category].map(algorithm => {
+                        // 安全地处理数据，防止XSS
+                        const title = (algorithm.title || '未命名算法').replace(/[<>]/g, '');
+                        const description = (algorithm.description || '暂无描述').replace(/[<>]/g, '');
+                        const timeComplexity = (algorithm.time_complexity || '未指定').replace(/[<>]/g, '');
+                        const spaceComplexity = (algorithm.space_complexity || '未指定').replace(/[<>]/g, '');
+                        const codePreview = (algorithm.code_preview || '').replace(/[<>]/g, '');
+                        const pdfUrl = (algorithm.pdf_url || '').replace(/[<>]/g, '');
+                        
+                        return `
+                            <div class="algorithm-card">
+                                <h3>${title}</h3>
+                                <div class="description">
+                                    <p>${description}</p>
+                                </div>
+                                <div class="complexity">
+                                    <div class="complexity-item">
+                                        <i class="fas fa-clock"></i>
+                                        <span>时间复杂度: ${timeComplexity}</span>
+                                    </div>
+                                    <div class="complexity-item">
+                                        <i class="fas fa-memory"></i>
+                                        <span>空间复杂度: ${spaceComplexity}</span>
+                                    </div>
+                                </div>
+                                ${codePreview ? `
+                                <div class="code-preview">
+                                    <pre>${codePreview}</pre>
+                                </div>
+                                ` : ''}
+                                <div class="links">
+                                    ${pdfUrl ? `
+                                    <a href="${pdfUrl}" class="link" target="_blank">
+                                        <i class="fas fa-file-pdf"></i> 详细分析
+                                    </a>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else if (container) {
+                    console.log(`${category}分类容器存在但无数据`);
+                } else {
+                    console.warn(`未找到${category}分类的容器`);
+                }
+            });
+
+            // 重新初始化翻页功能
+            setTimeout(() => {
+                if (window.algorithmPagination) {
+                    Object.values(window.algorithmPagination).forEach(pagination => {
+                        if (pagination && pagination.updatePagination) {
+                            pagination.updatePagination();
+                        }
+                    });
+                }
+            }, 100);
+        }
+
+        // 加载竞赛获奖数据
+        async function loadAwardsData() {
+            try {
+                console.log('🚀 开始加载竞赛获奖数据...');
+                
+                // 添加时间戳参数避免缓存
+                const timestamp = `?t=${Date.now()}`;
+                
+                // 设置请求超时
+                const timeout = 10000; // 10秒超时
+                
+                // 创建带超时的fetch函数
+                const fetchWithTimeout = (url, options = {}) => {
+                    return Promise.race([
+                        fetch(url, options),
+                        new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error('请求超时')), timeout)
+                        )
+                    ]);
+                };
+                
+                const response = await fetchWithTimeout(`/api/frontend/algorithm-awards${timestamp}`);
+                console.log('竞赛获奖API响应状态:', response.status);
+                
+                if (response.ok) {
+                    const awards = await response.json();
+                    console.log('竞赛获奖数据:', awards);
+                    
+                    if (Array.isArray(awards) && awards.length > 0) {
+                        renderAwardsData(awards);
+                        console.log(`✅ 成功加载 ${awards.length} 个获奖记录`);
+                    } else {
+                        console.log('没有获奖数据，保持静态内容');
+                        // 即使没有数据，也要初始化翻页功能
+                        initAwardsPagination();
+                    }
+                } else {
+                    console.error('加载竞赛获奖数据失败:', response.status);
+                    // 如果API失败，保持原有的静态内容，但初始化翻页功能
+                    initAwardsPagination();
+                }
+            } catch (error) {
+                console.error('加载竞赛获奖数据出错:', error);
+                // 如果API失败，保持原有的静态内容，但初始化翻页功能
+                initAwardsPagination();
+            }
+        }
+
+        // 渲染竞赛获奖数据
+        function renderAwardsData(awards) {
+            const awardsGrid = document.getElementById('awardsGrid');
+            if (!awardsGrid || !awards || awards.length === 0) {
+                console.log('没有获奖数据或容器不存在');
+                // 即使没有数据，也要初始化翻页功能以处理静态内容
+                initAwardsPagination();
+                return;
+            }
+            
+            console.log('🎨 开始渲染竞赛获奖数据，总数:', awards.length);
+            
+            awardsGrid.innerHTML = awards.map(award => {
+                // 安全地处理数据，防止XSS
+                const title = (award.title || '获奖标题').replace(/[<>]/g, '');
+                const competitionName = (award.competition_name || '竞赛名称').replace(/[<>]/g, '');
+                const winnerName = (award.winner_name || '').replace(/[<>]/g, '');
+                const awardLevel = (award.award_level || '未指定').replace(/[<>]/g, '');
+                const competitionLocation = (award.competition_location || '').replace(/[<>]/g, '');
+                const teamScore = (award.team_score || '').replace(/[<>]/g, '');
+                const description = (award.description || '').replace(/[<>]/g, '');
+                const imageUrl = (award.image_url || '/static/images/awards/default_award.jpg').replace(/[<>]/g, '');
+                
+                const date = award.competition_date ? new Date(award.competition_date).toLocaleDateString('zh-CN') : '未指定';
+                const year = date !== '未指定' ? date.split('/')[0] + '年' : '未指定';
+                
+                return `
+                    <div class="award-card">
+                        <div class="award-image-container">
+                            <img src="${imageUrl}" alt="${title}" class="award-image" onerror="this.src='/static/images/awards/default_award.jpg'">
+                            <div class="award-overlay">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="award-info">
+                            <h3 class="award-title">${competitionName}</h3>
+                            
+                            <div class="award-details">
+                                <h4>🏆 ${title}</h4>
+                                ${winnerName ? `<p><strong>获奖者：</strong>${winnerName}</p>` : ''}
+                                <p><strong>获奖等级：</strong>${awardLevel}</p>
+                                <p><strong>比赛时间：</strong>${date}</p>
+                                ${competitionLocation ? `<p><strong>比赛地点：</strong>${competitionLocation}</p>` : ''}
+                                ${teamScore ? `<p><strong>团队成绩：</strong>${teamScore}</p>` : ''}
+                                ${description ? `<p><strong>描述：</strong>${description}</p>` : ''}
+                            </div>
+                            
+                            <div class="award-meta">
+                                <div class="award-meta-item">
+                                    <i class="fas fa-medal"></i>
+                                    <span>${awardLevel}</span>
+                                </div>
+                                <div class="award-meta-item">
+                                    <i class="fas fa-users"></i>
+                                    <span>团队竞赛</span>
+                                </div>
+                                <div class="award-meta-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>${year}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            console.log('✅ 竞赛获奖数据渲染完成');
+            
+            // 重新初始化翻页功能
+            initAwardsPagination();
+            
+            // 确保第一页内容正确显示
+            setTimeout(() => {
+                if (window.awardsPagination) {
+                    window.awardsPagination.updatePagination();
+                }
+            }, 100);
+        }
+
+        // 初始化竞赛获奖翻页功能
+        function initAwardsPagination() {
+            if (window.awardsPagination) {
+                window.awardsPagination.destroy();
+            }
+            
+            // 延迟一点时间确保DOM更新完成
+            setTimeout(() => {
+                window.awardsPagination = new AwardsPagination();
+                console.log('✅ 竞赛获奖翻页功能初始化完成');
+                
+                // 添加调试信息
+                debugAwardsPagination();
+            }, 100);
+        }
+        
+        // 调试竞赛获奖翻页功能
+        function debugAwardsPagination() {
+            const awardsGrid = document.getElementById('awardsGrid');
+            if (!awardsGrid) {
+                console.error('❌ 未找到awardsGrid元素');
+                return;
+            }
+            
+            const cards = awardsGrid.querySelectorAll('.award-card');
+            console.log(`🔍 竞赛获奖调试信息:`);
+            console.log(`- 总卡片数: ${cards.length}`);
+            console.log(`- 翻页实例: ${!!window.awardsPagination}`);
+            
+            if (window.awardsPagination) {
+                console.log(`- 当前页: ${window.awardsPagination.currentPage}`);
+                console.log(`- 总页数: ${window.awardsPagination.totalPages}`);
+                console.log(`- 每页卡片数: ${window.awardsPagination.cardsPerPage}`);
+            }
+            
+            // 检查每个卡片的可见性
+            cards.forEach((card, index) => {
+                const isVisible = card.style.visibility !== 'hidden';
+                const title = card.querySelector('.award-title')?.textContent || '无标题';
+                console.log(`- 卡片 ${index}: ${title} (可见: ${isVisible})`);
+            });
+        }
+
+        // 页面加载完成后初始化项目概览和翻页功能
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('页面加载完成，开始初始化...');
+            
+            // 并行加载所有数据
+            Promise.allSettled([
+                loadProjectStats(),
+                loadAlgorithmData(),
+                loadAwardsData()
+            ]).then((results) => {
+                console.log('✅ 数据加载完成，开始初始化功能...');
+                
+                // 检查每个模块的加载结果
+                results.forEach((result, index) => {
+                    const moduleNames = ['项目统计', '算法数据', '竞赛获奖'];
+                    if (result.status === 'fulfilled') {
+                        console.log(`✅ ${moduleNames[index]}模块加载成功`);
+                    } else {
+                        console.error(`❌ ${moduleNames[index]}模块加载失败:`, result.reason);
+                    }
+                });
+                
+                // 初始化算法分类翻页功能
+                try {
+                    window.algorithmPagination = {
+                        'competition': new AlgorithmPagination('competition'),
+                        'deep-learning': new AlgorithmPagination('deep-learning'),
+                        'data-structures': new AlgorithmPagination('data-structures')
+                    };
+                    console.log('✅ 算法翻页实例创建完成:', Object.keys(window.algorithmPagination));
+                } catch (error) {
+                    console.error('❌ 初始化算法翻页功能时出错:', error);
+                }
+                
+                // 确保竞赛获奖翻页功能正确初始化
+                try {
+                    // 如果API加载失败，也要初始化翻页功能以处理静态内容
+                    if (!window.awardsPagination) {
+                        initAwardsPagination();
+                    }
+                    console.log('✅ 竞赛获奖翻页功能初始化完成');
+                } catch (error) {
+                    console.error('❌ 初始化竞赛获奖翻页功能时出错:', error);
+                }
+                
+                // 确保第一个分类（竞赛算法）的内容正确显示
+                setTimeout(() => {
+                    console.log('延迟初始化第一个分类...');
+                    
+                    // 确保所有分类内容都被正确初始化
+                    ['competition', 'deep-learning', 'data-structures'].forEach(category => {
+                        const content = document.getElementById(`${category}-content`);
+                        if (content) {
+                            console.log(`${category}分类内容已找到`);
+                        } else {
+                            console.error(`${category}分类内容未找到`);
+                        }
+                    });
+                    
+                    // 强制显示第一个分类的内容
+                    const firstContent = document.getElementById('competition-content');
+                    if (firstContent) {
+                        firstContent.classList.add('active');
+                        console.log('强制激活第一个分类内容');
+                        
+                        // 确保第一个分类的标签也是激活状态
+                        const firstTab = document.querySelector('.algorithms-tab[data-tab="competition"]');
+                        if (firstTab) {
+                            firstTab.classList.add('active');
+                            console.log('强制激活第一个分类标签');
+                        } else {
+                            console.error('未找到第一个分类标签');
+                        }
+                    }
+                    
+                    // 检查DOM元素是否存在
+                    const competitionContent = document.getElementById('competition-content');
+                    const competitionCards = competitionContent?.querySelectorAll('.algorithm-card');
+                    console.log('竞赛算法分类检查:', {
+                        contentExists: !!competitionContent,
+                        cardsCount: competitionCards?.length || 0
+                    });
+                    
+                    // 检查所有分类的DOM元素
+                    ['competition', 'deep-learning', 'data-structures'].forEach(category => {
+                        const content = document.getElementById(`${category}-content`);
+                        const cards = content?.querySelectorAll('.algorithm-card');
+                        const container = content?.querySelector('.algorithm-cards-container');
+                        console.log(`${category}分类检查:`, {
+                            contentExists: !!content,
+                            cardsCount: cards?.length || 0,
+                            containerExists: !!container,
+                            containerChildren: container?.children?.length || 0
+                        });
+                    });
+                    
+                    if (window.algorithmPagination['competition']) {
+                        console.log('开始更新竞赛算法分类翻页');
+                        window.algorithmPagination['competition'].updatePagination();
+                    } else {
+                        console.error('竞赛算法分类翻页实例未找到');
+                    }
+                    
+                    // 确保所有分类都正确初始化
+                    Object.entries(window.algorithmPagination).forEach(([category, pagination]) => {
+                        if (pagination && pagination.updatePagination) {
+                            console.log(`初始化${category}分类翻页`);
+                            try {
+                                pagination.updatePagination();
+                            } catch (error) {
+                                console.error(`初始化${category}分类翻页时出错:`, error);
+                            }
+                        } else {
+                            console.error(`${category}分类翻页初始化失败`);
+                        }
+                    });
+                    
+                    // 最终检查：确保第一个分类的内容是可见的
+                    const firstCategory = 'competition';
+                    const firstContentElement = document.getElementById(`${firstCategory}-content`);
+                    if (firstContentElement) {
+                        const visibleCards = firstContentElement.querySelectorAll('.algorithm-card.show');
+                        console.log(`最终检查: ${firstCategory}分类可见卡片数量:`, visibleCards.length);
+                        
+                        // 如果第一个分类没有可见卡片，尝试强制显示前3个
+                        if (visibleCards.length === 0) {
+                            console.warn('第一个分类没有可见卡片，尝试强制显示前3个');
+                            const allCards = firstContentElement.querySelectorAll('.algorithm-card');
+                            for (let i = 0; i < Math.min(3, allCards.length); i++) {
+                                allCards[i].classList.add('show');
+                                console.log(`强制显示卡片 ${i}: ${allCards[i].querySelector('h3')?.textContent}`);
+                            }
+                        }
+                    }
+                    
+                    console.log('🎉 算法页面初始化完成！');
+                }, 200);
+            }).catch((error) => {
+                console.error('❌ 初始化过程出错:', error);
+            });
+            
+            // 定期刷新数据（每10分钟）
+            setInterval(() => {
+                console.log('定期刷新数据...');
+                loadProjectStats(true);
+                loadAlgorithmData();
+                loadAwardsData();
+            }, 10 * 60 * 1000);
+            
+            // 添加全局调试函数
+            window.debugAwards = debugAwardsPagination;
+            console.log('🔧 调试函数已添加到全局: window.debugAwards()');
+        });
+    </script>
+
+<!-- 访客统计追踪系统 -->
+<!-- 访问统计系统已移除 -->
+</body>
+</html>
