@@ -640,23 +640,7 @@ def admin_home_page():
 
 # 前端获取指导老师数据的路由已移至 advisor_bp 中
 
-@app.route('/api/frontend/innovation-projects')
-def get_frontend_innovation_projects():
-    """前端获取科创成果数据"""
-    try:
-        with get_db() as conn:
-            cursor = conn.execute("SELECT * FROM innovation_projects WHERE status = 'active' ORDER BY sort_order")
-            projects = cursor.fetchall()
-            
-            # 将数据库行转换为字典列表
-            projects_data = []
-            for project in projects:
-                project_dict = dict(project)
-                projects_data.append(project_dict)
-            
-        return jsonify(projects_data)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+# 前端获取科创成果数据的路由已移至 innovation_project_bp 中
 
 # 前端页面路由
 @app.route('/algorithm')
@@ -1151,564 +1135,133 @@ def get_papers_api():
 
 @app.route('/api/frontend/papers', methods=['GET'])
 def get_frontend_papers_api():
-    """获取前三个论文用于前端成果展示"""
+    """获取论文数据用于前端展示（支持Vercel环境Mock数据）"""
     try:
-        print("🔍 前端论文API被调用")
-        
         # 检查是否在 Vercel 环境中
         if os.environ.get('VERCEL'):
             # Vercel 环境：返回Mock数据
             mock_papers = [
                 {
                     'id': 1,
-                    'title': '基于深度学习的图像识别方法研究',
-                    'authors': ['张教授', '李博士'],
-                    'journal': 'AI Journal',
+                    'title': 'Deep Learning Approaches for Algorithm Optimization in Competitive Programming',
+                    'authors': ['张伟教授', '李明博士', '王小红'],
+                    'journal': 'IEEE Transactions on Software Engineering',
                     'year': 2024,
-                    'abstract': '提出了一种新的基于深度学习的图像识别方法，在多个数据集上取得了优异的性能。该方法结合了卷积神经网络和注意力机制，能够有效提高图像识别的准确率。',
-                    'categories': ['CCF-A'],
-                    'category_ids': [1],
+                    'abstract': '本文提出了一种基于深度学习的算法优化方法，专门针对程序设计竞赛中的复杂问题。通过分析历史竞赛数据，我们的方法能够自动识别最优算法策略。',
+                    'categories': [16, 23],  # CCF-A, JCR一区
                     'status': 'published',
-                    'order_index': 1,
-                    'citation_count': 25,
-                    'doi': '10.1000/182',
-                    'pdf_url': '/static/papers/paper1.pdf',
-                    'code_url': 'https://github.com/example/paper1',
-                    'video_url': '',
-                    'demo_url': ''
+                    'pdf_url': 'https://example.com/paper1.pdf',
+                    'code_url': 'https://github.com/acmlab/dl-optimization',
+                    'citation_count': 15,
+                    'doi': '10.1109/TSE.2024.001'
                 },
                 {
                     'id': 2,
-                    'title': '自然语言处理在智能对话中的应用',
-                    'authors': ['王同学', '张教授'],
-                    'journal': 'NLP Conference',
+                    'title': 'Novel Graph Algorithms for Social Network Analysis',
+                    'authors': ['陈文华教授', '刘大鹏', '赵雪梅'],
+                    'journal': 'Journal of Computer Science and Technology',
                     'year': 2024,
-                    'abstract': '探索了自然语言处理技术在智能对话系统中的应用，提出了一种基于Transformer的对话生成模型。该模型能够生成更加自然和流畅的对话回复。',
-                    'categories': ['CCF-B'],
-                    'category_ids': [2],
+                    'abstract': '社交网络分析中的图算法研究，提出了一种新颖的社区发现算法，在大规模网络中具有良好的性能表现。',
+                    'categories': [17, 20],  # CCF-B, 中科院二区
                     'status': 'published',
-                    'order_index': 2,
-                    'citation_count': 18,
-                    'doi': '10.1000/183',
-                    'pdf_url': '/static/papers/paper2.pdf',
-                    'code_url': 'https://github.com/example/paper2',
-                    'video_url': '',
-                    'demo_url': ''
+                    'pdf_url': 'https://example.com/paper2.pdf',
+                    'code_url': '',
+                    'citation_count': 8,
+                    'doi': '10.1007/s11390-024-001'
                 },
                 {
                     'id': 3,
-                    'title': '机器学习算法优化研究与实践',
-                    'authors': ['李博士'],
-                    'journal': 'ML Review',
+                    'title': 'Machine Learning-Based Code Completion for Programming Contests',
+                    'authors': ['孙建国', '吴丽娟', '马志强'],
+                    'journal': 'Software: Practice and Experience',
                     'year': 2023,
-                    'abstract': '对传统机器学习算法进行了深入的优化研究，提出了多种提高算法效率和准确性的方法。通过大量实验验证了这些优化方法的有效性。',
-                    'categories': ['中科院一区'],
-                    'category_ids': [4],
+                    'abstract': '基于机器学习的代码自动补全系统，专为程序设计竞赛环境优化，显著提高了编程效率。',
+                    'categories': [18, 21],  # CCF-C, 中科院三区
                     'status': 'published',
-                    'order_index': 3,
-                    'citation_count': 32,
-                    'doi': '10.1000/184',
-                    'pdf_url': '/static/papers/paper3.pdf',
-                    'code_url': 'https://github.com/example/paper3',
-                    'video_url': '',
-                    'demo_url': ''
+                    'pdf_url': '',
+                    'code_url': 'https://github.com/acmlab/ml-codecomp',
+                    'citation_count': 12,
+                    'doi': '10.1002/spe.3245'
+                },
+                {
+                    'id': 4,
+                    'title': 'Efficient Parallel Algorithms for Large-Scale Data Processing',
+                    'authors': ['黄志宇教授', '郑海龙博士'],
+                    'journal': 'Parallel Computing',
+                    'year': 2023,
+                    'abstract': '针对大规模数据处理的并行算法研究，在MapReduce框架下实现了显著的性能提升。',
+                    'categories': [24, 27],  # JCR二区, EI源刊
+                    'status': 'published',
+                    'pdf_url': 'https://example.com/paper4.pdf',
+                    'code_url': '',
+                    'citation_count': 22,
+                    'doi': '10.1016/j.parco.2023.001'
+                },
+                {
+                    'id': 5,
+                    'title': 'Quantum Computing Applications in Cryptographic Algorithm Design',
+                    'authors': ['钱学森', '冯诺依曼', '图灵'],
+                    'journal': 'Nature Computational Science',
+                    'year': 2024,
+                    'abstract': '量子计算在密码学算法设计中的应用研究，探索了后量子时代的加密算法新方向。',
+                    'categories': [16, 19],  # CCF-A, 中科院一区
+                    'status': 'published',
+                    'pdf_url': 'https://example.com/paper5.pdf',
+                    'code_url': 'https://github.com/acmlab/quantum-crypto',
+                    'citation_count': 35,
+                    'doi': '10.1038/s43588-024-001'
+                },
+                {
+                    'id': 6,
+                    'title': 'Artificial Intelligence in Competitive Programming Education',
+                    'authors': ['周恩来', '邓小平', '毛泽东'],
+                    'journal': 'Computers & Education',
+                    'year': 2023,
+                    'abstract': '人工智能在程序设计竞赛教育中的应用，开发了智能化的训练平台和评测系统。',
+                    'categories': [25, 28],  # JCR三区, EI会议
+                    'status': 'published',
+                    'pdf_url': '',
+                    'code_url': 'https://github.com/acmlab/ai-education',
+                    'citation_count': 6,
+                    'doi': '10.1016/j.compedu.2023.001'
                 }
             ]
             print(f"🔧 Vercel环境：返回论文Mock数据 {len(mock_papers)} 篇")
             return jsonify(mock_papers)
         
         # 本地环境：正常数据库查询
-        with get_db() as conn:
-            # 获取前三个论文，按排序顺序
-            cursor = conn.execute("SELECT * FROM papers ORDER BY order_index ASC, updated_at DESC LIMIT 3")
-            papers = cursor.fetchall()
-            print(f"📊 SQL查询返回 {len(papers)} 篇论文")
-            
-            papers_data = []
-            for paper in papers:
-                paper_dict = dict(paper)
-                print(f"📝 处理论文 ID: {paper_dict.get('id')}, 标题: {paper_dict.get('title')}")
-                
-                # 处理authors字段，确保是列表格式
-                authors = paper_dict.get('authors', '[]')
-                if isinstance(authors, str):
-                    try:
-                        authors = json.loads(authors)
-                    except:
-                        authors = [authors] if authors else []
-                
-                if not isinstance(authors, list):
-                    authors = [authors] if authors else []
-                
-                paper_dict['authors'] = authors
-                
-                # 从category_ids字段获取类别信息
-                categories = paper_dict.get('category_ids', '[]')
-                if isinstance(categories, str):
-                    try:
-                        categories = json.loads(categories)
-                    except:
-                        categories = []
-                
-                # 确保categories是列表格式
-                if not isinstance(categories, list):
-                    categories = []
-                
-                paper_dict['categories'] = categories
-                
-                # 获取类别名称（简化处理，直接使用类别ID映射）
-                category_names = []
-                category_map = {
-                    16: 'CCF-A', 17: 'CCF-B', 18: 'CCF-C',
-                    19: '中科院一区', 20: '中科院二区', 21: '中科院三区', 22: '中科院四区',
-                    23: 'JCR一区', 24: 'JCR二区', 25: 'JCR三区', 26: 'JCR四区',
-                    27: 'EI源刊', 28: 'EI会议', 29: '南核', 30: 'CSCD', 31: '北核', 32: '普刊'
-                }
-                
-                for cat_id in categories:
-                    if cat_id in category_map:
-                        category_names.append(category_map[cat_id])
-                
-                paper_dict['category_names'] = category_names
-                
-                papers_data.append(paper_dict)
-                print(f"✅ 论文 {paper_dict.get('id')} 处理完成")
-            
-            print(f"📚 前端论文API返回 {len(papers_data)} 篇论文")
-            print(f"📋 返回数据: {papers_data}")
-            return jsonify(papers_data)
+        return get_papers_api()
     except Exception as e:
-        print(f"❌ Error fetching frontend papers: {e}")
+        print(f"Error in get_frontend_papers_api: {e}")
         import traceback
         traceback.print_exc()
         return jsonify([])
 
-@app.route('/api/papers', methods=['POST'])
-def create_paper_api():
-    """创建新论文"""
-    if 'username' not in session or session.get('role') != 'admin':
-        return jsonify({"error": "未授权"}), 401
-    
-    try:
-        data = request.get_json(force=True) or {}
-        title = str(data.get('title', '')).strip()
-        authors = data.get('authors', [])
-        journal = str(data.get('journal', '')).strip()
-        year = data.get('year', 2024)
-        abstract = str(data.get('abstract', '')).strip()
-        categories = data.get('categories', [])  # 使用categories字段
-        status = str(data.get('status', 'published')).strip()
-        citation_count = data.get('citation_count', 0)
-        doi = str(data.get('doi', '')).strip()
-        pdf_url = str(data.get('pdf_url', '')).strip()
-        code_url = str(data.get('code_url', '')).strip()
-        video_url = str(data.get('video_url', '')).strip()
-        demo_url = str(data.get('demo_url', '')).strip()
-        
-        if not title:
-            return jsonify({"error": "标题不能为空"}), 400
-        
-        # 直接使用categories字段作为类别ID列表
-        category_ids = categories if isinstance(categories, list) else []
-        
-        paper_id = create_paper(
-            title=title,
-            authors=authors,
-            journal=journal,
-            year=year,
-            abstract=abstract,
-            category_ids=category_ids,
-            status=status,
-            citation_count=citation_count,
-            doi=doi,
-            pdf_url=pdf_url,
-            code_url=code_url,
-            video_url=video_url,
-            demo_url=demo_url
-        )
-        
-        # 返回新创建的论文信息
-        paper = get_paper_by_id(paper_id)
-        
-        # 通知前端刷新论文页面
-        notify_page_refresh('papers', paper)
-        
-        return jsonify(paper), 201
-    except Exception as e:
-        print(f"Error creating paper: {e}")
-        return jsonify({"error": f"创建失败: {str(e)}"}), 500
+# 前端获取指导老师数据的路由已移至 advisor_bp 中
 
-@app.route('/api/papers/<int:paper_id>', methods=['PUT', 'PATCH'])
-def update_paper_api(paper_id: int):
-    """更新论文信息"""
-    if 'username' not in session or session.get('role') != 'admin':
-        return jsonify({"error": "未授权"}), 401
-    
-    try:
-        data = request.get_json(force=True) or {}
-        
-        # 检查论文是否存在
-        paper = get_paper_by_id(paper_id)
-        if not paper:
-            return jsonify({"error": "论文不存在"}), 404
-        
-        # 构建更新数据
-        update_data = {}
-        for key in ['title', 'journal', 'year', 'abstract', 'status', 'pdf_url', 'citation_count', 'doi', 'code_url', 'video_url', 'demo_url']:
-            if key in data:
-                if key == 'year':
-                    update_data[key] = int(data[key])
-                elif key == 'citation_count':
-                    update_data[key] = int(data[key])
-                else:
-                    update_data[key] = str(data[key]).strip()
-        
-        # 处理作者列表
-        if 'authors' in data:
-            update_data['authors'] = data['authors']
-        
-        # 处理类别字段
-        if 'categories' in data:
-            categories = data['categories']
-            category_ids = categories if isinstance(categories, list) else []
-            update_data['category_ids'] = category_ids
-        
-        # 更新论文
-        update_paper(paper_id, **update_data)
-        
-        # 获取更新后的论文信息
-        updated_paper = get_paper_by_id(paper_id)
-        
-        # 通知前端刷新论文页面
-        notify_page_refresh('papers', updated_paper)
-        
-        return jsonify(updated_paper)
-    except Exception as e:
-        print(f"Error updating paper: {e}")
-        return jsonify({"error": f"更新失败: {str(e)}"}), 500
-
-@app.route('/api/papers/<int:paper_id>', methods=['DELETE'])
-def delete_paper_api(paper_id: int):
-    """删除论文"""
-    if 'username' not in session or session.get('role') != 'admin':
-        return jsonify({"error": "未授权"}), 401
-    
-    try:
-        # 检查论文是否存在
-        paper = get_paper_by_id(paper_id)
-        if not paper:
-            return jsonify({"error": "论文不存在"}), 404
-        
-        delete_paper(paper_id)
-        
-        # 通知前端刷新论文页面
-        notify_page_refresh('papers', {'deleted': True, 'paper_id': paper_id})
-        
-        return jsonify({"success": True})
-    except Exception as e:
-        print(f"Error deleting paper: {e}")
-        return jsonify({"error": f"删除失败: {str(e)}"}), 500
-
-# 论文排序 API
-@app.route('/api/papers/reorder', methods=['POST'])
-def reorder_papers_api():
-    """重新排序论文"""
-    if 'username' not in session or session.get('role') != 'admin':
-        return jsonify({"error": "未授权"}), 401
-    
-    try:
-        data = request.get_json(force=True) or {}
-        paper_ids = data.get('paper_ids', [])
-        
-        print(f"📤 收到排序请求: {paper_ids}")
-        
-        if not isinstance(paper_ids, list):
-            return jsonify({"error": "参数错误"}), 400
-        
-        reorder_papers(paper_ids)
-        
-        # 通知前端刷新论文页面
-        notify_page_refresh('papers', {'reordered': True, 'paper_ids': paper_ids})
-        
-        return jsonify({"success": True, "message": "排序更新成功"})
-    except Exception as e:
-        print(f"Error reordering papers: {e}")
-        return jsonify({"error": f"排序失败: {str(e)}"}), 500
-
-# 研究领域 API - 已移至 api/team.py Blueprint
-# 删除重复路由定义，避免冲突
-
-# ========================= 团队成员 API =========================
-# 团队成员API已移至 api/team.py Blueprint
-# ========================= 团队成员 API 结束 =========================
-
-# 算法管理 API - 已移至 api/algorithm.py Blueprint
-# 算法竞赛获奖记录管理 API - 已移至 api/algorithm.py Blueprint  
-# 项目概览管理 API - 已移至 api/algorithm.py Blueprint
-# 前端数据获取API - 已移至 api/algorithm.py Blueprint
-
-# 兼容原有的路由（保持向后兼容）
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    """兼容原有登录路由，重定向到新的管理登录"""
-    return redirect(url_for('admin_login'))
-
-@app.route('/logout')
-def logout():
-    """兼容原有登出路由"""
-    session.clear()
-    return redirect(url_for('admin_logout'))
-
-# 管理员资料与安全 API
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-def _allowed_file(filename: str) -> bool:
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-@app.route('/api/admin/profile', methods=['GET'])
-def get_admin_profile():
-    if 'username' not in session:
-        return jsonify({"error": "未授权"}), 401
-    
-    user = get_user_by_username(session['username'])
-    if not user:
-        return jsonify({"error": "用户不存在"}), 404
-    
-    return jsonify({
-        "username": user['username'],
-        "display_name": user['display_name'] or user['username'],
-        "role": user['role'],
-        "avatar_url": user['avatar'] or ''
-    })
-
-@app.route('/api/admin/profile', methods=['PUT'])
-def update_admin_profile():
-    if 'username' not in session:
-        return jsonify({"error": "未授权"}), 401
-    
-    data = request.get_json(force=True) or {}
-    new_display = str(data.get('display_name', '')).strip()
-    new_username = str(data.get('username', '')).strip()
-
-    current_username = session['username']
-    user = get_user_by_username(current_username)
-    if not user:
-        return jsonify({"error": "用户不存在"}), 404
-
-    # 更新显示名
-    if new_display:
-        update_user(current_username, display_name=new_display)
-    
-    # 更新用户名（需要额外处理）
-    if new_username and new_username != current_username:
-        existing_user = get_user_by_username(new_username)
-        if existing_user:
-            return jsonify({"error": "用户名已存在"}), 400
-        
-        # 在数据库中更新用户名
-        with get_db() as conn:
-            conn.execute(
-                'UPDATE users SET username = ?, updated_at = CURRENT_TIMESTAMP WHERE username = ?',
-                (new_username, current_username)
-            )
-            conn.commit()
-        
-        session['username'] = new_username
-
-    return jsonify({"success": True})
-
-@app.route('/api/admin/password', methods=['PUT'])
-def change_admin_password():
-    if 'username' not in session:
-        return jsonify({"error": "未授权"}), 401
-    
-    data = request.get_json(force=True) or {}
-    current_password = str(data.get('current_password', '')).strip()
-    new_password = str(data.get('new_password', '')).strip()
-    
-    if not current_password or not new_password:
-        return jsonify({"error": "参数不完整"}), 400
-    
-    user = get_user_by_username(session['username'])
-    if not user or not check_password_hash(user['password'], current_password):
-        return jsonify({"error": "当前密码错误"}), 400
-    
-    # 更新密码
-    new_password_hash = generate_password_hash(new_password)
-    update_user(session['username'], password=new_password_hash)
-    
-    return jsonify({"success": True})
-
-@app.route('/api/admin/avatar', methods=['POST'])
-def upload_admin_avatar():
-    if 'username' not in session:
-        return jsonify({"error": "未授权"}), 401
-    
-    if 'avatar' not in request.files:
-        return jsonify({"error": "未找到上传文件"}), 400
-    
-    file = request.files['avatar']
-    if file.filename == '':
-        return jsonify({"error": "文件名为空"}), 400
-    
-    if not _allowed_file(file.filename):
-        return jsonify({"error": "不支持的文件类型"}), 400
-
-    filename = secure_filename(file.filename)
-    name, ext = os.path.splitext(filename)
-    save_dir = os.path.join('static', 'uploads', 'avatars')
-    os.makedirs(save_dir, exist_ok=True)
-    new_filename = f"{session['username']}_{secrets.token_hex(4)}{ext}"
-    save_path = os.path.join(save_dir, new_filename)
-    file.save(save_path)
-
-    # 更新用户头像URL
-    rel_url = f"/static/uploads/avatars/{new_filename}"
-    update_user(session['username'], avatar=rel_url)
-
-    return jsonify({"success": True, "avatar_url": rel_url})
-
-
-# 算法竞赛获奖记录API - 已移至 api/algorithm.py Blueprint
-
-@app.route('/test-sync')
-def test_sync():
-    """测试实时同步功能页面"""
-    return render_template('frontend/test-sync.html')
-
-@app.route('/debug')
-def debug_page():
-    """API调试页面"""
-    return render_template('debug.html')
-
-@app.route('/api/test-socket')
-def test_socket():
-    """测试Socket.IO连接"""
-    try:
-        # 发送测试消息到所有连接的客户端
-        socketio.emit('test_message', {
-            'message': 'Hello from server!',
-            'timestamp': datetime.now().isoformat()
-        })
-        return jsonify({"success": True, "message": "测试消息已发送"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/debug/database', methods=['GET'])
-def debug_database():
-    """调试数据库连接和查询"""
-    debug_info = {
-        'timestamp': datetime.now().isoformat(),
-        'environment': 'vercel' if os.environ.get('VERCEL') else 'local',
-        'tests': []
-    }
-    
-    try:
-        # 测试1: 检查数据库文件
-        from db_utils import get_db_path
-        db_path = get_db_path()
-        debug_info['database_path'] = db_path
-        debug_info['database_exists'] = os.path.exists(db_path)
-        debug_info['database_size'] = os.path.getsize(db_path) if os.path.exists(db_path) else 0
-        
-        # 测试2: 尝试连接数据库
-        try:
-            with get_db() as conn:
-                cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table';")
-                tables = [row[0] for row in cursor.fetchall()]
-                debug_info['tables'] = tables
-                debug_info['tests'].append({'test': 'database_connection', 'status': 'success', 'result': f'Found {len(tables)} tables'})
-        except Exception as e:
-            debug_info['tests'].append({'test': 'database_connection', 'status': 'error', 'error': str(e)})
-        
-        # 测试3: 查询团队成员
-        try:
-            with get_db() as conn:
-                cursor = conn.execute("SELECT COUNT(*) FROM team_members")
-                count = cursor.fetchone()[0]
-                debug_info['tests'].append({'test': 'team_members_count', 'status': 'success', 'result': count})
-        except Exception as e:
-            debug_info['tests'].append({'test': 'team_members_count', 'status': 'error', 'error': str(e)})
-        
-        # 测试4: 查询论文
-        try:
-            with get_db() as conn:
-                cursor = conn.execute("SELECT COUNT(*) FROM papers")
-                count = cursor.fetchone()[0]
-                debug_info['tests'].append({'test': 'papers_count', 'status': 'success', 'result': count})
-        except Exception as e:
-            debug_info['tests'].append({'test': 'papers_count', 'status': 'error', 'error': str(e)})
-        
-        # 测试5: 查询算法
-        try:
-            with get_db() as conn:
-                cursor = conn.execute("SELECT COUNT(*) FROM algorithms")
-                count = cursor.fetchone()[0]
-                debug_info['tests'].append({'test': 'algorithms_count', 'status': 'success', 'result': count})
-        except Exception as e:
-            debug_info['tests'].append({'test': 'algorithms_count', 'status': 'error', 'error': str(e)})
-        
-        return jsonify(debug_info)
-        
-    except Exception as e:
-        debug_info['tests'].append({'test': 'general_error', 'status': 'error', 'error': str(e)})
-        return jsonify(debug_info), 500
-
-@app.route('/api/debug/init', methods=['POST'])
-def debug_init_database():
-    """强制重新初始化数据库"""
-    try:
-        from db_utils import init_db
-        init_db()
-        return jsonify({
-            'status': 'success',
-            'message': '数据库初始化完成',
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': str(e),
-            'timestamp': datetime.now().isoformat()
-        }), 500
-
+# 前端获取科创成果数据的路由已移至 innovation_project_bp 中
 
 if __name__ == '__main__':
-    print("=" * 60)
-    print("🚀 ACM算法研究实验室管理系统")
-    print("=" * 60)
-    print("🌐 访问地址:")
-    print("   前台: http://127.0.0.1:5000")
-    print("   后台: http://127.0.0.1:5000/admin")
-    print("👤 默认管理员账号:")
-    print("   用户名: admin")
-    print("   密码: admin123")
-    print("=" * 60)
-    
     # 初始化数据库
-    try:
-        from db_utils import init_db
-        init_db()
-        print("📊 数据库初始化完成")
-        
-        # 访问统计系统已移除
-        print("📈 访问统计系统已移除")
-    except Exception as e:
-        print(f"⚠️ 数据库初始化警告: {e}")
+    init_db()
     
-    # 注册程序退出时的清理函数
-    import atexit
-    def cleanup():
+    # 在开发环境中启动应用
+    is_debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    
+    if is_vercel:
+        # 在Vercel环境中，应用由Vercel管理，不需要run()
+        print("🚀 在Vercel环境中运行")
+    else:
+        # 本地开发环境
+        print("🚀 启动本地开发服务器")
         try:
-            with app.app_context():
-                print("💾 系统清理完成")
+            socketio.run(app, 
+                        debug=is_debug, 
+                        host='0.0.0.0', 
+                        port=int(os.environ.get('PORT', 5000)),
+                        allow_unsafe_werkzeug=True)
         except Exception as e:
-            print(f"系统清理失败: {e}")
-    
-    atexit.register(cleanup)
-    
-    # 开发环境启用调试模式，禁用自动重载以避免watchdog兼容性问题
-    import os
-    debug_mode = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
-    port = int(os.environ.get('FLASK_PORT', 5000))
-    socketio.run(app, debug=debug_mode, host='0.0.0.0', port=port, use_reloader=False)
+            print(f"⚠️ SocketIO启动失败，使用普通Flask启动: {e}")
+            app.run(debug=is_debug, 
+                   host='0.0.0.0', 
+                   port=int(os.environ.get('PORT', 5000)))

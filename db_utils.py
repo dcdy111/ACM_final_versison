@@ -119,7 +119,30 @@ def _init_memory_tables(conn):
             ('深度优先搜索', '图算法', '图遍历的基本算法之一', 'O(V+E)', 'O(V)', 3)
         ''')
         
+        # 创建用户表并插入默认管理员
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                role TEXT DEFAULT 'admin',
+                display_name TEXT,
+                avatar TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # 插入默认管理员用户
+        from werkzeug.security import generate_password_hash
+        admin_password = generate_password_hash('admin123')
+        conn.execute('''
+            INSERT INTO users (username, password, role, display_name)
+            VALUES (?, ?, ?, ?)
+        ''', ('admin', admin_password, 'admin', '管理员'))
+        
         print("✅ 内存数据库表结构和示例数据创建完成")
+        print("👤 已创建默认管理员用户: admin / admin123")
         
     except Exception as e:
         print(f"❌ 初始化内存数据库失败: {e}")
@@ -772,6 +795,20 @@ def init_db():
                 print("已插入示例项目概览数据")
         except Exception as e:
             print(f"插入项目概览数据时出错: {e}")
+        
+        # 插入默认管理员用户
+        try:
+            cursor = conn.execute('SELECT COUNT(*) FROM users')
+            if cursor.fetchone()[0] == 0:
+                from werkzeug.security import generate_password_hash
+                admin_password = generate_password_hash('admin123')
+                conn.execute('''
+                    INSERT INTO users (username, password, role, display_name)
+                    VALUES (?, ?, ?, ?)
+                ''', ('admin', admin_password, 'admin', '管理员'))
+                print("已创建默认管理员用户: admin / admin123")
+        except Exception as e:
+            print(f"创建默认管理员用户时出错: {e}")
         
         conn.commit()
         print("数据库初始化完成") 

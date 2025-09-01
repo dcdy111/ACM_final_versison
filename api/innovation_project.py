@@ -17,6 +17,11 @@ UPLOAD_FOLDER = 'static/uploads/innovation_projects'
 @innovation_project_bp.route('/api/innovation-projects', methods=['GET'])
 def get_innovation_projects():
     """获取所有科创成果"""
+    return get_frontend_innovation_projects()
+
+@innovation_project_bp.route('/api/frontend/innovation-projects', methods=['GET'])
+def get_frontend_innovation_projects():
+    """获取所有科创成果"""
     try:
         # 检查是否在 Vercel 环境中
         if os.environ.get('VERCEL'):

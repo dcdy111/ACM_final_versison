@@ -1066,13 +1066,13 @@
 		async function loadNotifications() {
 			console.log('🔄 开始重新加载通知数据...');
 			try {
-				const response = await fetch('/api/notifications');
+				const response = await fetch('/api/frontend/activities');
 				if (response.ok) {
 					const notifications = await response.json();
 					console.log('✅ 获取到通知数据:', notifications.length, '条');
 					
-					// 只显示已发布的通知
-					allNotifications = notifications.filter(n => n.status === 'published');
+					// 前端活动数据直接使用，不需要再次过滤
+					allNotifications = notifications;
 					
 					// 重置到第一页
 					currentPage = 1;
@@ -1115,19 +1115,14 @@
 			
 			// 渲染当前页的通知
 			const notificationsHtml = currentPageNotifications.map(notification => {
-				const publishDate = notification.publish_date ? new Date(notification.publish_date) : new Date();
-				const formattedDate = publishDate.toLocaleDateString('zh-CN', {
-					year: 'numeric',
-					month: '2-digit',
-					day: '2-digit'
-				});
+				// 使用 formatted_date 或 date 字段
+				const formattedDate = notification.formatted_date || notification.date || '未知日期';
 				
-				// 处理标签
-				const tags = notification.tags ? notification.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
-				const primaryTag = tags.length > 0 ? tags[0] : notification.category;
+				// 处理类型信息
+				const primaryTag = notification.type || '实验室动态';
 				
 				// 截取摘要
-				const excerpt = notification.excerpt || (notification.content ? notification.content.substring(0, 150) + '...' : '暂无摘要');
+				const excerpt = notification.excerpt || '暂无摘要';
 				
 				// 解析卡片样式配置
 				let cardStyle = null;
@@ -1167,14 +1162,14 @@
 						<div class="article-content">
 							<div class="article-meta">
 								<span><i>📅</i> ${formattedDate}</span>
-								<span><i>⏱️</i> ${notification.reading_time || 5}分钟阅读</span>
+								<span><i>⏱️</i> 5分钟阅读</span>
 								<span><i>🏷️</i> ${primaryTag}</span>
 							</div>
 							<h2 class="article-title">
-								<a href="/notification/${notification.id}">${notification.title}</a>
+								<a href="#" onclick="alert('详情页面开发中...')">${notification.title}</a>
 							</h2>
 							<p class="article-excerpt">${excerpt}</p>
-							<a href="/notification/${notification.id}" class="blog-read-more">查看详情</a>
+							<a href="#" onclick="alert('详情页面开发中...')" class="blog-read-more">查看详情</a>
 						</div>
 					</article>
 				`;

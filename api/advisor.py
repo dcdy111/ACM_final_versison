@@ -37,6 +37,54 @@ def get_advisors():
 def get_frontend_advisors():
     """前端获取指导老师数据"""
     try:
+        # 检查是否在 Vercel 环境中
+        if os.environ.get('VERCEL'):
+            # Vercel 环境：返回Mock数据
+            mock_advisors = [
+                {
+                    'id': 1,
+                    'name': '张教授',
+                    'position': '计算机科学系主任、博士生导师',
+                    'description': '主要研究方向：机器学习、人工智能、计算机视觉。发表SCI论文60余篇，主持国家自然科学基金项目5项。',
+                    'image_url': 'https://picsum.photos/300/300?random=101',
+                    'email': 'zhang.prof@university.edu.cn',
+                    'google_scholar': 'https://scholar.google.com/citations?user=example1',
+                    'github': 'https://github.com/zhangprof',
+                    'border_color': 'primary',
+                    'status': 'active',
+                    'sort_order': 1
+                },
+                {
+                    'id': 2,
+                    'name': '李教授',
+                    'position': '算法实验室主任、教授',
+                    'description': '主要研究方向：算法优化、分布式计算、大数据处理。IEEE高级会员，获得国家科技进步二等奖。',
+                    'image_url': 'https://picsum.photos/300/300?random=102',
+                    'email': 'li.prof@university.edu.cn',
+                    'google_scholar': 'https://scholar.google.com/citations?user=example2',
+                    'github': 'https://github.com/liprof',
+                    'border_color': 'secondary',
+                    'status': 'active',
+                    'sort_order': 2
+                },
+                {
+                    'id': 3,
+                    'name': '王副教授',
+                    'position': '数据科学中心副主任',
+                    'description': '主要研究方向：深度学习、自然语言处理、推荐系统。发表顶级会议论文30余篇，获得多项发明专利。',
+                    'image_url': 'https://picsum.photos/300/300?random=103',
+                    'email': 'wang.prof@university.edu.cn',
+                    'google_scholar': 'https://scholar.google.com/citations?user=example3',
+                    'github': 'https://github.com/wangprof',
+                    'border_color': 'accent',
+                    'status': 'active',
+                    'sort_order': 3
+                }
+            ]
+            print(f"🔧 Vercel环境：返回指导老师Mock数据 {len(mock_advisors)} 位")
+            return jsonify(mock_advisors)
+        
+        # 本地环境：正常数据库查询
         with get_db() as conn:
             cursor = conn.execute("SELECT * FROM advisors WHERE status = 'active' ORDER BY sort_order")
             advisors = cursor.fetchall()

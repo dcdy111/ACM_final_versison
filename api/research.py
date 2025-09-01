@@ -3,6 +3,7 @@
 from flask import Blueprint, request, jsonify
 from db_utils import get_db
 import json
+import os
 from datetime import datetime
 from socket_utils import notify_page_refresh
 
@@ -16,6 +17,96 @@ def get_research_areas():
         per_page = int(request.args.get('per_page', 6))
         category = request.args.get('category', '')
         
+        # 检查是否在 Vercel 环境中
+        if os.environ.get('VERCEL'):
+            # Vercel 环境：返回Mock数据
+            mock_research_data = [
+                {
+                    'id': 1,
+                    'title': '机器学习与深度学习',
+                    'category': '人工智能',
+                    'description': '研究深度神经网络、强化学习、计算机视觉等前沿技术，致力于将AI技术应用于实际问题解决。',
+                    'members': ['张教授', '李博士', '王同学'],
+                    'order_index': 1,
+                    'created_at': '2024-01-01T00:00:00Z',
+                    'updated_at': '2024-01-01T00:00:00Z'
+                },
+                {
+                    'id': 2,
+                    'title': '算法设计与优化',
+                    'category': '理论计算机科学',
+                    'description': '专注于算法复杂度分析、数据结构优化、并行计算等理论与实践相结合的研究。',
+                    'members': ['陈教授', '刘同学'],
+                    'order_index': 2,
+                    'created_at': '2024-01-02T00:00:00Z',
+                    'updated_at': '2024-01-02T00:00:00Z'
+                },
+                {
+                    'id': 3,
+                    'title': '自然语言处理',
+                    'category': '人工智能',
+                    'description': '研究文本理解、语言生成、对话系统等NLP技术，推动人机交互的自然化发展。',
+                    'members': ['赵教授', '钱同学', '孙同学'],
+                    'order_index': 3,
+                    'created_at': '2024-01-03T00:00:00Z',
+                    'updated_at': '2024-01-03T00:00:00Z'
+                },
+                {
+                    'id': 4,
+                    'title': '大数据分析',
+                    'category': '数据科学',
+                    'description': '利用统计学习、数据挖掘等技术处理海量数据，发现数据中的规律和价值。',
+                    'members': ['周教授', '吴同学'],
+                    'order_index': 4,
+                    'created_at': '2024-01-04T00:00:00Z',
+                    'updated_at': '2024-01-04T00:00:00Z'
+                },
+                {
+                    'id': 5,
+                    'title': '计算机视觉',
+                    'category': '人工智能',
+                    'description': '研究图像识别、目标检测、图像生成等计算机视觉技术及其在各领域的应用。',
+                    'members': ['郑教授', '冯同学', '陈同学'],
+                    'order_index': 5,
+                    'created_at': '2024-01-05T00:00:00Z',
+                    'updated_at': '2024-01-05T00:00:00Z'
+                },
+                {
+                    'id': 6,
+                    'title': '软件工程与系统设计',
+                    'category': '软件工程',
+                    'description': '专注于大型软件系统架构设计、开发流程优化、软件质量保证等工程实践。',
+                    'members': ['何教授', '许同学'],
+                    'order_index': 6,
+                    'created_at': '2024-01-06T00:00:00Z',
+                    'updated_at': '2024-01-06T00:00:00Z'
+                }
+            ]
+            
+            # 分类筛选
+            if category and category != '全部':
+                mock_research_data = [item for item in mock_research_data if item['category'] == category]
+            
+            # 计算分页
+            total = len(mock_research_data)
+            total_pages = (total + per_page - 1) // per_page
+            start_idx = (page - 1) * per_page
+            end_idx = start_idx + per_page
+            paginated_data = mock_research_data[start_idx:end_idx]
+            
+            print(f"🔧 Vercel环境：返回研究领域Mock数据 {len(paginated_data)} 个")
+            return jsonify({
+                'success': True,
+                'data': paginated_data,
+                'pagination': {
+                    'page': page,
+                    'per_page': per_page,
+                    'total': total,
+                    'total_pages': total_pages
+                }
+            })
+        
+        # 本地环境：正常数据库查询
         with get_db() as conn:
             # 构建查询条件
             where_clause = ""

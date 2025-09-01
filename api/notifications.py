@@ -190,6 +190,94 @@ def optimize_html_content(html_content):
     
     return html_content
 
+@notifications_bp.route('/frontend/activities', methods=['GET'])
+def get_frontend_activities():
+    """获取前端显示的实验室动态活动"""
+    try:
+        # 检查是否在 Vercel 环境中
+        if os.environ.get('VERCEL'):
+            # Vercel 环境：返回Mock数据
+            mock_activities = [
+                {
+                    'id': 1,
+                    'title': '实验室团队在ICML 2024会议发表重要论文',
+                    'excerpt': '我们的研究团队在机器学习顶级会议ICML 2024上发表了关于"深度强化学习在多智能体系统中的应用"的重要论文，该成果在智能体协作领域取得了突破性进展。',
+                    'formatted_date': '2024年8月15日',
+                    'date': '2024-08-15',
+                    'type': 'research',
+                    'status': 'published'
+                },
+                {
+                    'id': 2,
+                    'title': '第十届ACM程序设计竞赛校内选拔赛成功举办',
+                    'excerpt': '实验室成功举办了第十届ACM程序设计竞赛校内选拔赛，共有来自全校的200余名学生参加。经过激烈角逐，最终选出15名优秀选手组成校队参加区域赛。',
+                    'formatted_date': '2024年7月20日',
+                    'date': '2024-07-20',
+                    'type': 'competition',
+                    'status': 'published'
+                },
+                {
+                    'id': 3,
+                    'title': '实验室与华为技术有限公司签署产学研合作协议',
+                    'excerpt': '为推进产学研深度融合，实验室与华为技术有限公司正式签署合作协议，将在人工智能算法优化、5G通信技术等领域开展深度合作，共同培养高端技术人才。',
+                    'formatted_date': '2024年6月30日',
+                    'date': '2024-06-30',
+                    'type': 'cooperation',
+                    'status': 'published'
+                },
+                {
+                    'id': 4,
+                    'title': '暑期算法训练营圆满结束',
+                    'excerpt': '为期四周的暑期算法训练营圆满结束，来自全国各地的60名学生参加了此次训练营。训练营邀请了多位知名教授和工程师授课，内容涵盖基础算法、高级数据结构、图论等多个方面。',
+                    'formatted_date': '2024年8月5日',
+                    'date': '2024-08-05',
+                    'type': 'training',
+                    'status': 'published'
+                },
+                {
+                    'id': 5,
+                    'title': '实验室学生在全国大学生数学建模竞赛中获得一等奖',
+                    'excerpt': '在刚刚结束的全国大学生数学建模竞赛中，实验室学生团队凭借优秀的建模能力和算法实现，获得全国一等奖的优异成绩，这是学校连续第三年在该赛事中获得全国一等奖。',
+                    'formatted_date': '2024年9月10日',
+                    'date': '2024-09-10',
+                    'type': 'award',
+                    'status': 'published'
+                }
+            ]
+            print(f"🔧 Vercel环境：返回实验室动态Mock数据 {len(mock_activities)} 条")
+            return jsonify(mock_activities)
+        
+        # 本地环境：正常数据库查询
+        with get_db() as conn:
+            cursor = conn.execute('''
+                SELECT id, title, excerpt, created_at, type, status 
+                FROM notifications 
+                WHERE status = 'published' 
+                ORDER BY created_at DESC 
+                LIMIT 10
+            ''')
+            activities = cursor.fetchall()
+            
+            # 转换数据格式
+            activities_data = []
+            for activity in activities:
+                activity_dict = dict(activity)
+                # 格式化日期
+                try:
+                    date_obj = datetime.fromisoformat(activity_dict['created_at'])
+                    activity_dict['formatted_date'] = date_obj.strftime('%Y年%m月%d日')
+                    activity_dict['date'] = date_obj.strftime('%Y-%m-%d')
+                except:
+                    activity_dict['formatted_date'] = '未知日期'
+                    activity_dict['date'] = '2024-01-01'
+                
+                activities_data.append(activity_dict)
+            
+            return jsonify(activities_data)
+    except Exception as e:
+        print(f"Error fetching frontend activities: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @notifications_bp.route('', methods=['GET'])
 def get_notifications():
     """获取通知列表"""

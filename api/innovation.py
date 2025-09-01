@@ -4,6 +4,7 @@ from datetime import datetime
 from socket_utils import notify_page_refresh
 from .utils import allowed_file, ensure_upload_dir
 import json
+import os
 
 innovation_bp = Blueprint('innovation', __name__, url_prefix='/api/innovation')
 
@@ -142,6 +143,51 @@ def reorder_stats():
 def get_frontend_stats():
     """获取前端显示的项目统计"""
     try:
+        # 检查是否在 Vercel 环境中
+        if os.environ.get('VERCEL'):
+            # Vercel 环境：返回Mock数据
+            mock_stats = [
+                {
+                    'id': 1,
+                    'title': '项目数量',
+                    'value': '50+',
+                    'icon': 'fas fa-project-diagram',
+                    'description': '累计参与各类创新项目',
+                    'status': 'active',
+                    'sort_order': 1
+                },
+                {
+                    'id': 2,
+                    'title': '获奖次数',
+                    'value': '30+',
+                    'icon': 'fas fa-trophy',
+                    'description': '国家级、省级竞赛获奖',
+                    'status': 'active',
+                    'sort_order': 2
+                },
+                {
+                    'id': 3,
+                    'title': '团队成员',
+                    'value': '20+',
+                    'icon': 'fas fa-users',
+                    'description': '活跃研究团队成员',
+                    'status': 'active',
+                    'sort_order': 3
+                },
+                {
+                    'id': 4,
+                    'title': '合作企业',
+                    'value': '15+',
+                    'icon': 'fas fa-handshake',
+                    'description': '产学研合作企业',
+                    'status': 'active',
+                    'sort_order': 4
+                }
+            ]
+            print(f"🔧 Vercel环境：返回项目统计Mock数据 {len(mock_stats)} 项")
+            return jsonify(mock_stats)
+        
+        # 本地环境：正常数据库查询
         with get_db() as conn:
             cursor = conn.execute("SELECT * FROM innovation_stats WHERE status = 'active' ORDER BY sort_order ASC")
             stats = cursor.fetchall()
@@ -159,6 +205,51 @@ def get_frontend_stats():
 def get_frontend_achievements():
     """获取前端显示的成果与荣誉"""
     try:
+        # 检查是否在 Vercel 环境中
+        if os.environ.get('VERCEL'):
+            # Vercel 环境：返回Mock数据
+            mock_achievements = {
+                'awards': [
+                    {
+                        'id': 1,
+                        'title': '全国大学生数学建模竞赛',
+                        'level': '国家级一等奖',
+                        'year': 2024,
+                        'type': 'competition',
+                        'participants': '张同学、李同学、王同学',
+                        'description': '针对智慧物流调度问题，建立了多目标优化模型',
+                        'status': 'active',
+                        'sort_order': 1
+                    },
+                    {
+                        'id': 2,
+                        'title': 'ACM-ICPC程序设计竞赛',
+                        'level': '省级特等奖',
+                        'year': 2024,
+                        'type': 'competition',
+                        'participants': '陈同学、刘同学、赵同学',
+                        'description': '在算法设计和编程实现方面表现优异',
+                        'status': 'active',
+                        'sort_order': 2
+                    }
+                ],
+                'honors': [
+                    {
+                        'id': 3,
+                        'title': '优秀学生团队',
+                        'level': '校级',
+                        'year': 2024,
+                        'type': 'honor',
+                        'description': '在科技创新方面表现突出',
+                        'status': 'active',
+                        'sort_order': 3
+                    }
+                ]
+            }
+            print(f"🔧 Vercel环境：返回成果荣誉Mock数据")
+            return jsonify(mock_achievements)
+        
+        # 本地环境：正常数据库查询
         with get_db() as conn:
             cursor = conn.execute("SELECT * FROM achievements WHERE status = 'active' ORDER BY sort_order ASC")
             achievements = cursor.fetchall()
@@ -184,6 +275,42 @@ def get_frontend_achievements():
 def get_frontend_carousel():
     """获取前端显示的轮播图"""
     try:
+        # 检查是否在 Vercel 环境中
+        if os.environ.get('VERCEL'):
+            # Vercel 环境：返回Mock数据
+            mock_carousel = [
+                {
+                    'id': 1,
+                    'title': '智能图像识别系统',
+                    'description': '基于深度学习的图像识别技术研究成果',
+                    'image_url': '/static/images/carousel/image1.jpg',
+                    'link_url': '/innovation/project/1',
+                    'status': 'active',
+                    'sort_order': 1
+                },
+                {
+                    'id': 2,
+                    'title': '自然语言处理平台',
+                    'description': '大规模预训练语言模型应用平台',
+                    'image_url': '/static/images/carousel/image2.jpg',
+                    'link_url': '/innovation/project/2',
+                    'status': 'active',
+                    'sort_order': 2
+                },
+                {
+                    'id': 3,
+                    'title': '大数据分析系统',
+                    'description': '企业级数据分析与可视化解决方案',
+                    'image_url': '/static/images/carousel/image3.jpg',
+                    'link_url': '/innovation/project/3',
+                    'status': 'active',
+                    'sort_order': 3
+                }
+            ]
+            print(f"🔧 Vercel环境：返回轮播图Mock数据 {len(mock_carousel)} 项")
+            return jsonify(mock_carousel)
+        
+        # 本地环境：正常数据库查询
         with get_db() as conn:
             cursor = conn.execute("SELECT * FROM innovation_carousel WHERE status = 'active' ORDER BY sort_order ASC")
             carousels = cursor.fetchall()
@@ -202,6 +329,51 @@ def get_frontend_carousel():
 def get_frontend_training_projects():
     """获取前端显示的大学生创新创业训练计划"""
     try:
+        # 检查是否在 Vercel 环境中
+        if os.environ.get('VERCEL'):
+            # Vercel 环境：返回Mock数据
+            mock_training_projects = [
+                {
+                    'id': 1,
+                    'title': '基于AI的智能推荐系统',
+                    'category': '国家级创新训练项目',
+                    'year': 2024,
+                    'leader': '张同学',
+                    'members': '李同学、王同学',
+                    'advisor': '陈教授',
+                    'description': '研究个性化推荐算法，应用于电商和内容平台',
+                    'status': 'active',
+                    'sort_order': 1
+                },
+                {
+                    'id': 2,
+                    'title': '智慧校园物联网系统',
+                    'category': '省级创业实践项目',
+                    'year': 2024,
+                    'leader': '刘同学',
+                    'members': '赵同学、钱同学',
+                    'advisor': '王教授',
+                    'description': '构建校园智能化管理和服务平台',
+                    'status': 'active',
+                    'sort_order': 2
+                },
+                {
+                    'id': 3,
+                    'title': '区块链技术在供应链中的应用',
+                    'category': '校级创新训练项目',
+                    'year': 2024,
+                    'leader': '孙同学',
+                    'members': '周同学、吴同学',
+                    'advisor': '李教授',
+                    'description': '探索区块链在供应链溯源中的创新应用',
+                    'status': 'active',
+                    'sort_order': 3
+                }
+            ]
+            print(f"🔧 Vercel环境：返回训练项目Mock数据 {len(mock_training_projects)} 项")
+            return jsonify(mock_training_projects)
+        
+        # 本地环境：正常数据库查询
         with get_db() as conn:
             cursor = conn.execute("SELECT * FROM innovation_training_projects WHERE status = 'active' ORDER BY sort_order ASC")
             projects = cursor.fetchall()
@@ -220,6 +392,48 @@ def get_frontend_training_projects():
 def get_frontend_intellectual_properties():
     """获取前端显示的知识产权"""
     try:
+        # 检查是否在 Vercel 环境中
+        if os.environ.get('VERCEL'):
+            # Vercel 环境：返回Mock数据
+            mock_properties = [
+                {
+                    'id': 1,
+                    'title': '基于深度学习的图像处理方法',
+                    'type': '发明专利',
+                    'patent_number': 'CN202410123456.7',
+                    'applicant': '张教授',
+                    'application_date': '2024-03-15',
+                    'status': '已授权',
+                    'description': '一种基于卷积神经网络的图像增强处理方法',
+                    'sort_order': 1
+                },
+                {
+                    'id': 2,
+                    'title': '智能数据挖掘系统',
+                    'type': '软件著作权',
+                    'patent_number': '2024SR0234567',
+                    'applicant': '李教授',
+                    'application_date': '2024-02-20',
+                    'status': '已登记',
+                    'description': '面向大数据的智能分析和挖掘软件系统',
+                    'sort_order': 2
+                },
+                {
+                    'id': 3,
+                    'title': '分布式计算优化算法',
+                    'type': '发明专利',
+                    'patent_number': 'CN202410234567.8',
+                    'applicant': '王教授',
+                    'application_date': '2024-01-10',
+                    'status': '实质审查',
+                    'description': '用于提高分布式系统计算效率的优化方法',
+                    'sort_order': 3
+                }
+            ]
+            print(f"🔧 Vercel环境：返回知识产权Mock数据 {len(mock_properties)} 项")
+            return jsonify(mock_properties)
+        
+        # 本地环境：正常数据库查询
         with get_db() as conn:
             cursor = conn.execute("SELECT * FROM intellectual_properties WHERE status = 'active' ORDER BY sort_order ASC")
             properties = cursor.fetchall()
@@ -238,6 +452,54 @@ def get_frontend_intellectual_properties():
 def get_frontend_enterprise_cooperations():
     """获取前端显示的校企合作"""
     try:
+        # 检查是否在 Vercel 环境中
+        if os.environ.get('VERCEL'):
+            # Vercel 环境：返回Mock数据
+            mock_cooperations = [
+                {
+                    'id': 1,
+                    'company_name': '腾讯科技有限公司',
+                    'cooperation_type': '联合实验室',
+                    'project_name': 'AI算法联合研发',
+                    'start_date': '2024-01-01',
+                    'end_date': '2026-12-31',
+                    'description': '在人工智能算法优化方面开展深度合作研究',
+                    'contact_person': '张总监',
+                    'status': 'active',
+                    'logo_url': '/static/images/partners/tencent.png',
+                    'sort_order': 1
+                },
+                {
+                    'id': 2,
+                    'company_name': '阿里巴巴集团',
+                    'cooperation_type': '技术转让',
+                    'project_name': '大数据处理平台',
+                    'start_date': '2024-03-01',
+                    'end_date': '2025-03-01',
+                    'description': '将研发的大数据分析技术转让给企业应用',
+                    'contact_person': '李经理',
+                    'status': 'active',
+                    'logo_url': '/static/images/partners/alibaba.png',
+                    'sort_order': 2
+                },
+                {
+                    'id': 3,
+                    'company_name': '华为技术有限公司',
+                    'cooperation_type': '人才培养',
+                    'project_name': '5G通信技术人才培训',
+                    'start_date': '2024-02-01',
+                    'end_date': '2024-12-01',
+                    'description': '共同培养5G通信和物联网技术人才',
+                    'contact_person': '王部长',
+                    'status': 'active',
+                    'logo_url': '/static/images/partners/huawei.png',
+                    'sort_order': 3
+                }
+            ]
+            print(f"🔧 Vercel环境：返回校企合作Mock数据 {len(mock_cooperations)} 项")
+            return jsonify(mock_cooperations)
+        
+        # 本地环境：正常数据库查询
         with get_db() as conn:
             cursor = conn.execute("SELECT * FROM enterprise_cooperations WHERE status = 'active' ORDER BY sort_order ASC")
             cooperations = cursor.fetchall()

@@ -1412,8 +1412,8 @@
                     </div>
                 `;
                 
-                // 获取论文数据 - 修改为获取所有论文
-                const response = await fetch('/api/papers');
+                // 获取论文数据 - 使用前端专用API
+                const response = await fetch('/api/frontend/papers');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -1876,7 +1876,7 @@
                         lastCheckTime = now;
                         
                         try {
-                            const res = await fetch('/api/papers', {
+                            const res = await fetch('/api/frontend/papers', {
                                 method: 'GET',
                                 headers: {
                                     'Cache-Control': 'no-cache',
