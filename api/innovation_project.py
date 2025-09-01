@@ -1,9 +1,13 @@
 from flask import Blueprint, request, jsonify, abort, session
 from db_utils import get_db
 import os
-from socket_utils import notify_page_refresh
+# from socket_utils import notify_page_refresh
 from datetime import datetime
-from .utils import allowed_file
+try:
+    from .utils import allowed_file
+except ImportError:
+    def allowed_file(filename):
+        return True
 
 innovation_project_bp = Blueprint('innovation_project', __name__)
 
@@ -14,6 +18,48 @@ UPLOAD_FOLDER = 'static/uploads/innovation_projects'
 def get_innovation_projects():
     """获取所有科创成果"""
     try:
+        # 检查是否在 Vercel 环境中
+        if os.environ.get('VERCEL'):
+            # Vercel 环境：返回Mock数据
+            mock_projects = [
+                {
+                    'id': 1,
+                    'title': '智能图像识别系统',
+                    'description': '基于深度学习的智能图像识别系统，可应用于安防监控、工业检测等多个领域，识别准确率达到95%以上。',
+                    'image_url': '/static/images/innovation/project1.jpg',
+                    'category': '国家级创新创业项目',
+                    'tags': '人工智能,图像识别,深度学习',
+                    'detail_url': '/innovation/project/1',
+                    'status': 'active',
+                    'sort_order': 1
+                },
+                {
+                    'id': 2,
+                    'title': '自然语言处理平台',
+                    'description': '大规模预训练语言模型平台，支持多语言理解和生成任务，可用于智能客服、文本分析等应用。',
+                    'image_url': '/static/images/innovation/project2.jpg',
+                    'category': '省级创新创业项目',
+                    'tags': 'NLP,语言模型,AI',
+                    'detail_url': '/innovation/project/2',
+                    'status': 'active',
+                    'sort_order': 2
+                },
+                {
+                    'id': 3,
+                    'title': '大数据分析平台',
+                    'description': '企业级大数据分析平台，提供数据清洗、分析、可视化等功能，帮助企业进行数据驱动决策。',
+                    'image_url': '/static/images/innovation/project3.jpg',
+                    'category': '校级创新创业项目',
+                    'tags': '大数据,数据分析,可视化',
+                    'detail_url': '/innovation/project/3',
+                    'status': 'active',
+                    'sort_order': 3
+                }
+            ]
+            print(f"🔧 Vercel环境：返回科创项目Mock数据 {len(mock_projects)} 个")
+            return jsonify(mock_projects)
+        
+        # 本地环境：正常数据库查询
         with get_db() as conn:
             cursor = conn.execute('''
                 SELECT * FROM innovation_projects 

@@ -1,16 +1,128 @@
 """
 数据库工具模块
 用于提供数据库连接功能，避免循环导入问题
+支持Vercel无服务器环境的内存数据库
 """
 
 import sqlite3
 import os
 from contextlib import contextmanager
 
+# 全局变量用于存储内存数据库连接
+_memory_db = None
+_is_vercel = os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV')
+
 def get_db_path():
     """获取数据库文件路径"""
+    if _is_vercel:
+        # Vercel环境使用内存数据库
+        return ':memory:'
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'acm_lab.db')
     return db_path
+
+def get_memory_db():
+    """获取全局内存数据库连接（仅用于Vercel环境）"""
+    global _memory_db
+    if _memory_db is None:
+        _memory_db = sqlite3.connect(':memory:', check_same_thread=False)
+        _memory_db.row_factory = sqlite3.Row
+        _memory_db.isolation_level = None
+        print("🔧 创建新的内存数据库连接")
+        # 立即初始化表结构
+        _init_memory_tables(_memory_db)
+    return _memory_db
+
+def _init_memory_tables(conn):
+    """在内存数据库中创建基本表结构"""
+    try:
+        # 创建最基本的表结构
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS team_members (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                position TEXT,
+                description TEXT,
+                image_url TEXT,
+                qq TEXT,
+                wechat TEXT,
+                email TEXT,
+                group_name TEXT DEFAULT '算法组',
+                status TEXT DEFAULT '在职',
+                grade TEXT DEFAULT '2024级',
+                order_index INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS papers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                authors TEXT,
+                journal TEXT,
+                year INTEGER,
+                abstract TEXT,
+                category_ids TEXT DEFAULT '[]',
+                status TEXT DEFAULT 'published',
+                order_index INTEGER DEFAULT 0,
+                citation_count INTEGER DEFAULT 0,
+                doi TEXT,
+                pdf_url TEXT,
+                code_url TEXT,
+                video_url TEXT,
+                demo_url TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS algorithms (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                category TEXT NOT NULL,
+                description TEXT,
+                time_complexity TEXT,
+                space_complexity TEXT,
+                code_preview TEXT,
+                pdf_url TEXT,
+                status TEXT DEFAULT 'active',
+                order_index INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # 插入示例数据
+        conn.execute('''
+            INSERT INTO team_members (name, position, description, order_index)
+            VALUES 
+            ('张教授', '实验室主任', '专注于机器学习和人工智能研究', 1),
+            ('李博士', '副教授', '专注于计算机视觉和深度学习', 2),
+            ('王同学', '博士生', '研究自然语言处理', 3)
+        ''')
+        
+        conn.execute('''
+            INSERT INTO papers (title, authors, journal, year, abstract, order_index)
+            VALUES 
+            ('基于深度学习的图像识别方法', '["张教授", "李博士"]', 'AI Journal', 2024, '提出了一种新的基于深度学习的图像识别方法', 1),
+            ('自然语言处理在智能对话中的应用', '["王同学", "张教授"]', 'NLP Conference', 2024, '探索了自然语言处理技术在智能对话系统中的应用', 2),
+            ('机器学习算法优化研究', '["李博士"]', 'ML Review', 2023, '对传统机器学习算法进行了深入的优化研究', 3)
+        ''')
+        
+        conn.execute('''
+            INSERT INTO algorithms (title, category, description, time_complexity, space_complexity, order_index)
+            VALUES 
+            ('快速排序算法', '基础算法', '一种高效的排序算法，使用分治策略', 'O(n log n)', 'O(log n)', 1),
+            ('动态规划背包问题', '动态规划', '解决0-1背包问题的经典动态规划方法', 'O(nW)', 'O(nW)', 2),
+            ('深度优先搜索', '图算法', '图遍历的基本算法之一', 'O(V+E)', 'O(V)', 3)
+        ''')
+        
+        print("✅ 内存数据库表结构和示例数据创建完成")
+        
+    except Exception as e:
+        print(f"❌ 初始化内存数据库失败: {e}")
 
 @contextmanager
 def get_db():
@@ -20,14 +132,24 @@ def get_db():
     Yields:
         sqlite3.Connection: 数据库连接对象
     """
-    db_path = get_db_path()
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row  # 使结果可以通过列名访问
-    conn.isolation_level = None  # 启用自动提交模式
-    try:
-        yield conn
-    finally:
-        conn.close()
+    if _is_vercel:
+        # Vercel环境：使用共享的内存数据库
+        conn = get_memory_db()
+        try:
+            yield conn
+        finally:
+            # 不关闭连接，保持内存数据持久化
+            pass
+    else:
+        # 本地环境：使用文件数据库
+        db_path = get_db_path()
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row  # 使结果可以通过列名访问
+        conn.isolation_level = None  # 启用自动提交模式
+        try:
+            yield conn
+        finally:
+            conn.close()
 
 def init_db():
     """初始化数据库表结构"""

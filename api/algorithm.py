@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, abort, session
 from db_utils import get_db
 from datetime import datetime
 import traceback
+import os
 
 # 创建算法蓝图
 algorithm_bp = Blueprint('algorithm', __name__, url_prefix='/api')
@@ -11,6 +12,54 @@ algorithm_bp = Blueprint('algorithm', __name__, url_prefix='/api')
 def get_frontend_algorithms():
     """获取算法数据（前端展示）"""
     try:
+        # 检查是否在 Vercel 环境中
+        if os.environ.get('VERCEL'):
+            # Vercel 环境：返回Mock数据
+            mock_algorithms = [
+                {
+                    'id': 1,
+                    'title': '快速排序算法',
+                    'category': '基础算法',
+                    'frontend_category': 'competition',
+                    'description': '一种高效的排序算法，使用分治策略。平均时间复杂度为O(n log n)，是最常用的排序算法之一。',
+                    'time_complexity': 'O(n log n)',
+                    'space_complexity': 'O(log n)',
+                    'code_preview': 'def quicksort(arr):\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[len(arr) // 2]\n    left = [x for x in arr if x < pivot]\n    middle = [x for x in arr if x == pivot]\n    right = [x for x in arr if x > pivot]\n    return quicksort(left) + middle + quicksort(right)',
+                    'pdf_url': '',
+                    'status': 'active',
+                    'order_index': 1
+                },
+                {
+                    'id': 2,
+                    'title': '动态规划-背包问题',
+                    'category': '动态规划',
+                    'frontend_category': 'competition',
+                    'description': '解决0-1背包问题的经典动态规划方法，通过状态转移方程来求解最优解。',
+                    'time_complexity': 'O(nW)',
+                    'space_complexity': 'O(nW)',
+                    'code_preview': 'def knapsack(values, weights, W):\n    n = len(values)\n    dp = [[0] * (W + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        for w in range(W + 1):\n            if weights[i-1] <= w:\n                dp[i][w] = max(dp[i-1][w], dp[i-1][w-weights[i-1]] + values[i-1])\n            else:\n                dp[i][w] = dp[i-1][w]\n    return dp[n][W]',
+                    'pdf_url': '',
+                    'status': 'active',
+                    'order_index': 2
+                },
+                {
+                    'id': 3,
+                    'title': '深度优先搜索(DFS)',
+                    'category': '图论',
+                    'frontend_category': 'competition',
+                    'description': '图遍历的基本算法之一，使用栈结构实现，可以用于路径查找、连通性判断等问题。',
+                    'time_complexity': 'O(V+E)',
+                    'space_complexity': 'O(V)',
+                    'code_preview': 'def dfs(graph, start, visited=None):\n    if visited is None:\n        visited = set()\n    visited.add(start)\n    print(start)\n    for neighbor in graph[start]:\n        if neighbor not in visited:\n            dfs(graph, neighbor, visited)\n    return visited',
+                    'pdf_url': '',
+                    'status': 'active',
+                    'order_index': 3
+                }
+            ]
+            print(f"🔧 Vercel环境：返回算法Mock数据 {len(mock_algorithms)} 个")
+            return jsonify(mock_algorithms)
+        
+        # 本地环境：正常数据库查询
         with get_db() as conn:
             # 获取启用的算法，按排序索引和创建时间排序
             cursor = conn.execute('''

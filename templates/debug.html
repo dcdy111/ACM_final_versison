@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API调试页面 - ACM实验室</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .api-result {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { color: #059669; }
+        .error { color: #dc2626; }
+        .loading { color: #d97706; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8">🔧 API调试页面</h1>
+        
+        <!-- 环境信息 -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">🌍 环境信息</h2>
+            <div id="environment-info" class="space-y-2">
+                <p><strong>当前环境:</strong> <span id="current-env">检测中...</span></p>
+                <p><strong>时间戳:</strong> <span id="timestamp"></span></p>
+                <p><strong>用户代理:</strong> <span id="user-agent"></span></p>
+            </div>
+        </div>
+
+        <!-- API测试面板 -->
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- 数据库调试 -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">📊 数据库调试</h3>
+                <button onclick="testDatabase()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-4">
+                    测试数据库连接
+                </button>
+                <div id="db-result" class="api-result bg-gray-50 p-3 rounded border"></div>
+            </div>
+
+            <!-- 团队成员API -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">👥 团队成员API</h3>
+                <button onclick="testTeamAPI()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mb-4">
+                    测试团队成员API
+                </button>
+                <div id="team-result" class="api-result bg-gray-50 p-3 rounded border"></div>
+            </div>
+
+            <!-- 论文API -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">📚 论文API</h3>
+                <button onclick="testPapersAPI()" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 mb-4">
+                    测试论文API
+                </button>
+                <div id="papers-result" class="api-result bg-gray-50 p-3 rounded border"></div>
+            </div>
+
+            <!-- 算法API -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">🔢 算法API</h3>
+                <button onclick="testAlgorithmsAPI()" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 mb-4">
+                    测试算法API
+                </button>
+                <div id="algorithms-result" class="api-result bg-gray-50 p-3 rounded border"></div>
+            </div>
+
+            <!-- 科创项目API -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">🚀 科创项目API</h3>
+                <button onclick="testInnovationAPI()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 mb-4">
+                    测试科创项目API
+                </button>
+                <div id="innovation-result" class="api-result bg-gray-50 p-3 rounded border"></div>
+            </div>
+
+            <!-- 综合测试 -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">🔄 综合测试</h3>
+                <button onclick="testAllAPIs()" class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600 mb-4">
+                    测试所有API
+                </button>
+                <div id="all-result" class="api-result bg-gray-50 p-3 rounded border"></div>
+            </div>
+        </div>
+
+        <!-- 返回首页 -->
+        <div class="text-center mt-8">
+            <a href="/" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+                返回首页
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            updateEnvironmentInfo();
+        });
+
+        function updateEnvironmentInfo() {
+            document.getElementById('current-env').textContent = window.location.hostname.includes('vercel') ? 'Vercel生产环境' : '本地开发环境';
+            document.getElementById('timestamp').textContent = new Date().toLocaleString();
+            document.getElementById('user-agent').textContent = navigator.userAgent.substring(0, 100) + '...';
+        }
+
+        async function makeAPICall(url, resultElementId, description) {
+            const resultElement = document.getElementById(resultElementId);
+            resultElement.innerHTML = `<span class="loading">🔄 ${description}...</span>`;
+            
+            try {
+                const startTime = performance.now();
+                const response = await fetch(url, {
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
+                const endTime = performance.now();
+                const duration = Math.round(endTime - startTime);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                resultElement.innerHTML = `
+                    <div class="success">✅ ${description}成功 (${duration}ms)</div>
+                    <div class="text-sm text-gray-600 mt-2">
+                        <strong>状态:</strong> ${response.status} ${response.statusText}<br>
+                        <strong>数据量:</strong> ${Array.isArray(data) ? data.length : 1} 项<br>
+                        <strong>响应时间:</strong> ${duration}ms
+                    </div>
+                    <details class="mt-3">
+                        <summary class="cursor-pointer text-blue-600">查看详细数据</summary>
+                        <pre class="text-xs bg-gray-100 p-2 mt-2 rounded overflow-auto">${JSON.stringify(data, null, 2)}</pre>
+                    </details>
+                `;
+                
+                return { success: true, data, duration };
+            } catch (error) {
+                resultElement.innerHTML = `
+                    <div class="error">❌ ${description}失败</div>
+                    <div class="text-sm text-red-600 mt-2">
+                        <strong>错误:</strong> ${error.message}
+                    </div>
+                `;
+                
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testDatabase() {
+            await makeAPICall('/api/debug/database', 'db-result', '数据库连接测试');
+        }
+
+        async function testTeamAPI() {
+            await makeAPICall('/api/team', 'team-result', '团队成员API测试');
+        }
+
+        async function testPapersAPI() {
+            await makeAPICall('/api/frontend/papers', 'papers-result', '论文API测试');
+        }
+
+        async function testAlgorithmsAPI() {
+            await makeAPICall('/api/frontend/algorithms', 'algorithms-result', '算法API测试');
+        }
+
+        async function testInnovationAPI() {
+            await makeAPICall('/api/innovation-projects', 'innovation-result', '科创项目API测试');
+        }
+
+        async function testAllAPIs() {
+            const resultElement = document.getElementById('all-result');
+            resultElement.innerHTML = '<span class="loading">🔄 正在测试所有API...</span>';
+            
+            const tests = [
+                { url: '/api/debug/database', name: '数据库连接' },
+                { url: '/api/team', name: '团队成员' },
+                { url: '/api/frontend/papers', name: '论文数据' },
+                { url: '/api/frontend/algorithms', name: '算法数据' },
+                { url: '/api/innovation-projects', name: '科创项目' }
+            ];
+            
+            const results = [];
+            const startTime = performance.now();
+            
+            for (const test of tests) {
+                try {
+                    const response = await fetch(test.url, {
+                        headers: {
+                            'Cache-Control': 'no-cache',
+                            'Pragma': 'no-cache'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        results.push({
+                            name: test.name,
+                            status: '✅ 成功',
+                            count: Array.isArray(data) ? data.length : 1
+                        });
+                    } else {
+                        results.push({
+                            name: test.name,
+                            status: `❌ 失败 (${response.status})`,
+                            count: 0
+                        });
+                    }
+                } catch (error) {
+                    results.push({
+                        name: test.name,
+                        status: `❌ 错误: ${error.message}`,
+                        count: 0
+                    });
+                }
+            }
+            
+            const endTime = performance.now();
+            const totalDuration = Math.round(endTime - startTime);
+            
+            const successCount = results.filter(r => r.status.includes('✅')).length;
+            const totalCount = results.length;
+            
+            resultElement.innerHTML = `
+                <div class="${successCount === totalCount ? 'success' : 'error'}">
+                    🎯 综合测试完成: ${successCount}/${totalCount} 成功 (${totalDuration}ms)
+                </div>
+                <div class="mt-3 space-y-1">
+                    ${results.map(r => `
+                        <div class="text-sm">
+                            <strong>${r.name}:</strong> ${r.status}
+                            ${r.count > 0 ? ` (${r.count} 项数据)` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

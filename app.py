@@ -1154,6 +1154,70 @@ def get_frontend_papers_api():
     """获取前三个论文用于前端成果展示"""
     try:
         print("🔍 前端论文API被调用")
+        
+        # 检查是否在 Vercel 环境中
+        if os.environ.get('VERCEL'):
+            # Vercel 环境：返回Mock数据
+            mock_papers = [
+                {
+                    'id': 1,
+                    'title': '基于深度学习的图像识别方法研究',
+                    'authors': ['张教授', '李博士'],
+                    'journal': 'AI Journal',
+                    'year': 2024,
+                    'abstract': '提出了一种新的基于深度学习的图像识别方法，在多个数据集上取得了优异的性能。该方法结合了卷积神经网络和注意力机制，能够有效提高图像识别的准确率。',
+                    'categories': ['CCF-A'],
+                    'category_ids': [1],
+                    'status': 'published',
+                    'order_index': 1,
+                    'citation_count': 25,
+                    'doi': '10.1000/182',
+                    'pdf_url': '/static/papers/paper1.pdf',
+                    'code_url': 'https://github.com/example/paper1',
+                    'video_url': '',
+                    'demo_url': ''
+                },
+                {
+                    'id': 2,
+                    'title': '自然语言处理在智能对话中的应用',
+                    'authors': ['王同学', '张教授'],
+                    'journal': 'NLP Conference',
+                    'year': 2024,
+                    'abstract': '探索了自然语言处理技术在智能对话系统中的应用，提出了一种基于Transformer的对话生成模型。该模型能够生成更加自然和流畅的对话回复。',
+                    'categories': ['CCF-B'],
+                    'category_ids': [2],
+                    'status': 'published',
+                    'order_index': 2,
+                    'citation_count': 18,
+                    'doi': '10.1000/183',
+                    'pdf_url': '/static/papers/paper2.pdf',
+                    'code_url': 'https://github.com/example/paper2',
+                    'video_url': '',
+                    'demo_url': ''
+                },
+                {
+                    'id': 3,
+                    'title': '机器学习算法优化研究与实践',
+                    'authors': ['李博士'],
+                    'journal': 'ML Review',
+                    'year': 2023,
+                    'abstract': '对传统机器学习算法进行了深入的优化研究，提出了多种提高算法效率和准确性的方法。通过大量实验验证了这些优化方法的有效性。',
+                    'categories': ['中科院一区'],
+                    'category_ids': [4],
+                    'status': 'published',
+                    'order_index': 3,
+                    'citation_count': 32,
+                    'doi': '10.1000/184',
+                    'pdf_url': '/static/papers/paper3.pdf',
+                    'code_url': 'https://github.com/example/paper3',
+                    'video_url': '',
+                    'demo_url': ''
+                }
+            ]
+            print(f"🔧 Vercel环境：返回论文Mock数据 {len(mock_papers)} 篇")
+            return jsonify(mock_papers)
+        
+        # 本地环境：正常数据库查询
         with get_db() as conn:
             # 获取前三个论文，按排序顺序
             cursor = conn.execute("SELECT * FROM papers ORDER BY order_index ASC, updated_at DESC LIMIT 3")
@@ -1512,6 +1576,11 @@ def test_sync():
     """测试实时同步功能页面"""
     return render_template('frontend/test-sync.html')
 
+@app.route('/debug')
+def debug_page():
+    """API调试页面"""
+    return render_template('debug.html')
+
 @app.route('/api/test-socket')
 def test_socket():
     """测试Socket.IO连接"""
@@ -1524,6 +1593,84 @@ def test_socket():
         return jsonify({"success": True, "message": "测试消息已发送"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/debug/database', methods=['GET'])
+def debug_database():
+    """调试数据库连接和查询"""
+    debug_info = {
+        'timestamp': datetime.now().isoformat(),
+        'environment': 'vercel' if os.environ.get('VERCEL') else 'local',
+        'tests': []
+    }
+    
+    try:
+        # 测试1: 检查数据库文件
+        from db_utils import get_db_path
+        db_path = get_db_path()
+        debug_info['database_path'] = db_path
+        debug_info['database_exists'] = os.path.exists(db_path)
+        debug_info['database_size'] = os.path.getsize(db_path) if os.path.exists(db_path) else 0
+        
+        # 测试2: 尝试连接数据库
+        try:
+            with get_db() as conn:
+                cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table';")
+                tables = [row[0] for row in cursor.fetchall()]
+                debug_info['tables'] = tables
+                debug_info['tests'].append({'test': 'database_connection', 'status': 'success', 'result': f'Found {len(tables)} tables'})
+        except Exception as e:
+            debug_info['tests'].append({'test': 'database_connection', 'status': 'error', 'error': str(e)})
+        
+        # 测试3: 查询团队成员
+        try:
+            with get_db() as conn:
+                cursor = conn.execute("SELECT COUNT(*) FROM team_members")
+                count = cursor.fetchone()[0]
+                debug_info['tests'].append({'test': 'team_members_count', 'status': 'success', 'result': count})
+        except Exception as e:
+            debug_info['tests'].append({'test': 'team_members_count', 'status': 'error', 'error': str(e)})
+        
+        # 测试4: 查询论文
+        try:
+            with get_db() as conn:
+                cursor = conn.execute("SELECT COUNT(*) FROM papers")
+                count = cursor.fetchone()[0]
+                debug_info['tests'].append({'test': 'papers_count', 'status': 'success', 'result': count})
+        except Exception as e:
+            debug_info['tests'].append({'test': 'papers_count', 'status': 'error', 'error': str(e)})
+        
+        # 测试5: 查询算法
+        try:
+            with get_db() as conn:
+                cursor = conn.execute("SELECT COUNT(*) FROM algorithms")
+                count = cursor.fetchone()[0]
+                debug_info['tests'].append({'test': 'algorithms_count', 'status': 'success', 'result': count})
+        except Exception as e:
+            debug_info['tests'].append({'test': 'algorithms_count', 'status': 'error', 'error': str(e)})
+        
+        return jsonify(debug_info)
+        
+    except Exception as e:
+        debug_info['tests'].append({'test': 'general_error', 'status': 'error', 'error': str(e)})
+        return jsonify(debug_info), 500
+
+@app.route('/api/debug/init', methods=['POST'])
+def debug_init_database():
+    """强制重新初始化数据库"""
+    try:
+        from db_utils import init_db
+        init_db()
+        return jsonify({
+            'status': 'success',
+            'message': '数据库初始化完成',
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
 
 
 if __name__ == '__main__':

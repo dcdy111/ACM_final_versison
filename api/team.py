@@ -9,6 +9,7 @@ from db_utils import get_db
 # from socket_utils import notify_page_refresh
 import logging
 import json
+import os
 from datetime import datetime
 
 # 配置日志
@@ -21,6 +22,76 @@ team_bp = Blueprint('team', __name__)
 def get_team_members():
     """获取所有团队成员，按年级分组"""
     try:
+        # 检查是否在 Vercel 环境中
+        if os.environ.get('VERCEL'):
+            # Vercel 环境：返回Mock数据
+            mock_data = [
+                {
+                    'grade': '2024级',
+                    'members': [
+                        {
+                            'id': 1,
+                            'name': '张教授',
+                            'position': '实验室主任',
+                            'role': '实验室主任',
+                            'desc': '专注于机器学习和人工智能研究，在计算机视觉领域有深入研究',
+                            'description': '专注于机器学习和人工智能研究，在计算机视觉领域有深入研究',
+                            'img': '/static/images/team/professor_zhang.jpg',
+                            'image_url': '/static/images/team/professor_zhang.jpg',
+                            'qq': '',
+                            'wechat': '',
+                            'email': 'zhang@example.com',
+                            'group_name': '算法组',
+                            'status': '在职',
+                            'grade': '2024级',
+                            'order_index': 1
+                        },
+                        {
+                            'id': 2,
+                            'name': '李博士',
+                            'position': '副教授',
+                            'role': '副教授',
+                            'desc': '专注于深度学习算法优化和自然语言处理技术研究',
+                            'description': '专注于深度学习算法优化和自然语言处理技术研究',
+                            'img': '/static/images/team/dr_li.jpg',
+                            'image_url': '/static/images/team/dr_li.jpg',
+                            'qq': '',
+                            'wechat': '',
+                            'email': 'li@example.com',
+                            'group_name': '算法组',
+                            'status': '在职',
+                            'grade': '2024级',
+                            'order_index': 2
+                        }
+                    ]
+                },
+                {
+                    'grade': '2023级',
+                    'members': [
+                        {
+                            'id': 3,
+                            'name': '王同学',
+                            'position': '博士生',
+                            'role': '博士生',
+                            'desc': '研究方向为计算机视觉和图像处理',
+                            'description': '研究方向为计算机视觉和图像处理',
+                            'img': '/static/images/team/wang_student.jpg',
+                            'image_url': '/static/images/team/wang_student.jpg',
+                            'qq': '',
+                            'wechat': '',
+                            'email': 'wang@example.com',
+                            'group_name': '算法组',
+                            'status': '在职',
+                            'grade': '2023级',
+                            'order_index': 3
+                        }
+                    ]
+                }
+            ]
+            print("🔧 Vercel环境：返回团队成员Mock数据")
+            return jsonify(mock_data)
+        
+        # 本地环境：正常数据库查询
         with get_db() as conn:
             # 修改排序逻辑：优先按order_index排序，然后按年级和创建时间
             cursor = conn.execute('''
