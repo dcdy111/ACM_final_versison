@@ -1,23 +1,19 @@
 {
   "version": 2,
-  "functions": {
-    "api/index.py": {
-      "runtime": "python3.9",
-      "maxDuration": 30
-    }
-  },
-  "rewrites": [
+  "builds": [
     {
-      "source": "/static/(.*)",
-      "destination": "/static/$1"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/api/index.py"
+      "src": "api/index.py",
+      "use": "@vercel/python"
     }
   ],
-  "env": {
-    "FLASK_ENV": "production",
-    "FLASK_DEBUG": "False"
-  }
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/index.py"
+    }
+  ]
 }
